@@ -1,0 +1,12 @@
+server:
+  port: 8000
+
+spring:
+  datasource:
+    url: env.url
+    username: env.username
+    password: env.password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
