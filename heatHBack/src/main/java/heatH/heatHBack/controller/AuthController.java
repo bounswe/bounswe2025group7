@@ -1,6 +1,7 @@
 package heatH.heatHBack.controller;
 
 import heatH.heatHBack.model.request.LoginRequest;
+import heatH.heatHBack.model.request.RefreshTokenRequest;
 import heatH.heatHBack.model.request.RegisterRequest;
 import heatH.heatHBack.model.response.AuthResponse;
 import heatH.heatHBack.service.implementation.AuthService;
@@ -21,13 +22,18 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
-        String token = authService.register(request);
-        return ResponseEntity.ok(new AuthResponse(token));
+        AuthResponse response = authService.register(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-        String token = authService.login(request);
-        return ResponseEntity.ok(new AuthResponse(token));
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
     }
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthResponse> refreshToken(@RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request.getRefreshToken()));
+    }
+
 }
