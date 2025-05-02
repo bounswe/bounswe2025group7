@@ -3,10 +3,13 @@ server:
 
 spring:
   datasource:
-    url: env.url
-    username: env.username
-    password: env.password
+    url: jdbc:postgresql://localhost:8001/mydb
+    username: myuser
+    password: mypassword
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect

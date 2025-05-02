@@ -1,9 +1,12 @@
 package heatH.heatHBack.model.response;
 
-public class AuthResponse {
-    public String token;
+import lombok.Builder;
+import lombok.Data;
 
-    public AuthResponse(String token) {
-        this.token = token;
-    }
+@Data
+@Builder
+public class AuthResponse {
+    private String accessToken;
+    private String refreshToken;
 }
+

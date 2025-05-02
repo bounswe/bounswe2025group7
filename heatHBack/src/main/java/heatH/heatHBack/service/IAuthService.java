@@ -2,8 +2,10 @@ package heatH.heatHBack.service;
 
 import heatH.heatHBack.model.request.LoginRequest;
 import heatH.heatHBack.model.request.RegisterRequest;
+import heatH.heatHBack.model.response.AuthResponse;
 
 public interface IAuthService {
-    String register(RegisterRequest request);
-    String login(LoginRequest request);
+    AuthResponse register(RegisterRequest request);
+    AuthResponse login(LoginRequest request);
+    AuthResponse refreshToken(String refreshToken);
 }
