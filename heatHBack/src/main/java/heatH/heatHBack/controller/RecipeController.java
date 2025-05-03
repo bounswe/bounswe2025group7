@@ -21,13 +21,13 @@ import lombok.RequiredArgsConstructor;
 public class RecipeController {
     private final RecipeService recipeService;
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<RecipeResponse> createRecipe(@RequestBody RecipeRequest request) {
         recipeService.saveRecipe(request);
         return ResponseEntity.ok(new RecipeResponse("OK"));
     }
     
-    @GetMapping
+    @GetMapping("/get")
     public ResponseEntity<?> getRecipeDetails(@RequestParam Long recipeId) {
         return recipeService.getRecipeById(recipeId)
                 .<ResponseEntity<?>>map(recipe -> ResponseEntity.ok(recipe))

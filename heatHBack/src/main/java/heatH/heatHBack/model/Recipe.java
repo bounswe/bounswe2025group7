@@ -2,6 +2,7 @@ package heatH.heatHBack.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -45,8 +46,10 @@ public class Recipe {
     @Column
     private double easinessScore;
 
-    @Column(name = "userId", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
+    private User user;
 
     public String getTitle() {return title;}
     public List<String> getInstructions(){return instructions;}
