@@ -16,7 +16,7 @@ const Login = () => {
       {/* login header */}
       <Spacer height = '10%'/>
       <Text style = {styles.header}>
-        NutriMate
+        heatH
       </Text>
 
       {/* Auth container */}
