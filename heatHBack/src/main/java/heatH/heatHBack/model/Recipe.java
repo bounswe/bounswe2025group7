@@ -2,12 +2,7 @@ package heatH.heatHBack.model;
 
 import java.util.List;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
@@ -20,7 +15,9 @@ public class Recipe {
 
     private int totalCalorie = 0;
 
-    @Column(nullable = false)
+    @ElementCollection
+    @CollectionTable(name = "recipe_ingredients", joinColumns = @JoinColumn(name = "recipe_id"))
+    @Column(name = "ingredient", nullable = false)
     private List<String> ingredients;
 
     @Column
@@ -34,7 +31,9 @@ public class Recipe {
     @Column
     private String type;
 
-    @Column(nullable = false)
+    @ElementCollection
+    @CollectionTable(name = "recipe_instructions", joinColumns = @JoinColumn(name = "recipe_id"))
+    @Column(name = "instruction", nullable = false)
     private List<String> instructions;
 
     @Column
@@ -46,7 +45,7 @@ public class Recipe {
     @Column
     private double easinessScore;
 
-    @Column(name = "id", nullable = false)
+    @Column(name = "userId", nullable = false)
     private Long userId;
 
     public String getTitle() {return title;}
