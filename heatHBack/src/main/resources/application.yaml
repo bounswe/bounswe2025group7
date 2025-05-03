@@ -3,9 +3,10 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:8001/mydb
-    username: myuser
-    password: mypassword
+    url: jdbc:postgresql://34.40.43.87:5432/heath
+    username:
+    password:
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
