@@ -3,8 +3,12 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme/theme'; 
-import SignupPage from './pages/SignupPage';
+
 import LandingPage from './pages/LandingPage';
+
+import SignupPage from './pages/Login/SignupPage.jsx';
+import SignIn from './pages/Login/SignIn.tsx';
+
 
 function App() {
   return (
@@ -14,7 +18,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/home" element={<LandingPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/signin" element={<SignIn />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>  
