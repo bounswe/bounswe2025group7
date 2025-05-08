@@ -1,17 +1,28 @@
 package heatH.heatHBack.service.implementation;
 
 import heatH.heatHBack.model.User;
+import heatH.heatHBack.model.UserMailVerification;
 import heatH.heatHBack.model.request.LoginRequest;
 import heatH.heatHBack.model.request.RegisterRequest;
 import heatH.heatHBack.model.response.AuthResponse;
 import heatH.heatHBack.repository.UserRepository;
+import heatH.heatHBack.repository.UserVerificationRepository;
 import heatH.heatHBack.service.IAuthService;
+import jakarta.persistence.Id;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +32,8 @@ public class AuthService implements IAuthService{
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final MailService mailService;
+    private final UserVerificationRepository userVerificationRepository;
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -78,6 +91,24 @@ public class AuthService implements IAuthService{
                 .accessToken(newAccessToken)
                 .refreshToken(refreshToken)
                 .build();
+    }
+
+    @Override
+    public Integer sendVerificationCode(String email) {
+        Integer verificationCode = (int) (Math.random() * 900000) + 100000;
+
+        mailService.sendEmail(email, "Verification Code", "Your verification code is: " + verificationCode);
+
+        userVerificationRepository.save(new UserMailVerification(email, verificationCode));
+        return verificationCode;
+    }
+
+
+
+    @Scheduled(fixedRate = 600_000)
+    public void cleanupExpiredCodes() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(5);
+        userVerificationRepository.deleteAllOlderThan(cutoff);
     }
 
 }
