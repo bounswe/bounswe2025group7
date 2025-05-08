@@ -103,7 +103,31 @@ public class AuthService implements IAuthService{
         return verificationCode;
     }
 
+    @Override
+    public Boolean verifyCode(Integer code) {
+        String email = getCurrentUserEmail();
 
+        Optional<UserMailVerification> recordOpt = userVerificationRepository
+                .findTopByEmailOrderByCreatedAtDesc(email);
+
+        if (recordOpt.isEmpty()) return false;
+
+        UserMailVerification record = recordOpt.get();
+
+        if (record.getCreatedAt().isBefore(LocalDateTime.now().minusMinutes(5))) {
+            return false;
+        }
+
+        return record.getCode().equals(code);
+    }
+
+    private String getCurrentUserEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("User not authenticated");
+        }
+        return authentication.getName();
+    }
 
     @Scheduled(fixedRate = 600_000)
     public void cleanupExpiredCodes() {
