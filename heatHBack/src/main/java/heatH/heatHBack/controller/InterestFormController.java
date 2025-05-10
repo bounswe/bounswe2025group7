@@ -20,12 +20,12 @@ import lombok.RequiredArgsConstructor;
 public class InterestFormController {
     private final InterestFormService interestFormService;
 
-    @PostMapping
+    @PostMapping("/submit")
     public ResponseEntity<InterestForm> submitForm(@RequestBody InterestFormRequest request) {
         return ResponseEntity.ok(interestFormService.submitForm(request));
     }
 
-    @GetMapping
+    @GetMapping("/get-form")
     public ResponseEntity<InterestForm> getForm() {
         InterestForm form = interestFormService.getForm();
         return (form != null) ? ResponseEntity.ok(form) : ResponseEntity.notFound().build();
