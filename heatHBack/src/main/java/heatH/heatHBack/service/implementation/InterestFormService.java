@@ -26,4 +26,13 @@ public class InterestFormService {
     public InterestForm getForm(Long id) {
         return interestFormRepository.findById(id).orElse(null);
     }
+
+    public Boolean checkFirstLogin(Long id){
+        InterestForm form = interestFormRepository.findById(id).orElse(null);
+        if (form != null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

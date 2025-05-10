@@ -30,4 +30,9 @@ public class InterestFormController {
         InterestForm form = interestFormService.getForm(id);
         return (form != null) ? ResponseEntity.ok(form) : ResponseEntity.notFound().build();
     }
+    @GetMapping("/check-first-login")
+    public ResponseEntity<Boolean> checkFirstLogin(@PathVariable Long id) {
+        Boolean isFirstLogin = interestFormService.checkFirstLogin(id);
+        return ResponseEntity.ok(isFirstLogin);
+    }
 }
