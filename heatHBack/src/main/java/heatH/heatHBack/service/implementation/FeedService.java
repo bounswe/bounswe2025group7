@@ -1,16 +1,24 @@
 package heatH.heatHBack.service.implementation;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
 
 import heatH.heatHBack.model.Feed;
 import heatH.heatHBack.model.FeedType;
 import heatH.heatHBack.model.Recipe;
+import heatH.heatHBack.model.User;
 import heatH.heatHBack.model.request.FeedRequest;
+import heatH.heatHBack.model.response.FeedResponse;
 import heatH.heatHBack.repository.FeedRepository;
+import heatH.heatHBack.repository.LikeRepository;
+import heatH.heatHBack.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -18,6 +26,8 @@ import lombok.RequiredArgsConstructor;
 public class FeedService {
     private final FeedRepository feedRepository;
     private final RecipeService recipeService;
+    private final LikeRepository likeRepository;
+    private final UserRepository userRepository;
 
     public Feed createFeed(FeedRequest request) {
         FeedType type = FeedType.valueOf(request.getType());
@@ -26,6 +36,8 @@ public class FeedService {
         feed.setUserId(request.getUserId());
         feed.setCreatedAt(LocalDateTime.now());
         feed.setType(type);
+        feed.setLikeCount(0);
+        
 
         switch (type) {
             case TEXT -> feed.setText(request.getText());
@@ -48,4 +60,29 @@ public class FeedService {
 
         return feedRepository.save(feed);
     }
+
+    public List<FeedResponse> getRecentFeedsForUser() {
+    // Fetch last 20 feeds sorted by createdAt DESC
+    List<Feed> feeds = feedRepository.findTop20ByOrderByCreatedAtDesc();
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        User user = userRepository.findByUsername(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+    return feeds.stream().map(feed -> {
+        FeedResponse response = new FeedResponse();
+        response.setId(feed.getId());
+        response.setUserId(feed.getUserId());
+        response.setType(feed.getType());
+        response.setCreatedAt(feed.getCreatedAt());
+        response.setLikeCount(feed.getLikeCount());
+
+        // Check if this feed is liked by the user
+        boolean liked = likeRepository.findByUserAndFeedId(user, feed.getId()).isPresent();
+        response.setLikedByCurrentUser(liked);
+
+        return response;
+    }).toList();
+}
+
 }

@@ -8,5 +8,6 @@ public class FeedRequest {
     private String text;         
     private String image;     
     private Long recipeId;       
-    private String type;         
+    private String type;
+    private Integer likeCount;         
 }

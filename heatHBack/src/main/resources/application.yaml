@@ -1,13 +1,9 @@
-server:
-  port: ${SERVER_PORT:8080}
-
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: jdbc:postgresql://34.40.43.87:5432/heath
+    username: postgres
+    password: 1001defbc42fdd73e6b2bc6308cd9000
     driver-class-name: org.postgresql.Driver
-
   jpa:
     hibernate:
       ddl-auto: update
@@ -15,12 +11,11 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${SPRING_MAIL_USERNAME}
-    password: ${SPRING_MAIL_PASSWORD}
+    username: heath352.451@gmail.com
+    password: rrkn cwwh zbet urak
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true

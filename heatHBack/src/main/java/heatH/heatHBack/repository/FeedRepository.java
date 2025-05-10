@@ -8,4 +8,6 @@ import heatH.heatHBack.model.Feed;
 
 public interface FeedRepository extends JpaRepository<Feed, Long> {
     List<Feed> findByUserId(Long userId);
+
+    List<Feed> findTop20ByOrderByCreatedAtDesc();
 }
