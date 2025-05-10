@@ -8,6 +8,7 @@ import LandingPage from './pages/LandingPage';
 
 import SignupPage from './pages/Login/SignupPage.jsx';
 import SignIn from './pages/Login/SignIn.tsx';
+import SavedRecipes from './pages/SavedRecipes';
 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Route path="/home" element={<LandingPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signin" element={<SignIn />} />
+          <Route path="/saved" element={<SavedRecipes />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>  
