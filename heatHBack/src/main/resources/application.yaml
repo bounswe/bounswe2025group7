@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://34.40.43.87:5432/heath
-    username:
-    password:
+    url: jdbc:postgresql://localhost:5432/heath
+    username: postgres
+    password: 0e1fa2b1d9faa8fedc3aa9fe1d090635
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
