@@ -3,22 +3,28 @@ import { Container, Box, Typography, TextField, Button, Link } from '@mui/materi
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 import React from 'react';
+import axios from 'axios';
+
 export default function SigninPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
 
-  const handleChange = (e) =>
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     try {
       await authService.login(form);        
       navigate('/');                        
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || 'Login failed');
+      } else {
+        setError('Login failed');
+      }
     }
   };
 
