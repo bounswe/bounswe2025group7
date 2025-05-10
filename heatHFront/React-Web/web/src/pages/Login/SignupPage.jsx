@@ -16,7 +16,9 @@ export default function SignupPage() {
     setError('');
     try {
       await authService.register(form);
-      navigate('/profile/setup');
+      // Clear any tokens set during registration so user must sign in
+      authService.logout();
+      navigate('/signin', { state: { success: 'Registration successful! Please sign in.' } });
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
     }

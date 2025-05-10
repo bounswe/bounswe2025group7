@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Box, Typography, TextField, Button, Link } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../../services/authService';
 import { Link as RouterLink } from 'react-router-dom';
 import axios from 'axios';
@@ -8,6 +8,8 @@ import interestFormService from '../../services/interestFormService';
 
 export default function SigninPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const successMsg = location.state?.success || '';
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
 
@@ -70,6 +72,12 @@ export default function SigninPage() {
     <Container maxWidth="sm">
       <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Typography variant="h5">Sign In</Typography>
+
+        {successMsg && (
+          <Typography color="primary" variant="body2" sx={{ mt: 1 }}>
+            {successMsg}
+          </Typography>
+        )}
 
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, width: '100%' }}>
           <TextField
