@@ -1,0 +1,119 @@
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { AppBar, Toolbar, Typography, Button, Container, Box, Divider } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import PersonIcon from '@mui/icons-material/Person';
+import HomeIcon from '@mui/icons-material/Home';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
+
+const StyledAppBar = styled(AppBar)(({ theme }) => ({
+  backgroundColor: theme.palette.primary.main,
+}));
+
+const StyledToolbar = styled(Toolbar)({
+  display: 'flex',
+  justifyContent: 'space-between',
+});
+
+const NavButton = styled(Button)({
+  color: 'white',
+  '&:hover': {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+});
+
+const LogoLink = styled(Link)({
+  textDecoration: 'none',
+  color: 'white',
+  display: 'flex',
+  alignItems: 'center',
+  '&:hover': {
+    color: 'white',
+  },
+});
+
+const Footer = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.palette.primary.main,
+  color: 'white',
+  padding: theme.spacing(3),
+  marginTop: 'auto',
+}));
+
+const Template = ({ children }) => {
+  const location = useLocation();
+
+  return (
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column',
+      minHeight: '100vh'
+    }}>
+      <StyledAppBar position="static">
+        <StyledToolbar>
+          <LogoLink to="/">
+            <Typography variant="h6" component="div">
+              HeatH
+            </Typography>
+          </LogoLink>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <NavButton
+              component={Link}
+              to="/feed"
+              color={location.pathname === '/feed' ? 'secondary' : 'inherit'}
+              startIcon={<HomeIcon />}
+            >
+              Home
+            </NavButton>
+            <NavButton
+              component={Link}
+              to="/profile"
+              color={location.pathname === '/profile' ? 'secondary' : 'inherit'}
+              startIcon={<PersonIcon />}
+            >
+              Profile
+            </NavButton>
+            <NavButton
+              component={Link}
+              to="/saved-recipes"
+              color={location.pathname === '/saved-recipes' ? 'secondary' : 'inherit'}
+              startIcon={<BookmarkIcon />}
+            >
+              Saved Recipes
+            </NavButton>
+          </Box>
+        </StyledToolbar>
+      </StyledAppBar>
+      <Container sx={{ mt: 4, mb: 4, flex: 1 }}>
+        {children}
+      </Container>
+      <Footer>
+        <Container>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 2
+          }}>
+            <Typography variant="body2">
+              © 2024 HeatH. All rights reserved.
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Link to="/privacy" style={{ color: 'white', textDecoration: 'none' }}>
+                <Typography variant="body2">Privacy Policy</Typography>
+              </Link>
+              <Link to="/terms" style={{ color: 'white', textDecoration: 'none' }}>
+                <Typography variant="body2">Terms of Service</Typography>
+              </Link>
+              <Link to="/contact" style={{ color: 'white', textDecoration: 'none' }}>
+                <Typography variant="body2">Contact Us</Typography>
+              </Link>
+            </Box>
+          </Box>
+        </Container>
+      </Footer>
+    </Box>
+  );
+};
+
+export default Template; 
