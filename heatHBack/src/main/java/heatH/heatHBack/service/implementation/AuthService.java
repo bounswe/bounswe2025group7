@@ -91,13 +91,14 @@ public class AuthService implements IAuthService{
     }
 
     @Override
-    public Integer sendVerificationCode(String email) {
+    public String sendVerificationCode(String email) {
         Integer verificationCode = (int) (Math.random() * 900000) + 100000;
 
         mailService.sendEmail(email, "Verification Code", "Your verification code is: " + verificationCode);
 
         userVerificationRepository.save(new UserMailVerification(email, verificationCode));
-        return verificationCode;
+
+        return "Mail has send";
     }
 
     @Override

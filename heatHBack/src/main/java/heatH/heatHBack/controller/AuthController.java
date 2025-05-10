@@ -34,7 +34,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.refreshToken(request.getRefreshToken()));
     }
     @PostMapping("/send-verification-code")
-    public ResponseEntity<Integer> sendVerificationCode(@RequestBody EmailRequest emailRequest) {
+    public ResponseEntity<String> sendVerificationCode(@RequestBody EmailRequest emailRequest) {
         return ResponseEntity.ok(authService.sendVerificationCode(emailRequest.getEmail()));
     }
     @PostMapping("/verify-code")

@@ -2,10 +2,7 @@ package heatH.heatHBack.model;
 
 import java.time.LocalDate;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
@@ -19,5 +16,9 @@ public class InterestForm {
     private String surname;
     private LocalDate dateOfBirth;
     private Integer height;
-    private Double weight; 
+    private Double weight;
+
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 }
