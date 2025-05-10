@@ -1,5 +1,6 @@
 package heatH.heatHBack.controller;
 
+import heatH.heatHBack.model.request.EmailRequest;
 import heatH.heatHBack.model.request.LoginRequest;
 import heatH.heatHBack.model.request.RefreshTokenRequest;
 import heatH.heatHBack.model.request.RegisterRequest;
@@ -8,10 +9,7 @@ import heatH.heatHBack.service.implementation.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RestController
@@ -34,6 +32,14 @@ public class AuthController {
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthResponse> refreshToken(@RequestBody RefreshTokenRequest request) {
         return ResponseEntity.ok(authService.refreshToken(request.getRefreshToken()));
+    }
+    @PostMapping("/send-verification-code")
+    public ResponseEntity<Integer> sendVerificationCode(@RequestBody EmailRequest emailRequest) {
+        return ResponseEntity.ok(authService.sendVerificationCode(emailRequest.getEmail()));
+    }
+    @PostMapping("/verify-code")
+    public ResponseEntity<Boolean> verifyCode(@RequestParam Integer code) {
+        return ResponseEntity.ok(authService.verifyCode(code));
     }
 
 }
