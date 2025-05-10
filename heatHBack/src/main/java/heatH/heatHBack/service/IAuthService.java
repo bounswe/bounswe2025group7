@@ -8,4 +8,6 @@ public interface IAuthService {
     AuthResponse register(RegisterRequest request);
     AuthResponse login(LoginRequest request);
     AuthResponse refreshToken(String refreshToken);
+    Integer sendVerificationCode(String email);
+    Boolean verifyCode(Integer code);
 }

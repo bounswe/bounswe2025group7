@@ -4,10 +4,21 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme/theme'; 
 import LandingPage from './pages/LandingPage';
-import SignupPage from './pages/Login/SignupPage.jsx';
-import SignIn from './pages/Login/SignIn.tsx'
+
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+
+
+import Profile from './pages/Profile';
+import InitialProfileSetup from './pages/InitialProfileSetup';
+
+import HomePage from './pages/HomePage';
+
+import SignupPage from './pages/Login/SignupPage.jsx';
+import SignIn from './pages/Login/SignIn.tsx';
+import SavedRecipes from './pages/SavedRecipes';
+
+
 
 function App() {
   return (
@@ -20,7 +31,12 @@ function App() {
             <Route path="/signin" element={<SignIn />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/setup" element={<InitialProfileSetup />} />
+            <Route path="/saved" element={<SavedRecipes />} />
+
           </Routes>
+
       </BrowserRouter>
     </ThemeProvider>  
   );

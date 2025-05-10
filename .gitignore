@@ -1,0 +1,33 @@
+# Node modules
+node_modules/
+
+# Build output
+build/
+dist/
+
+# Dependency lock files
+package-lock.json
+yarn.lock
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+
+# IDEs
+.vscode/
+.idea/
+
+# OS-specific
+.DS_Store
+
+# Java build files
+target/
+*.class
+*.jar
+
+# Docker
+*.log
