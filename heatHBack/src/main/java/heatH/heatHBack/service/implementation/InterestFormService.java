@@ -31,6 +31,8 @@ public class InterestFormService {
         form.setHeight(request.getHeight());
         form.setWeight(request.getWeight());
         form.setUser(user);
+        form.setGender(request.getGender());
+        form.setProfilePhoto(request.getProfilePhoto());
 
         return interestFormRepository.save(form);
     }
