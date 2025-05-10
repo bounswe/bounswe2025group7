@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Typography, Grid, Card, Box, CardActions, IconButton, useTheme } from '@mui/material';
+import { Container, Typography, Grid, Card, Box, CardActions, IconButton, useTheme, Dialog, DialogContent, DialogActions, Button } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -157,6 +157,18 @@ const HeaderSection = styled(Box)(({ theme }) => ({
 const SavedRecipes = () => {
   const theme = useTheme();
   const [recipes, setRecipes] = useState(initialRecipes);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+
+  const handleOpenDialog = (recipe) => {
+    setSelectedRecipe(recipe);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedRecipe(null);
+  };
 
   const toggleLike = (id) => {
     setRecipes((prev) =>
@@ -193,7 +205,7 @@ const SavedRecipes = () => {
                 <Typography variant="h6" sx={{ m: 2, color: 'text.primary' }}>
                   {recipe.title}
                 </Typography>
-                <Box sx={{ position: 'relative', width: '100%', pt: '100%' }}>
+                <Box onClick={() => handleOpenDialog(recipe)} sx={{ position: 'relative', width: '100%', pt: '100%', overflow: 'hidden', cursor: 'pointer', '&:hover .descOverlay': { opacity: 1, transform: 'translateY(0)' } }}>
                   <img
                     src={recipe.image}
                     alt={recipe.title}
@@ -207,6 +219,7 @@ const SavedRecipes = () => {
                     }}
                   />
                   <Box
+                    className="descOverlay"
                     sx={{
                       position: 'absolute',
                       bottom: 0,
@@ -215,6 +228,9 @@ const SavedRecipes = () => {
                       color: theme.palette.primary.contrastText,
                       px: 1,
                       py: 0.5,
+                      opacity: 0,
+                      transform: 'translateY(100%)',
+                      transition: 'all 0.3s ease-in-out',
                     }}
                   >
                     <Typography variant="body2">
@@ -249,6 +265,27 @@ const SavedRecipes = () => {
             </Grid>
           ))}
         </Grid>
+        {/* Dialog for recipe details */}
+        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
+              <Box component="img" src={selectedRecipe?.image} alt={selectedRecipe?.title} sx={{ width: { xs: '100%', md: '50%' }, height: 300, objectFit: 'cover' }} />
+              <Box sx={{ p: 2, width: { xs: '100%', md: '50%' } }}>
+                <Typography variant="h5" gutterBottom>
+                  {selectedRecipe?.title}
+                </Typography>
+                <Typography variant="body1">
+                  {selectedRecipe?.description}
+                </Typography>
+              </Box>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog} color="primary">
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   );
