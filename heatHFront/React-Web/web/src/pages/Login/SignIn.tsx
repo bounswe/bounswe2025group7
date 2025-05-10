@@ -3,6 +3,9 @@ import { Container, Box, Typography, TextField, Button, Link } from '@mui/materi
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+
+
 export default function SigninPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
@@ -59,6 +62,12 @@ export default function SigninPage() {
           <Button type="submit" variant="contained" fullWidth sx={{ mt: 3 }}>
             Sign In
           </Button>
+
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Link component={RouterLink} to="/forgot-password" underline="hover">
+              Forgot Password?
+            </Link>
+          </Box>
 
           <Box sx={{ mt: 2, textAlign: 'center' }}>
             <Typography variant="body2">
