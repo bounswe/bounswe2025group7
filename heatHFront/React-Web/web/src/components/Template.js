@@ -8,6 +8,7 @@ import BookmarkIcon from '@mui/icons-material/Bookmark';
 import LogoutIcon from '@mui/icons-material/Logout';
 import logo from '../images/logo.png';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import authService from '../services/authService';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
@@ -47,7 +48,7 @@ const Template = ({ children }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('token'); 
+    authService.logout();
     navigate('/');
   };
 
