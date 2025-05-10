@@ -1,17 +1,26 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Box, Typography, TextField, Button, Link } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
-import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import axios from 'axios';
-
-
+import interestFormService from '../../services/interestFormService';
 
 export default function SigninPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
+
+  // If already authenticated, redirect on mount
+  useEffect(() => {
+    const token = authService.getAccessToken();
+    if (token) {
+      interestFormService.checkFirstLogin().then((firstLogin) => {
+        if (firstLogin) navigate('/profile/setup');
+        else navigate('/home');
+      });
+    }
+  }, [navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -20,8 +29,14 @@ export default function SigninPage() {
     e.preventDefault();
     setError('');
     try {
-      await authService.login(form);        
-      navigate('/home');                        
+      await authService.login(form);
+      // After login, decide whether to show the interest form
+      const firstLogin = await interestFormService.checkFirstLogin();
+      if (firstLogin) {
+        navigate('/profile/setup');
+      } else {
+        navigate('/home');
+      }
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message || 'Login failed');
@@ -38,10 +53,10 @@ export default function SigninPage() {
 
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, width: '100%' }}>
           <TextField
-            label="Email Address"
-            name="email"
+            label="Username"
+            name="username"
             type="email"
-            value={form.email}
+            value={form.username}
             onChange={handleChange}
             required
             fullWidth

@@ -5,7 +5,7 @@ import authService from '../../services/authService';
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' }); // Removed the "name" field
+  const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
 
   const handleChange = (e) =>
@@ -29,9 +29,9 @@ export default function SignupPage() {
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, width: '100%' }}>
           <TextField
             label="Email Address"
-            name="email"
+            name="username"
             type="email"
-            value={form.email}
+            value={form.username}
             onChange={handleChange}
             required
             fullWidth

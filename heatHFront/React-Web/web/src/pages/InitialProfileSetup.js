@@ -13,6 +13,7 @@ import {
 import { styled } from '@mui/material/styles';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import Template from '../components/Template';
+import interestFormService from '../services/interestFormService';
 
 const Input = styled('input')({
   display: 'none',
@@ -54,9 +55,16 @@ const InitialProfileSetup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // TODO: Add API call to save profile data and photo
-      // After successful save, navigate to profile page
-      navigate('/profile');
+      // Submit interest-form data
+      await interestFormService.createInterestForm({
+        name: formData.firstName,
+        surname: formData.lastName,
+        dateOfBirth: formData.dateOfBirth,
+        height: Number(formData.height),
+        weight: Number(formData.weight),
+      });
+      // After successful submission, send user to home
+      navigate('/home');
     } catch (error) {
       console.error('Error saving profile:', error);
     }
