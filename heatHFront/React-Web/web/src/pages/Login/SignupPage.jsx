@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Container, Box, Typography, TextField, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -6,7 +5,7 @@ import authService from '../../services/authService';
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [form, setForm] = useState({ email: '', password: '' }); // Removed the "name" field
   const [error, setError] = useState('');
 
   const handleChange = (e) =>
@@ -28,15 +27,6 @@ export default function SignupPage() {
       <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Typography variant="h5">Sign Up</Typography>
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, width: '100%' }}>
-          <TextField
-            label="Name"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            required
-            fullWidth
-            margin="normal"
-          />
           <TextField
             label="Email Address"
             name="email"
