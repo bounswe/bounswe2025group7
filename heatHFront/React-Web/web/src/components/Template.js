@@ -5,6 +5,7 @@ import { styled } from '@mui/material/styles';
 import PersonIcon from '@mui/icons-material/Person';
 import HomeIcon from '@mui/icons-material/Home';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
+import logo from '../images/logo.png';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
@@ -50,11 +51,38 @@ const Template = ({ children }) => {
     }}>
       <StyledAppBar position="static">
         <StyledToolbar>
-          <LogoLink to="/home">
+          {/* Logo at the far left */}
+          <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 48 }}>
+            <img
+              src={logo}
+              alt="HeatH logo"
+              style={{
+                height: 52,
+                width: 52,
+                borderRadius: '50%',
+                background: 'white',
+                objectFit: 'cover',
+              }}
+            />
+          </Box>
+
+          {/* Centered title */}
+          <Box
+            sx={{
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
             <Typography variant="h6" component="div">
               HeatH
             </Typography>
-          </LogoLink>
+          </Box>
+
+          {/* Navigation buttons on the right */}
           <Box sx={{ display: 'flex', gap: 1 }}>
             <NavButton
               component={Link}

@@ -19,6 +19,7 @@ import RestaurantIcon from '@mui/icons-material/Restaurant';
 import SavingsIcon from '@mui/icons-material/Savings';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import logo from '../images/logo.png';
 
 const HeroSection = styled(Box)(({ theme }) => ({
   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
@@ -85,6 +86,13 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
   right: 0,
 }));
 
+const Footer = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.palette.primary.main,
+  color: 'white',
+  padding: theme.spacing(3),
+  marginTop: 'auto',
+}));
+
 const LandingPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -93,33 +101,60 @@ const LandingPage = () => {
     <Box>
       {/* Navigation Bar */}
       <StyledAppBar>
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            HeatH
-          </Typography>
+        <Toolbar sx={{ position: 'relative', justifyContent: 'space-between' }}>
+          {/* Logo at the far left */}
+          <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 48 }}>
+            <img
+              src={logo}
+              alt="HeatH logo"
+              style={{
+                height: 42,
+                width: 42,
+                borderRadius: '50%',
+                background: 'white',
+                objectFit: 'cover',
+              }}
+            />
+          </Box>
+          {/* Centered title */}
+          <Box
+            sx={{
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <Typography variant="h6" component="div">
+              HeatH
+            </Typography>
+          </Box>
+          {/* Navigation buttons on the right */}
           <Box sx={{ display: 'flex', gap: 2 }}>
-          <Link 
-              component={RouterLink} 
-              to="/signin" 
-              color="inherit" 
+            <Link
+              component={RouterLink}
+              to="/signin"
+              color="inherit"
               underline="none"
-              sx={{ 
-                '&:hover': { 
-                  color: theme.palette.secondary.main 
-                } 
+              sx={{
+                '&:hover': {
+                  color: theme.palette.secondary.main,
+                },
               }}
             >
               Sign In
             </Link>
-            <Link 
-              component={RouterLink} 
-              to="/signup" 
-              color="inherit" 
+            <Link
+              component={RouterLink}
+              to="/signup"
+              color="inherit"
               underline="none"
-              sx={{ 
-                '&:hover': { 
-                  color: theme.palette.secondary.main 
-                } 
+              sx={{
+                '&:hover': {
+                  color: theme.palette.secondary.main,
+                },
               }}
             >
               Sign Up
@@ -131,6 +166,19 @@ const LandingPage = () => {
       {/* Hero Section */}
       <HeroSection>
         <Container maxWidth="md">
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            <img
+              src={logo}
+              alt="HeatH logo"
+              style={{
+                height: 124,
+                width: 124,
+                borderRadius: '50%',
+                background: 'white',
+                objectFit: 'cover',
+              }}
+            />
+          </Box>
           <Typography 
             variant="h1"
             gutterBottom
@@ -280,6 +328,33 @@ const LandingPage = () => {
           </Button>
         </Container>
       </Box>
+
+      <Footer>
+        <Container>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 2
+          }}>
+            <Typography variant="body2">
+              © 2024 HeatH. All rights reserved.
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Link to="/privacy" component={RouterLink} style={{ color: 'white', textDecoration: 'none' }}>
+                <Typography variant="body2">Privacy Policy</Typography>
+              </Link>
+              <Link to="/terms" component={RouterLink} style={{ color: 'white', textDecoration: 'none' }}>
+                <Typography variant="body2">Terms of Service</Typography>
+              </Link>
+              <Link to="/contact" component={RouterLink} style={{ color: 'white', textDecoration: 'none' }}>
+                <Typography variant="body2">Contact Us</Typography>
+              </Link>
+            </Box>
+          </Box>
+        </Container>
+      </Footer>
     </Box>
   );
 };
