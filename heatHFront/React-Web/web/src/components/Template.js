@@ -7,6 +7,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import LogoutIcon from '@mui/icons-material/Logout';
 import logo from '../images/logo.png';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
@@ -46,9 +47,7 @@ const Template = ({ children }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Clear auth tokens or user data here
-    localStorage.removeItem('token'); // or whatever your token key is
-    // Optionally clear other user data
+    localStorage.removeItem('token'); 
     navigate('/');
   };
 

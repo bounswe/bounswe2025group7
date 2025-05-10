@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Container, Box, Typography, TextField, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ export default function SignupPage() {
   return (
     <Container maxWidth="sm">
       <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        
         <Typography variant="h5">Sign Up</Typography>
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, width: '100%' }}>
           <TextField
@@ -55,7 +57,13 @@ export default function SignupPage() {
           <Button type="submit" variant="contained" fullWidth sx={{ mt: 3 }}>
             Register
           </Button>
+          
         </Box>
+        <Box textAlign="center" mt={3}>
+            <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ alignSelf: 'flex-start', mb: 5 }}>
+              Back
+            </Button>
+          </Box>
       </Box>
     </Container>
   );
