@@ -13,6 +13,7 @@ import {
 import { styled } from '@mui/material/styles';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import Template from '../components/Template';
+import interestFormService from '../services/interestFormService';
 import { useNavigate } from 'react-router-dom';
 
 const Input = styled('input')({
@@ -30,19 +31,16 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        // TODO: Replace with actual API call
-        // const response = await api.getProfile();
-        // setProfileData(response.data);
-        
-        // Temporary mock data
+        // Fetch real profile data from backend
+        const data = await interestFormService.getInterestForm();
         setProfileData({
-          firstName: 'John',
-          lastName: 'Doe',
-          weight: 70,
-          height: 175,
-          dateOfBirth: '1998-01-01',
-          gender: 'male',
-          profilePhoto: '', // URL to profile photo
+          firstName: data.name,
+          lastName: data.surname,
+          weight: data.weight,
+          height: data.height,
+          dateOfBirth: data.dateOfBirth,
+          gender: '',        // backend does not provide gender
+          profilePhoto: '',  // or data.profilePhoto if available
         });
         setLoading(false);
       } catch (err) {

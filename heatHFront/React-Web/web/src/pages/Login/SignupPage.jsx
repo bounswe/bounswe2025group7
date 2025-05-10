@@ -6,7 +6,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' }); // Removed the "name" field
+  const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
 
   const handleChange = (e) =>
@@ -17,7 +17,10 @@ export default function SignupPage() {
     setError('');
     try {
       await authService.register(form);
-      navigate('/profile/setup');
+      // Clear tokens and mark newly registered
+      authService.logout();
+      sessionStorage.setItem('justRegistered', 'true');
+      navigate('/signin', { state: { success: 'Registration successful! Please sign in.' } });
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
     }
@@ -31,9 +34,9 @@ export default function SignupPage() {
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, width: '100%' }}>
           <TextField
             label="Email Address"
-            name="email"
+            name="username"
             type="email"
-            value={form.email}
+            value={form.username}
             onChange={handleChange}
             required
             fullWidth

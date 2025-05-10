@@ -17,6 +17,7 @@ import HomePage from './pages/HomePage';
 import SignupPage from './pages/Login/SignupPage.jsx';
 import SignIn from './pages/Login/SignIn.tsx';
 import SavedRecipes from './pages/SavedRecipes';
+import ProtectedRoute from './components/ProtectedRoute';
 
 
 
@@ -24,19 +25,22 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+          {/* Protected routes */}
+          <Route element={<ProtectedRoute />}>
             <Route path="/home" element={<HomePage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/setup" element={<InitialProfileSetup />} />
             <Route path="/saved" element={<SavedRecipes />} />
-
-          </Routes>
-
+          </Route>
+        </Routes>
       </BrowserRouter>
     </ThemeProvider>  
   );
