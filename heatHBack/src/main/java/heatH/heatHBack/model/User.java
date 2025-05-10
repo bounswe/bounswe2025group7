@@ -37,6 +37,9 @@ public class User implements UserDetails {
     @Column(name = "refresh_token")
     private String refreshToken;
 
+    @Column(name = "profile_photo", columnDefinition = "TEXT")
+    private String profilePhoto;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

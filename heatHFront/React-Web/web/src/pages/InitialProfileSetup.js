@@ -87,6 +87,8 @@ const InitialProfileSetup = () => {
         dateOfBirth: formData.dateOfBirth,
         height: Number(formData.height),
         weight: Number(formData.weight),
+        gender: formData.gender,
+        profilePhoto: previewUrl,
       });
       // After successful submission, send user to home
       navigate('/home');

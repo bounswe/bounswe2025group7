@@ -39,8 +39,8 @@ const Profile = () => {
           weight: data.weight,
           height: data.height,
           dateOfBirth: data.dateOfBirth,
-          gender: '',        // backend does not provide gender
-          profilePhoto: '',  // or data.profilePhoto if available
+          gender: data.gender,      
+          profilePhoto: data.user?.profilePhoto || '',  
         });
         setLoading(false);
       } catch (err) {

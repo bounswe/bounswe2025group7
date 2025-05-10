@@ -32,6 +32,12 @@ public class InterestFormService {
         form.setWeight(request.getWeight());
         form.setUser(user);
 
+        // Update user's profile photo
+        if (request.getProfilePhoto() != null && !request.getProfilePhoto().isEmpty()) {
+            user.setProfilePhoto(request.getProfilePhoto());
+            userRepository.save(user);
+        }
+
         return interestFormRepository.save(form);
     }
 
