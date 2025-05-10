@@ -39,6 +39,8 @@ public class FeedService {
                 Recipe recipe = recipeService.getRecipeById(request.getRecipeId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
                 feed.setRecipe(recipe);
+                feed.setText(request.getText());
+                feed.setImage(request.getImage());
             }
 
             default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid feed type");
