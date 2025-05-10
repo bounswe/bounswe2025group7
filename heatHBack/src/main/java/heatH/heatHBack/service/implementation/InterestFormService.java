@@ -13,17 +13,20 @@ import heatH.heatHBack.repository.InterestFormRepository;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class InterestFormService {
     private final InterestFormRepository interestFormRepository;
     private final UserRepository userRepository;
+    private final GcsService gcsService;
 
     public InterestForm submitForm(InterestFormRequest request) {
         String email = getCurrentUserEmail();
         User user = userRepository.findByUsername(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
         InterestForm form = new InterestForm();
         form.setName(request.getName());
         form.setSurname(request.getSurname());
@@ -32,10 +35,16 @@ public class InterestFormService {
         form.setWeight(request.getWeight());
         form.setUser(user);
         form.setGender(request.getGender());
-        form.setProfilePhoto(request.getProfilePhoto());
+
+        if (request.getProfilePhoto() != null) {
+            String fileName = "user-profile-" + UUID.randomUUID() + ".jpg";
+            String imageUrl = gcsService.uploadBase64Image(request.getProfilePhoto(), fileName);
+            form.setProfilePhoto(imageUrl);
+        }
 
         return interestFormRepository.save(form);
     }
+
 
     public InterestForm getForm() {
         String email = getCurrentUserEmail();
@@ -76,27 +85,29 @@ public class InterestFormService {
         InterestForm form = interestFormRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("InterestForm not found"));
 
-        if (request.getName() != null)
+        if (request.getName() != null) {
             form.setName(request.getName());
-
-        if (request.getSurname() != null)
+        }
+        if (request.getSurname() != null) {
             form.setSurname(request.getSurname());
-
-        if (request.getDateOfBirth() != null)
+        }
+        if (request.getDateOfBirth() != null) {
             form.setDateOfBirth(request.getDateOfBirth());
-
-        if (request.getHeight() != null)
+        }
+        if (request.getHeight() != null) {
             form.setHeight(request.getHeight());
-
-        if (request.getWeight() != null)
+        }
+        if (request.getWeight() != null) {
             form.setWeight(request.getWeight());
-
-        if (request.getProfilePhoto() != null)
-            form.setProfilePhoto(request.getProfilePhoto());
-
-        if (request.getGender() != null)
+        }
+        if (request.getProfilePhoto() != null) {
+            String fileName = "user-profile-" + UUID.randomUUID() + ".jpg";
+            String imageUrl = gcsService.uploadBase64Image(request.getProfilePhoto(), fileName);
+            form.setProfilePhoto(imageUrl);
+        }
+        if (request.getGender() != null) {
             form.setGender(request.getGender());
-
+        }
         return interestFormRepository.save(form);
     }
 
