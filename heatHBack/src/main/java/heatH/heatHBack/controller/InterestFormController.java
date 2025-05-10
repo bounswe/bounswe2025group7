@@ -26,13 +26,13 @@ public class InterestFormController {
     }
 
     @GetMapping
-    public ResponseEntity<InterestForm> getForm(@PathVariable Long id) {
-        InterestForm form = interestFormService.getForm(id);
+    public ResponseEntity<InterestForm> getForm() {
+        InterestForm form = interestFormService.getForm();
         return (form != null) ? ResponseEntity.ok(form) : ResponseEntity.notFound().build();
     }
     @GetMapping("/check-first-login")
-    public ResponseEntity<Boolean> checkFirstLogin(@PathVariable Long id) {
-        Boolean isFirstLogin = interestFormService.checkFirstLogin(id);
+    public ResponseEntity<Boolean> checkFirstLogin() {
+        Boolean isFirstLogin = interestFormService.checkFirstLogin();
         return ResponseEntity.ok(isFirstLogin);
     }
 }
