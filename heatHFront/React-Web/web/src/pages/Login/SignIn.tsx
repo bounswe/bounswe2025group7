@@ -15,6 +15,12 @@ export default function SigninPage() {
 
   // On mount, if token exists check first-login; invalid token sends to signin
   useEffect(() => {
+    // If coming straight from registration, skip validation and go to setup
+    if (sessionStorage.getItem('justRegistered') === 'true') {
+      sessionStorage.removeItem('justRegistered');
+      navigate('/profile/setup');
+      return;
+    }
     const refresh = authService.getRefreshToken();
     if (!refresh) {
       authService.logout();
@@ -23,11 +29,12 @@ export default function SigninPage() {
     // Validate token by attempting to refresh
     authService.refreshToken()
       .then(() => {
-        // If refresh succeeds, check first-login
+        // If refresh succeeds, check first-login flag
         return interestFormService.checkFirstLogin();
       })
       .then((firstLogin) => {
-        if (firstLogin) navigate('/profile/setup');
+        // If service returns false, show setup; true means already done, go home
+        if (!firstLogin) navigate('/profile/setup');
         else navigate('/home');
       })
       .catch(() => {
@@ -45,7 +52,13 @@ export default function SigninPage() {
     setError('');
     try {
       await authService.login(form);
-      // After login, decide next route: invalid token -> signin, else form or home
+      // If just registered, direct to setup and clear flag
+      if (sessionStorage.getItem('justRegistered') === 'true') {
+        sessionStorage.removeItem('justRegistered');
+        navigate('/profile/setup');
+        return;
+      }
+      // After login, check first-login flag (false means show setup)
       let firstLogin;
       try {
         firstLogin = await interestFormService.checkFirstLogin();
@@ -55,9 +68,9 @@ export default function SigninPage() {
           navigate('/signin');
           return;
         }
-        firstLogin = true;
+        firstLogin = false;
       }
-      if (firstLogin) navigate('/profile/setup');
+      if (!firstLogin) navigate('/profile/setup');
       else navigate('/home');
     } catch (err) {
       if (axios.isAxiosError(err)) {
