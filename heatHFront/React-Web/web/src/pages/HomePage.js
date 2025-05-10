@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { Container, Typography, Grid, Card, Box, CardActions, IconButton, useTheme, Dialog, DialogContent, DialogActions, Button, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Container, Typography, Grid, Card, Box, CardActions, IconButton, useTheme, Dialog, DialogContent, DialogActions, Button, TextField, FormControl, InputLabel, Select, MenuItem, CircularProgress } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -8,27 +9,16 @@ import BookmarkIcon from '@mui/icons-material/Bookmark';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import ShareIcon from '@mui/icons-material/Share';
 import Template from '../components/Template';
+import Recipe from '../models/Recipe';
+import recipeService from '../services/recipeService';
 
-// Static list of 15 recipes
+// Static list for initial UI rendering - will be replaced with API data
 const initialRecipes = [
   { id: 1, title: 'Avocado Quinoa Salad', image: 'https://picsum.photos/seed/avocado-quinoa-salad/300/300', description: 'A refreshing blend of avocado, quinoa, and fresh vegetables', liked: false, saved: false, shared: false },
   { id: 2, title: 'Mediterranean Chickpea Bowl', image: 'https://picsum.photos/seed/mediterranean-chickpea-bowl/300/300', description: 'Protein-packed chickpeas with olives, tomatoes, and feta', liked: false, saved: false, shared: false },
-  { id: 3, title: 'Berry Banana Smoothie', image: 'https://picsum.photos/seed/berry-banana-smoothie/300/300', description: 'Sweet strawberries, blueberries, and bananas blended to perfection', liked: false, saved: false, shared: false },
-  { id: 4, title: 'Grilled Chicken & Veggies', image: 'https://picsum.photos/seed/grilled-chicken-veggies/300/300', description: 'Juicy grilled chicken served with a medley of seasonal vegetables', liked: false, saved: false, shared: false },
-  { id: 5, title: 'Thai Peanut Noodle Salad', image: 'https://picsum.photos/seed/thai-peanut-noodle-salad/300/300', description: 'Rice noodles tossed with crunchy veggies and spicy peanut sauce', liked: false, saved: false, shared: false },
-  { id: 6, title: 'Kale Citrus Salad', image: 'https://picsum.photos/seed/kale-citrus-salad/300/300', description: 'Fresh kale leaves with orange segments and tangy vinaigrette', liked: false, saved: false, shared: false },
-  { id: 7, title: 'Sweet Potato Buddha Bowl', image: 'https://picsum.photos/seed/sweet-potato-buddha-bowl/300/300', description: 'Roasted sweet potatoes, greens, and chickpeas in a hearty bowl', liked: false, saved: false, shared: false },
-  { id: 8, title: 'Zucchini Noodle Alfredo', image: 'https://picsum.photos/seed/zucchini-noodle-alfredo/300/300', description: 'Low-carb zucchini noodles smothered in creamy cashew-based alfredo', liked: false, saved: false, shared: false },
-  { id: 9, title: 'Salmon Poke Bowl', image: 'https://picsum.photos/seed/salmon-poke-bowl/300/300', description: 'Fresh salmon cubes over rice with avocado and seaweed salad', liked: false, saved: false, shared: false },
-  { id: 10, title: 'Lentil Vegetable Soup', image: 'https://picsum.photos/seed/lentil-vegetable-soup/300/300', description: 'Hearty lentils simmered with carrots, celery, and aromatic herbs', liked: false, saved: false, shared: false },
-  { id: 11, title: 'Spinach Mushroom Omelette', image: 'https://picsum.photos/seed/spinach-mushroom-omelette/300/300', description: 'Fluffy eggs filled with sautéed mushrooms and fresh spinach', liked: false, saved: false, shared: false },
-  { id: 12, title: 'Black Bean Tacos', image: 'https://picsum.photos/seed/black-bean-tacos/300/300', description: 'Soft tortillas loaded with seasoned black beans and fresh salsa', liked: false, saved: false, shared: false },
-  { id: 13, title: 'Greek Yogurt Parfait', image: 'https://picsum.photos/seed/greek-yogurt-parfait/300/300', description: 'Layers of creamy yogurt, crunchy granola, and mixed berries', liked: false, saved: false, shared: false },
-  { id: 14, title: 'Turkey Lettuce Wraps', image: 'https://picsum.photos/seed/turkey-lettuce-wraps/300/300', description: 'Spiced ground turkey wrapped in crisp lettuce leaves', liked: false, saved: false, shared: false },
-  { id: 15, title: 'Mango Chia Pudding', image: 'https://picsum.photos/seed/mango-chia-pudding/300/300', description: 'Creamy mango puree combined with chia seeds for a nutritious treat', liked: false, saved: false, shared: false },
+  // ...other recipes
 ];
 
-// add header styled component
 const HeaderSection = styled(Box)(({ theme }) => ({
   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
   color: theme.palette.primary.contrastText,
@@ -38,67 +28,187 @@ const HeaderSection = styled(Box)(({ theme }) => ({
 
 const HomePage = () => {
   const theme = useTheme();
-  const [recipes, setRecipes] = useState(
-    initialRecipes.map((r) => ({ ...r, saved: false }))
-  );
+  const navigate = useNavigate();
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   // Post composer state
   const [userInputText, setUserInputText] = useState('');
-  const [postType, setPostType] = useState(null); // 'image' or 'recipe'
+  const [postType, setPostType] = useState(null);
   const [postImage, setPostImage] = useState(null);
   const [selectedRecipeForPost, setSelectedRecipeForPost] = useState('');
   const fileInputRef = useRef(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
-  // Recipe selection modal
   const [recipeSelectionDialogOpen, setRecipeSelectionDialogOpen] = useState(false);
 
-  const handleOpenDialog = (recipe) => {
-    setSelectedRecipe(recipe);
-    setOpenDialog(true);
+  // Fetch recipes on component mount
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        setLoading(true);
+        // In a real app, you would have an API endpoint to get all recipes
+        // For now, we'll use our static data but transform it into Recipe objects
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const fetchedRecipes = initialRecipes.map(r => {
+          const recipe = new Recipe({
+            id: r.id,
+            title: r.title,
+            photo: r.image,
+            instructions: [r.description],
+            totalCalory: 0,
+            ingredients: [],
+            tag: '',
+            price: 0,
+            type: '',
+            healthinessScore: 0,
+            easinessScore: 0,
+            whoShared: null,
+          });
+          recipe.liked = r.liked;
+          recipe.saved = r.saved;
+          recipe.shared = r.shared;
+          return recipe;
+        });
+        
+        setRecipes(fetchedRecipes);
+        setError(null);
+      } catch (err) {
+        console.error("Failed to fetch recipes:", err);
+        setError("Failed to load recipes. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecipes();
+  }, []);
+
+  // Navigate to recipe detail page
+  const handleRecipeClick = (recipe) => {
+    navigate(`/recipe/${recipe.getId()}`);
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setSelectedRecipe(null);
+  // Handle like action using recipeService
+  const handleLike = async (id) => {
+    try {
+      // Optimistic UI update first
+      setRecipes(prev => 
+        prev.map(r => {
+          if (r.getId() === id) {
+            const newValue = !r.liked;
+            r.liked = newValue;
+            return r;
+          }
+          return r;
+        })
+      );
+      
+      // Then send the request to the server
+      await recipeService.updateRecipeAction(id, 'like', !recipes.find(r => r.getId() === id).liked);
+    } catch (err) {
+      console.error("Failed to update like status:", err);
+      // Revert the optimistic update on error
+      setRecipes(prev => 
+        prev.map(r => {
+          if (r.getId() === id) {
+            r.liked = !r.liked; // Revert back
+            return r;
+          }
+          return r;
+        })
+      );
+    }
   };
 
-  const handleLike = (id) => {
-    // placeholder for backend request
-    fetch(`/api/recipes/${id}/like`, { method: 'POST' }).catch(console.error);
-    setRecipes((prev) => prev.map((r) => (r.id === id ? { ...r, liked: !r.liked } : r)));
+  // Handle save action using recipeService
+  const handleSave = async (id) => {
+    try {
+      // Optimistic UI update first
+      setRecipes(prev => 
+        prev.map(r => {
+          if (r.getId() === id) {
+            const newValue = !r.saved;
+            r.saved = newValue;
+            return r;
+          }
+          return r;
+        })
+      );
+      
+      // Then send the request to the server
+      await recipeService.updateRecipeAction(id, 'save', !recipes.find(r => r.getId() === id).saved);
+    } catch (err) {
+      console.error("Failed to update save status:", err);
+      // Revert the optimistic update on error
+      setRecipes(prev => 
+        prev.map(r => {
+          if (r.getId() === id) {
+            r.saved = !r.saved; // Revert back
+            return r;
+          }
+          return r;
+        })
+      );
+    }
   };
 
-  const handleSave = (id) => {
-    setRecipes((prev) => prev.map((r) => (r.id === id ? { ...r, saved: !r.saved } : r)));
+  // Handle share action using recipeService
+  const handleShare = async (id) => {
+    try {
+      // Optimistic UI update first
+      setRecipes(prev => 
+        prev.map(r => {
+          if (r.getId() === id) {
+            const newValue = !r.shared;
+            r.shared = newValue;
+            return r;
+          }
+          return r;
+        })
+      );
+      
+      // Then send the request to the server
+      await recipeService.updateRecipeAction(id, 'share', !recipes.find(r => r.getId() === id).shared);
+    } catch (err) {
+      console.error("Failed to update share status:", err);
+      // Revert the optimistic update on error
+      setRecipes(prev => 
+        prev.map(r => {
+          if (r.getId() === id) {
+            r.shared = !r.shared; // Revert back
+            return r;
+          }
+          return r;
+        })
+      );
+    }
   };
 
-  const handleShare = (id) => {
-    // placeholder for backend request
-    fetch(`/api/recipes/${id}/share`, { method: 'POST' }).catch(console.error);
-    setRecipes((prev) => prev.map((r) => (r.id === id ? { ...r, shared: !r.shared } : r)));
-  };
-
-  // Composer handlers
+  // Post composer handlers
   const handleAddImageClick = () => {
-    // only open file selector; postType will change on actual selection
     if (fileInputRef.current) fileInputRef.current.click();
   };
+  
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setPostImage(e.target.files[0]);
       setPostType('image');
-      // clear any selected recipe since now posting an image
       setSelectedRecipeForPost('');
     }
-    // reset input so same file can be reselected
     e.target.value = '';
   };
+  
   const handleAddRecipeClick = () => {
     setRecipeSelectionDialogOpen(true);
   };
   
   const handleRecipeSelect = (recipe) => {
-    setSelectedRecipeForPost(recipe.id);
+    setSelectedRecipeForPost(recipe.getId());
     setPostType('recipe');
     setRecipeSelectionDialogOpen(false);
   };
@@ -114,8 +224,16 @@ const HomePage = () => {
     else if (postType === 'image' && userInputText) type = 'IMAGE_AND_TEXT';
     else if (postType === 'image') type = 'IMAGE_AND_TEXT';
     else type = 'TEXT';
-    const postPayload = { type, text: userInputText, image: postImage, recipeId: selectedRecipeForPost };
+    
+    const postPayload = { 
+      type, 
+      text: userInputText, 
+      image: postImage, 
+      recipeId: selectedRecipeForPost 
+    };
+    
     console.log('Posting:', postPayload);
+    
     // Clear composer
     setUserInputText('');
     setPostImage(null);
@@ -123,19 +241,18 @@ const HomePage = () => {
     setPostType(null);
   };
 
-  // Get selected recipe details 
+  // Get selected recipe details
   const getSelectedRecipeDetails = () => {
-    return initialRecipes.find(r => r.id === selectedRecipeForPost);
+    return recipes.find(r => r.getId() === selectedRecipeForPost);
   };
 
   return (
     <Template>
       <Box>
-      <div style={{ textAlign: 'center' }}> 
-        <Typography variant="h3" sx={{ color: 'primary.main', backgroundColor: 'white' }}>
-              Home
-        </Typography>
-
+        <div style={{ textAlign: 'center' }}> 
+          <Typography variant="h3" sx={{ color: 'primary.main', backgroundColor: 'white' }}>
+            Home
+          </Typography>
         </div>
            
         <Container maxWidth="md" sx={{ py: 4 }}>
@@ -178,15 +295,15 @@ const HomePage = () => {
               <Box component="img" src={URL.createObjectURL(postImage)} alt="preview" sx={{ width: '100%', mt: 2 }} />
             )}
             {/* Recipe preview */}
-            {postType === 'recipe' && selectedRecipeForPost && (
+            {postType === 'recipe' && selectedRecipeForPost && getSelectedRecipeDetails() && (
               <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box 
                   component="img" 
-                  src={getSelectedRecipeDetails()?.image} 
-                  alt={getSelectedRecipeDetails()?.title} 
+                  src={getSelectedRecipeDetails().getPhoto()} 
+                  alt={getSelectedRecipeDetails().getTitle()} 
                   sx={{ width: 100, height: 100, objectFit: 'cover' }} 
                 />
-                <Typography variant="body1">{getSelectedRecipeDetails()?.title}</Typography>
+                <Typography variant="body1">{getSelectedRecipeDetails().getTitle()}</Typography>
               </Box>
             )}
             {/* Composer actions */}
@@ -212,108 +329,108 @@ const HomePage = () => {
               </Button>
             </Box>
           </Card>
-          <Box sx={{ maxWidth: 600, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {recipes.map((recipe) => (
-              <Card key={recipe.id} sx={{ width: '100%', boxShadow: 2, '&:hover': { boxShadow: 6 } }}>
-                <Typography variant="h6" sx={{ m: 2, color: 'text.primary' }}>
-                  {recipe.title}
-                </Typography>
-                <Box
-                  onClick={() => handleOpenDialog(recipe)}
-                  sx={{
-                    position: 'relative',
-                    width: '100%',
-                    pt: '100%',
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                    '&:hover .descOverlay': {
-                      opacity: 1,
-                      transform: 'translateY(0)',
-                    },
-                  }}
-                >
-                  <img
-                    src={recipe.image}
-                    alt={recipe.title}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                    }}
-                  />
-                  <Box
-                    className="descOverlay"
-                    sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      width: '100%',
-                      bgcolor: alpha(theme.palette.primary.dark, 0.7),
-                      color: theme.palette.primary.contrastText,
-                      px: 1,
-                      py: 0.5,
-                      opacity: 0,
-                      transform: 'translateY(100%)',
-                      transition: 'all 0.3s ease-in-out',
-                    }}
-                  >
-                    <Typography variant="body2">
-                      {recipe.description}
-                    </Typography>
-                  </Box>
-                </Box>
-                <CardActions disableSpacing>
-                  <IconButton
-                    onClick={() => handleLike(recipe.id)}
-                    aria-label="like"
-                    color={recipe.liked ? 'error' : 'default'}
-                  >
-                    {recipe.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                  </IconButton>
-                  <IconButton
-                    onClick={() => handleSave(recipe.id)}
-                    aria-label="save"
-                    color={recipe.saved ? 'primary' : 'default'}
-                  >
-                    {recipe.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
-                  </IconButton>
-                  <IconButton
-                    onClick={() => handleShare(recipe.id)}
-                    aria-label="share"
-                    color={recipe.shared ? 'secondary' : 'default'}
-                  >
-                    {recipe.shared ? <ShareIcon /> : <ShareOutlinedIcon />}
-                  </IconButton>
-                </CardActions>
-              </Card>
-            ))}
-          </Box>
-        </Container>
-        {/* Dialog for recipe details */}
-        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-          <DialogContent>
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
-              <Box component="img" src={selectedRecipe?.image} alt={selectedRecipe?.title} sx={{ width: { xs: '100%', md: '50%' }, height: 300, objectFit: 'cover' }} />
-              <Box sx={{ p: 2, width: { xs: '100%', md: '50%' } }}>
-                <Typography variant="h5" gutterBottom>
-                  {selectedRecipe?.title}
-                </Typography>
-                <Typography variant="body1">
-                  {selectedRecipe?.description}
-                </Typography>
-              </Box>
+
+          {/* Loading state */}
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
             </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog} color="primary">
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
+          ) : error ? (
+            <Box sx={{ textAlign: 'center', my: 4 }}>
+              <Typography color="error">{error}</Typography>
+              <Button 
+                sx={{ mt: 2 }} 
+                variant="contained"
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </Button>
+            </Box>
+          ) : (
+            <Box sx={{ maxWidth: 600, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {recipes.map((recipe) => (
+                <Card key={recipe.getId()} sx={{ width: '100%', boxShadow: 2, '&:hover': { boxShadow: 6 } }}>
+                  <Typography variant="h6" sx={{ m: 2, color: 'text.primary' }}>
+                    {recipe.getTitle()}
+                  </Typography>
+                  <Box
+                    onClick={() => handleRecipeClick(recipe)}
+                    sx={{
+                      position: 'relative',
+                      width: '100%',
+                      pt: '100%',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      '&:hover .descOverlay': {
+                        opacity: 1,
+                        transform: 'translateY(0)',
+                      },
+                    }}
+                  >
+                    <img
+                      src={recipe.getPhoto()}
+                      alt={recipe.getTitle()}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                    <Box
+                      className="descOverlay"
+                      sx={{
+                        position: 'absolute',
+                        bottom: 0,
+                        width: '100%',
+                        bgcolor: alpha(theme.palette.primary.dark, 0.7),
+                        color: theme.palette.primary.contrastText,
+                        px: 1,
+                        py: 0.5,
+                        opacity: 0,
+                        transform: 'translateY(100%)',
+                        transition: 'all 0.3s ease-in-out',
+                      }}
+                    >
+                      <Typography variant="body2">
+                        {recipe.getInstructions()[0]}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <CardActions disableSpacing>
+                    <React.Fragment>
+                      <IconButton
+                        onClick={() => handleLike(recipe.getId())}
+                        aria-label="like"
+                        color={recipe.liked ? 'error' : 'default'}
+                      >
+                        {recipe.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleSave(recipe.getId())}
+                        aria-label="save"
+                        color={recipe.saved ? 'primary' : 'default'}
+                      >
+                        {recipe.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleShare(recipe.getId())}
+                        aria-label="share"
+                        color={recipe.shared ? 'secondary' : 'default'}
+                      >
+                        {recipe.shared ? <ShareIcon /> : <ShareOutlinedIcon />}
+                      </IconButton>
+                    </React.Fragment>
+                  </CardActions>
+                </Card>
+              ))}
+            </Box>
+          )}
+        </Container>
         
-        {/* Recipe Selection Dialog */}
+        {/* Recipe Selection Dialog - for post composer */}
         <Dialog 
           open={recipeSelectionDialogOpen} 
           onClose={handleCloseRecipeDialog} 
@@ -325,9 +442,9 @@ const HomePage = () => {
               Select a Recipe
             </Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 2 }}>
-              {initialRecipes.map((recipe) => (
+              {recipes.map((recipe) => (
                 <Box
-                  key={recipe.id}
+                  key={recipe.getId()}
                   onClick={() => handleRecipeSelect(recipe)}
                   sx={{
                     position: 'relative',
@@ -345,8 +462,8 @@ const HomePage = () => {
                   }}
                 >
                   <img
-                    src={recipe.image}
-                    alt={recipe.title}
+                    src={recipe.getPhoto()}
+                    alt={recipe.getTitle()}
                     style={{
                       position: 'absolute',
                       top: 0,
@@ -368,7 +485,7 @@ const HomePage = () => {
                     }}
                   >
                     <Typography variant="subtitle2" noWrap>
-                      {recipe.title}
+                      {recipe.getTitle()}
                     </Typography>
                   </Box>
                 </Box>
@@ -386,4 +503,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage; 
+export default HomePage;
