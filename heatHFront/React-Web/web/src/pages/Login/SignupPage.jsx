@@ -16,7 +16,7 @@ export default function SignupPage() {
     setError('');
     try {
       await authService.register(form);
-      navigate('/login');
+      navigate('/profile/setup');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
     }

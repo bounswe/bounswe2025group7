@@ -98,9 +98,9 @@ const LandingPage = () => {
             HeatH
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <Link 
+          <Link 
               component={RouterLink} 
-              to="/" 
+              to="/signin" 
               color="inherit" 
               underline="none"
               sx={{ 
@@ -109,7 +109,7 @@ const LandingPage = () => {
                 } 
               }}
             >
-              Home
+              Sign In
             </Link>
             <Link 
               component={RouterLink} 

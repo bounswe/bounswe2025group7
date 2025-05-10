@@ -50,7 +50,7 @@ const Template = ({ children }) => {
     }}>
       <StyledAppBar position="static">
         <StyledToolbar>
-          <LogoLink to="/">
+          <LogoLink to="/home">
             <Typography variant="h6" component="div">
               HeatH
             </Typography>
@@ -58,8 +58,8 @@ const Template = ({ children }) => {
           <Box sx={{ display: 'flex', gap: 1 }}>
             <NavButton
               component={Link}
-              to="/feed"
-              color={location.pathname === '/feed' ? 'secondary' : 'inherit'}
+              to="/home"
+              color={location.pathname === '/home' ? 'secondary' : 'inherit'}
               startIcon={<HomeIcon />}
             >
               Home
@@ -74,8 +74,8 @@ const Template = ({ children }) => {
             </NavButton>
             <NavButton
               component={Link}
-              to="/saved-recipes"
-              color={location.pathname === '/saved-recipes' ? 'secondary' : 'inherit'}
+              to="/saved"
+              color={location.pathname === '/saved' ? 'secondary' : 'inherit'}
               startIcon={<BookmarkIcon />}
             >
               Saved Recipes

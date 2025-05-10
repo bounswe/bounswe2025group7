@@ -7,6 +7,7 @@ import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import ShareIcon from '@mui/icons-material/Share';
+import Template from '../components/Template';
 
 // Static list of 15 recipes
 const initialRecipes = [
@@ -128,92 +129,92 @@ const HomePage = () => {
   };
 
   return (
-    <Box>
-      <HeaderSection>
-        <Container>
-          <Typography variant="h1" gutterBottom sx={{ mb: 0, color: '#2c363fff' }}>
-            Home
-          </Typography>
-        </Container>
-      </HeaderSection>
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        {/* Post composer box */}
-        <Card sx={{ mb: 4, p: 2, maxWidth: 600, mx: 'auto' }}>
-          <TextField
-            multiline
-            rows={3}
-            fullWidth
-            placeholder="What's on your mind?"
-            value={userInputText}
-            onChange={(e) => setUserInputText(e.target.value)}
-          />
-          <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-            <Button
-              variant={postType === 'image' ? 'contained' : 'outlined'}
-              disabled={postType === 'recipe'}
-              onClick={handleAddImageClick}
-            >
-              Add Image
-            </Button>
-            <Button
-              variant={postType === 'recipe' ? 'contained' : 'outlined'}
-              disabled={postType === 'image'}
-              onClick={handleAddRecipeClick}
-            >
-              Add Recipe
-            </Button>
-          </Box>
-          {/* hidden file input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={handleFileChange}
-          />
-          {/* Image preview */}
-          {postType === 'image' && postImage && (
-            <Box component="img" src={URL.createObjectURL(postImage)} alt="preview" sx={{ width: '100%', mt: 2 }} />
-          )}
-          {/* Recipe preview */}
-          {postType === 'recipe' && selectedRecipeForPost && (
-            <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box 
-                component="img" 
-                src={getSelectedRecipeDetails()?.image} 
-                alt={getSelectedRecipeDetails()?.title} 
-                sx={{ width: 100, height: 100, objectFit: 'cover' }} 
-              />
-              <Typography variant="body1">{getSelectedRecipeDetails()?.title}</Typography>
+    <Template>
+      <Box>
+      <div style={{ textAlign: 'center' }}> 
+        <Typography variant="h3" sx={{ color: 'primary.main', backgroundColor: 'white' }}>
+              Home
+        </Typography>
+
+        </div>
+           
+        <Container maxWidth="md" sx={{ py: 4 }}>
+          {/* Post composer box */}
+          <Card sx={{ mb: 4, p: 2, maxWidth: 600, mx: 'auto' }}>
+            <TextField
+              multiline
+              rows={3}
+              fullWidth
+              placeholder="What's on your mind?"
+              value={userInputText}
+              onChange={(e) => setUserInputText(e.target.value)}
+            />
+            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+              <Button
+                variant={postType === 'image' ? 'contained' : 'outlined'}
+                disabled={postType === 'recipe'}
+                onClick={handleAddImageClick}
+              >
+                Add Image
+              </Button>
+              <Button
+                variant={postType === 'recipe' ? 'contained' : 'outlined'}
+                disabled={postType === 'image'}
+                onClick={handleAddRecipeClick}
+              >
+                Add Recipe
+              </Button>
             </Box>
-          )}
-          {/* Composer actions */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+            {/* hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+            />
+            {/* Image preview */}
             {postType === 'image' && postImage && (
-              <Button color="secondary" onClick={() => { setPostImage(null); setPostType(null); }}>
-                Remove Image
-              </Button>
+              <Box component="img" src={URL.createObjectURL(postImage)} alt="preview" sx={{ width: '100%', mt: 2 }} />
             )}
+            {/* Recipe preview */}
             {postType === 'recipe' && selectedRecipeForPost && (
-              <Button color="secondary" onClick={() => { setSelectedRecipeForPost(''); setPostType(null); }}>
-                Remove Recipe
-              </Button>
+              <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box 
+                  component="img" 
+                  src={getSelectedRecipeDetails()?.image} 
+                  alt={getSelectedRecipeDetails()?.title} 
+                  sx={{ width: 100, height: 100, objectFit: 'cover' }} 
+                />
+                <Typography variant="body1">{getSelectedRecipeDetails()?.title}</Typography>
+              </Box>
             )}
-            <Box sx={{ flexGrow: 1 }} />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSend}
-              disabled={!userInputText && !postImage && !selectedRecipeForPost}
-            >
-              Send
-            </Button>
-          </Box>
-        </Card>
-        <Grid container spacing={4}>
-          {recipes.map((recipe) => (
-            <Grid item key={recipe.id} xs={12}>
-              <Card sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}>
+            {/* Composer actions */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+              {postType === 'image' && postImage && (
+                <Button color="secondary" onClick={() => { setPostImage(null); setPostType(null); }}>
+                  Remove Image
+                </Button>
+              )}
+              {postType === 'recipe' && selectedRecipeForPost && (
+                <Button color="secondary" onClick={() => { setSelectedRecipeForPost(''); setPostType(null); }}>
+                  Remove Recipe
+                </Button>
+              )}
+              <Box sx={{ flexGrow: 1 }} />
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSend}
+                disabled={!userInputText && !postImage && !selectedRecipeForPost}
+              >
+                Send
+              </Button>
+            </Box>
+          </Card>
+          <Box sx={{ maxWidth: 600, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {recipes.map((recipe) => (
+              <Card key={recipe.id} sx={{ width: '100%', boxShadow: 2, '&:hover': { boxShadow: 6 } }}>
                 <Typography variant="h6" sx={{ m: 2, color: 'text.primary' }}>
                   {recipe.title}
                 </Typography>
@@ -287,89 +288,101 @@ const HomePage = () => {
                   </IconButton>
                 </CardActions>
               </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-      {/* Dialog for recipe details */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
-            <Box component="img" src={selectedRecipe?.image} alt={selectedRecipe?.title} sx={{ width: { xs: '100%', md: '50%' }, height: 300, objectFit: 'cover' }} />
-            <Box sx={{ p: 2, width: { xs: '100%', md: '50%' } }}>
-              <Typography variant="h5" gutterBottom>
-                {selectedRecipe?.title}
-              </Typography>
-              <Typography variant="body1">
-                {selectedRecipe?.description}
-              </Typography>
-            </Box>
+            ))}
           </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-      
-      {/* Recipe Selection Dialog */}
-      <Dialog 
-        open={recipeSelectionDialogOpen} 
-        onClose={handleCloseRecipeDialog} 
-        maxWidth="md" 
-        fullWidth
-      >
-        <DialogContent>
-          <Typography variant="h5" gutterBottom align="center">
-            Select a Recipe
-          </Typography>
-          <Grid container spacing={2}>
-            {initialRecipes.map((recipe) => (
-              <Grid item key={recipe.id} xs={6} sm={4} md={3}>
-                <Card 
-                  sx={{ 
-                    cursor: 'pointer', 
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
+        </Container>
+        {/* Dialog for recipe details */}
+        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
+              <Box component="img" src={selectedRecipe?.image} alt={selectedRecipe?.title} sx={{ width: { xs: '100%', md: '50%' }, height: 300, objectFit: 'cover' }} />
+              <Box sx={{ p: 2, width: { xs: '100%', md: '50%' } }}>
+                <Typography variant="h5" gutterBottom>
+                  {selectedRecipe?.title}
+                </Typography>
+                <Typography variant="body1">
+                  {selectedRecipe?.description}
+                </Typography>
+              </Box>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog} color="primary">
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+        
+        {/* Recipe Selection Dialog */}
+        <Dialog 
+          open={recipeSelectionDialogOpen} 
+          onClose={handleCloseRecipeDialog} 
+          maxWidth="md" 
+          fullWidth
+        >
+          <DialogContent>
+            <Typography variant="h5" gutterBottom align="center">
+              Select a Recipe
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 2 }}>
+              {initialRecipes.map((recipe) => (
+                <Box
+                  key={recipe.id}
+                  onClick={() => handleRecipeSelect(recipe)}
+                  sx={{
+                    position: 'relative',
+                    width: '100%',
+                    pt: '100%',
+                    boxShadow: 2,
+                    borderRadius: 1,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
                     transition: 'transform 0.2s, box-shadow 0.2s',
                     '&:hover': {
                       transform: 'scale(1.03)',
                       boxShadow: 6,
-                    }
+                    },
                   }}
-                  onClick={() => handleRecipeSelect(recipe)}
                 >
-                  <Typography variant="subtitle1" align="center" sx={{ p: 1, fontWeight: 'bold' }}>
-                    {recipe.title}
-                  </Typography>
-                  <Box sx={{ flexGrow: 1, position: 'relative', pt: '100%' }}>
-                    <img
-                      src={recipe.image}
-                      alt={recipe.title}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
-                    />
+                  <img
+                    src={recipe.image}
+                    alt={recipe.title}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      width: '100%',
+                      bgcolor: alpha(theme.palette.primary.dark, 0.7),
+                      color: theme.palette.primary.contrastText,
+                      py: 0.5,
+                      textAlign: 'center',
+                    }}
+                  >
+                    <Typography variant="subtitle2" noWrap>
+                      {recipe.title}
+                    </Typography>
                   </Box>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseRecipeDialog} color="primary">
-            Cancel
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+                </Box>
+              ))}
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseRecipeDialog} color="primary">
+              Cancel
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </Template>
   );
 };
 
