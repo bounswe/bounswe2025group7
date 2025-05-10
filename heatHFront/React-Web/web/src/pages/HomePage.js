@@ -324,44 +324,56 @@ const HomePage = () => {
             <Typography variant="h5" gutterBottom align="center">
               Select a Recipe
             </Typography>
-            <Grid container spacing={2}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 2 }}>
               {initialRecipes.map((recipe) => (
-                <Grid item key={recipe.id} xs={6} sm={4} md={3}>
-                  <Card 
-                    sx={{ 
-                      cursor: 'pointer', 
+                <Box
+                  key={recipe.id}
+                  onClick={() => handleRecipeSelect(recipe)}
+                  sx={{
+                    position: 'relative',
+                    width: '100%',
+                    pt: '100%',
+                    boxShadow: 2,
+                    borderRadius: 1,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'scale(1.03)',
+                      boxShadow: 6,
+                    },
+                  }}
+                >
+                  <img
+                    src={recipe.image}
+                    alt={recipe.title}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
                       height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      transition: 'transform 0.2s, box-shadow 0.2s',
-                      '&:hover': {
-                        transform: 'scale(1.03)',
-                        boxShadow: 6,
-                      }
+                      objectFit: 'cover',
                     }}
-                    onClick={() => handleRecipeSelect(recipe)}
+                  />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      width: '100%',
+                      bgcolor: alpha(theme.palette.primary.dark, 0.7),
+                      color: theme.palette.primary.contrastText,
+                      py: 0.5,
+                      textAlign: 'center',
+                    }}
                   >
-                    <Typography variant="subtitle1" align="center" sx={{ p: 1, fontWeight: 'bold' }}>
+                    <Typography variant="subtitle2" noWrap>
                       {recipe.title}
                     </Typography>
-                    <Box sx={{ flexGrow: 1, position: 'relative', pt: '100%' }}>
-                      <img
-                        src={recipe.image}
-                        alt={recipe.title}
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                        }}
-                      />
-                    </Box>
-                  </Card>
-                </Grid>
+                  </Box>
+                </Box>
               ))}
-            </Grid>
+            </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseRecipeDialog} color="primary">
