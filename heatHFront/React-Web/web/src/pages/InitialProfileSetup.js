@@ -47,6 +47,7 @@ const InitialProfileSetup = () => {
           dateOfBirth: dob,
           height: data.height != null ? data.height.toString() : '',
           weight: data.weight != null ? data.weight.toString() : '',
+          gender: data.gender || prev.gender || '',
         }));
       } catch (err) {
         console.log('No existing interest form, proceeding blank');
