@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Container, Box, Divider } from '@mui/material';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { AppBar, Toolbar, Typography, Button, Container, Box, Divider, IconButton } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import PersonIcon from '@mui/icons-material/Person';
 import HomeIcon from '@mui/icons-material/Home';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
+import LogoutIcon from '@mui/icons-material/Logout';
 import logo from '../images/logo.png';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -42,6 +43,14 @@ const Footer = styled(Box)(({ theme }) => ({
 
 const Template = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear auth tokens or user data here
+    localStorage.removeItem('token'); // or whatever your token key is
+    // Optionally clear other user data
+    navigate('/');
+  };
 
   return (
     <Box sx={{ 
@@ -83,7 +92,7 @@ const Template = ({ children }) => {
           </Box>
 
           {/* Navigation buttons on the right */}
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <NavButton
               component={Link}
               to="/home"
@@ -108,6 +117,14 @@ const Template = ({ children }) => {
             >
               Saved Recipes
             </NavButton>
+            <IconButton
+              color="inherit"
+              onClick={handleLogout}
+              sx={{ ml: 2 }}
+              title="Log Out"
+            >
+              <LogoutIcon />
+            </IconButton>
           </Box>
         </StyledToolbar>
       </StyledAppBar>
