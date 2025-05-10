@@ -50,7 +50,7 @@ const Template = ({ children }) => {
     }}>
       <StyledAppBar position="static">
         <StyledToolbar>
-          <LogoLink to="/">
+          <LogoLink to="/home">
             <Typography variant="h6" component="div">
               HeatH
             </Typography>
