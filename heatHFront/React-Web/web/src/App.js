@@ -5,9 +5,11 @@ import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme/theme'; 
 
 import LandingPage from './pages/LandingPage';
+import HomePage from './pages/HomePage';
 
 import SignupPage from './pages/Login/SignupPage.jsx';
 import SignIn from './pages/Login/SignIn.tsx';
+import SavedRecipes from './pages/SavedRecipes';
 
 
 function App() {
@@ -16,9 +18,10 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/home" element={<LandingPage />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signin" element={<SignIn />} />
+          <Route path="/saved" element={<SavedRecipes />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>  
