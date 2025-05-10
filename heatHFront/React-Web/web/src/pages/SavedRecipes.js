@@ -365,86 +365,101 @@ const SavedRecipes = () => {
         </div>
 
         <Container maxWidth="md" sx={{ py: 4 }}>
-          <Grid container spacing={4}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: theme.spacing(3) }}>
             {recipes.map((recipe) => (
-              <Grid item key={recipe.id} xs={12} sm={6} md={4}>
-                <Card sx={{ height: 350, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <Typography variant="h6" sx={{ m: 2, color: 'text.primary' }}>
-                    {recipe.getTitle()}
-                  </Typography>
-                  <Box
-                    onClick={() => handleOpenDialog(recipe)}
-                    sx={{
-                      position: 'relative',
+              <Card key={recipe.id} sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: 2,
+                '&:hover': {
+                  boxShadow: 6,
+                },
+              }}>
+                <Typography variant="h6" sx={{ 
+                  m: 2, 
+                  color: 'text.primary',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {recipe.getTitle()}
+                </Typography>
+                <Box
+                  onClick={() => handleOpenDialog(recipe)}
+                  sx={{
+                    position: 'relative',
+                    width: '100%',
+                    pt: '100%', // This creates a perfect square (1:1 aspect ratio)
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    '&:hover .descOverlay': {
+                      opacity: 1,
+                      transform: 'translateY(0)',
+                    },
+                  }}
+                >
+                  <img
+                    src={recipe.getPhoto()}
+                    alt={recipe.getTitle()}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
                       width: '100%',
-                      height: 200,
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      '&:hover .descOverlay': {
-                        opacity: 1,
-                        transform: 'translateY(0)',
-                      },
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                  <Box
+                    className="descOverlay"
+                    sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      width: '100%',
+                      bgcolor: alpha(theme.palette.primary.dark, 0.7),
+                      color: theme.palette.primary.contrastText,
+                      px: 1,
+                      py: 0.5,
+                      opacity: 0,
+                      transform: 'translateY(100%)',
+                      transition: 'all 0.3s ease-in-out',
                     }}
                   >
-                    <img
-                      src={recipe.getPhoto()}
-                      alt={recipe.getTitle()}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
-                    />
-                    <Box
-                      className="descOverlay"
-                      sx={{
-                        position: 'absolute',
-                        bottom: 0,
-                        width: '100%',
-                        bgcolor: alpha(theme.palette.primary.dark, 0.7),
-                        color: theme.palette.primary.contrastText,
-                        px: 1,
-                        py: 0.5,
-                        opacity: 0,
-                        transform: 'translateY(100%)',
-                        transition: 'all 0.3s ease-in-out',
-                      }}
-                    >
-                      <Typography variant="body2">
-                        {recipe.getInstructions()[0]}
-                      </Typography>
-                    </Box>
+                    <Typography variant="body2">
+                      {recipe.getInstructions()[0]}
+                    </Typography>
                   </Box>
-                  <CardActions disableSpacing sx={{ mt: 'auto' }}>
-                    <IconButton
-                      onClick={() => toggleLike(recipe.id)}
-                      aria-label="like"
-                      color={recipe.liked ? 'error' : 'default'}
-                    >
-                      {recipe.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                    </IconButton>
-                    <IconButton
-                      onClick={() => toggleSave(recipe.id)}
-                      aria-label="save"
-                      color={recipe.saved ? 'primary' : 'default'}
-                    >
-                      {recipe.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
-                    </IconButton>
-                    <IconButton
-                      onClick={() => toggleShare(recipe.id)}
-                      aria-label="share"
-                      color={recipe.shared ? 'secondary' : 'default'}
-                    >
-                      {recipe.shared ? <ShareIcon /> : <ShareOutlinedIcon />}
-                    </IconButton>
-                  </CardActions>
-                </Card>
-              </Grid>
+                </Box>
+                <CardActions disableSpacing sx={{ mt: 'auto', pt: 1 }}>
+                  <IconButton
+                    onClick={() => toggleLike(recipe.id)}
+                    aria-label="like"
+                    color={recipe.liked ? 'error' : 'default'}
+                  >
+                    {recipe.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                  </IconButton>
+                  <IconButton
+                    onClick={() => toggleSave(recipe.id)}
+                    aria-label="save"
+                    color={recipe.saved ? 'primary' : 'default'}
+                  >
+                    {recipe.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+                  </IconButton>
+                  <IconButton
+                    onClick={() => toggleShare(recipe.id)}
+                    aria-label="share"
+                    color={recipe.shared ? 'secondary' : 'default'}
+                  >
+                    {recipe.shared ? <ShareIcon /> : <ShareOutlinedIcon />}
+                  </IconButton>
+                </CardActions>
+              </Card>
             ))}
-          </Grid>
+          </Box>
           {/* Dialog for recipe details */}
           <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
             <DialogContent>

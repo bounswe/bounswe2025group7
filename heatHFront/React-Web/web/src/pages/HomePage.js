@@ -212,86 +212,84 @@ const HomePage = () => {
               </Button>
             </Box>
           </Card>
-          <Grid container spacing={4}>
+          <Box sx={{ maxWidth: 600, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
             {recipes.map((recipe) => (
-              <Grid item key={recipe.id} xs={12}>
-                <Card sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}>
-                  <Typography variant="h6" sx={{ m: 2, color: 'text.primary' }}>
-                    {recipe.title}
-                  </Typography>
-                  <Box
-                    onClick={() => handleOpenDialog(recipe)}
-                    sx={{
-                      position: 'relative',
+              <Card key={recipe.id} sx={{ width: '100%', boxShadow: 2, '&:hover': { boxShadow: 6 } }}>
+                <Typography variant="h6" sx={{ m: 2, color: 'text.primary' }}>
+                  {recipe.title}
+                </Typography>
+                <Box
+                  onClick={() => handleOpenDialog(recipe)}
+                  sx={{
+                    position: 'relative',
+                    width: '100%',
+                    pt: '100%',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    '&:hover .descOverlay': {
+                      opacity: 1,
+                      transform: 'translateY(0)',
+                    },
+                  }}
+                >
+                  <img
+                    src={recipe.image}
+                    alt={recipe.title}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
                       width: '100%',
-                      pt: '100%',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      '&:hover .descOverlay': {
-                        opacity: 1,
-                        transform: 'translateY(0)',
-                      },
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                  <Box
+                    className="descOverlay"
+                    sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      width: '100%',
+                      bgcolor: alpha(theme.palette.primary.dark, 0.7),
+                      color: theme.palette.primary.contrastText,
+                      px: 1,
+                      py: 0.5,
+                      opacity: 0,
+                      transform: 'translateY(100%)',
+                      transition: 'all 0.3s ease-in-out',
                     }}
                   >
-                    <img
-                      src={recipe.image}
-                      alt={recipe.title}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
-                    />
-                    <Box
-                      className="descOverlay"
-                      sx={{
-                        position: 'absolute',
-                        bottom: 0,
-                        width: '100%',
-                        bgcolor: alpha(theme.palette.primary.dark, 0.7),
-                        color: theme.palette.primary.contrastText,
-                        px: 1,
-                        py: 0.5,
-                        opacity: 0,
-                        transform: 'translateY(100%)',
-                        transition: 'all 0.3s ease-in-out',
-                      }}
-                    >
-                      <Typography variant="body2">
-                        {recipe.description}
-                      </Typography>
-                    </Box>
+                    <Typography variant="body2">
+                      {recipe.description}
+                    </Typography>
                   </Box>
-                  <CardActions disableSpacing>
-                    <IconButton
-                      onClick={() => handleLike(recipe.id)}
-                      aria-label="like"
-                      color={recipe.liked ? 'error' : 'default'}
-                    >
-                      {recipe.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                    </IconButton>
-                    <IconButton
-                      onClick={() => handleSave(recipe.id)}
-                      aria-label="save"
-                      color={recipe.saved ? 'primary' : 'default'}
-                    >
-                      {recipe.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
-                    </IconButton>
-                    <IconButton
-                      onClick={() => handleShare(recipe.id)}
-                      aria-label="share"
-                      color={recipe.shared ? 'secondary' : 'default'}
-                    >
-                      {recipe.shared ? <ShareIcon /> : <ShareOutlinedIcon />}
-                    </IconButton>
-                  </CardActions>
-                </Card>
-              </Grid>
+                </Box>
+                <CardActions disableSpacing>
+                  <IconButton
+                    onClick={() => handleLike(recipe.id)}
+                    aria-label="like"
+                    color={recipe.liked ? 'error' : 'default'}
+                  >
+                    {recipe.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                  </IconButton>
+                  <IconButton
+                    onClick={() => handleSave(recipe.id)}
+                    aria-label="save"
+                    color={recipe.saved ? 'primary' : 'default'}
+                  >
+                    {recipe.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+                  </IconButton>
+                  <IconButton
+                    onClick={() => handleShare(recipe.id)}
+                    aria-label="share"
+                    color={recipe.shared ? 'secondary' : 'default'}
+                  >
+                    {recipe.shared ? <ShareIcon /> : <ShareOutlinedIcon />}
+                  </IconButton>
+                </CardActions>
+              </Card>
             ))}
-          </Grid>
+          </Box>
         </Container>
         {/* Dialog for recipe details */}
         <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
