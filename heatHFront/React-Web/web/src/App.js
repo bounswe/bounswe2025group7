@@ -19,6 +19,7 @@ import SignIn from './pages/Login/SignIn.tsx';
 import SavedRecipes from './pages/SavedRecipes';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import RecipeDetail from './pages/RecipeDetail';
 
 
 function App() {
@@ -35,11 +36,11 @@ function App() {
 
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/setup" element={<InitialProfileSetup />} />
-            <Route path="/saved" element={<SavedRecipes />} />
-          </Route>
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/setup" element={<InitialProfileSetup />} />
+          <Route path="/saved" element={<SavedRecipes />} />
+          <Route path="/recipe/:id" element={<RecipeDetail />} />     
         </Routes>
       </BrowserRouter>
     </ThemeProvider>  
