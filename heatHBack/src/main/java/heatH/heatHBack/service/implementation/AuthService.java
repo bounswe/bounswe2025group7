@@ -8,8 +8,6 @@ import heatH.heatHBack.model.response.AuthResponse;
 import heatH.heatHBack.repository.UserRepository;
 import heatH.heatHBack.repository.UserVerificationRepository;
 import heatH.heatHBack.service.IAuthService;
-import jakarta.persistence.Id;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,7 +18,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
