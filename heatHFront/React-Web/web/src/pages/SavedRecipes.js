@@ -8,6 +8,7 @@ import BookmarkIcon from '@mui/icons-material/Bookmark';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import ShareIcon from '@mui/icons-material/Share';
 import Recipe from '../models/Recipe';
+import Template from '../components/Template';
 
 const initialRecipes = [
   (() => {
@@ -354,105 +355,120 @@ const SavedRecipes = () => {
   };
 
   return (
-    <Box>
-      <HeaderSection>
-        <Container>
-          <Typography variant="h1" gutterBottom sx={{ mb: 0, color: '#2c363fff' }}>
-        Saved Recipes
-      </Typography>
-        </Container>
-      </HeaderSection>
-      <Container sx={{ py: 4 }}>
-      <Grid container spacing={4}>
-        {recipes.map((recipe) => (
-          <Grid item key={recipe.id} xs={12} sm={6} md={4}>
-            <Card>
-              <Typography variant="h6" sx={{ m: 2, color: 'text.primary' }}>
-                  {recipe.getTitle()}
-              </Typography>
-                <Box onClick={() => handleOpenDialog(recipe)} sx={{ position: 'relative', width: '100%', pt: '100%', overflow: 'hidden', cursor: 'pointer', '&:hover .descOverlay': { opacity: 1, transform: 'translateY(0)' } }}>
-                <img
-                    src={recipe.getPhoto()}
-                    alt={recipe.getTitle()}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
-                />
-                <Box
-                    className="descOverlay"
-                  sx={{
-                    position: 'absolute',
-                    bottom: 0,
-                    width: '100%',
-                    bgcolor: alpha(theme.palette.primary.dark, 0.7),
-                    color: theme.palette.primary.contrastText,
-                    px: 1,
-                    py: 0.5,
-                      opacity: 0,
-                      transform: 'translateY(100%)',
-                      transition: 'all 0.3s ease-in-out',
-                  }}
-                >
-                  <Typography variant="body2">
-                      {recipe.getInstructions()[0]}
+    <Template>
+      <Box>
+        <div style={{ textAlign: 'center' }}> 
+        <Typography variant="h3" sx={{ color: 'primary.main', backgroundColor: 'white' }}>
+              Saved Recipes
+            </Typography>
+
+        </div>
+
+        <Container maxWidth="md" sx={{ py: 4 }}>
+          <Grid container spacing={4}>
+            {recipes.map((recipe) => (
+              <Grid item key={recipe.id} xs={12} sm={6} md={4}>
+                <Card sx={{ height: 350, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <Typography variant="h6" sx={{ m: 2, color: 'text.primary' }}>
+                    {recipe.getTitle()}
+                  </Typography>
+                  <Box
+                    onClick={() => handleOpenDialog(recipe)}
+                    sx={{
+                      position: 'relative',
+                      width: '100%',
+                      height: 200,
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      '&:hover .descOverlay': {
+                        opacity: 1,
+                        transform: 'translateY(0)',
+                      },
+                    }}
+                  >
+                    <img
+                      src={recipe.getPhoto()}
+                      alt={recipe.getTitle()}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                    <Box
+                      className="descOverlay"
+                      sx={{
+                        position: 'absolute',
+                        bottom: 0,
+                        width: '100%',
+                        bgcolor: alpha(theme.palette.primary.dark, 0.7),
+                        color: theme.palette.primary.contrastText,
+                        px: 1,
+                        py: 0.5,
+                        opacity: 0,
+                        transform: 'translateY(100%)',
+                        transition: 'all 0.3s ease-in-out',
+                      }}
+                    >
+                      <Typography variant="body2">
+                        {recipe.getInstructions()[0]}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <CardActions disableSpacing sx={{ mt: 'auto' }}>
+                    <IconButton
+                      onClick={() => toggleLike(recipe.id)}
+                      aria-label="like"
+                      color={recipe.liked ? 'error' : 'default'}
+                    >
+                      {recipe.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                    </IconButton>
+                    <IconButton
+                      onClick={() => toggleSave(recipe.id)}
+                      aria-label="save"
+                      color={recipe.saved ? 'primary' : 'default'}
+                    >
+                      {recipe.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+                    </IconButton>
+                    <IconButton
+                      onClick={() => toggleShare(recipe.id)}
+                      aria-label="share"
+                      color={recipe.shared ? 'secondary' : 'default'}
+                    >
+                      {recipe.shared ? <ShareIcon /> : <ShareOutlinedIcon />}
+                    </IconButton>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+          {/* Dialog for recipe details */}
+          <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+            <DialogContent>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
+                <Box component="img" src={selectedRecipe?.getPhoto()} alt={selectedRecipe?.getTitle()} sx={{ width: { xs: '100%', md: '50%' }, height: 300, objectFit: 'cover' }} />
+                <Box sx={{ p: 2, width: { xs: '100%', md: '50%' } }}>
+                  <Typography variant="h5" gutterBottom>
+                    {selectedRecipe?.getTitle()}
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedRecipe?.getInstructions()[0]}
                   </Typography>
                 </Box>
               </Box>
-              <CardActions disableSpacing>
-                <IconButton
-                  onClick={() => toggleLike(recipe.id)}
-                  aria-label="like"
-                  color={recipe.liked ? 'error' : 'default'}
-                >
-                  {recipe.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                </IconButton>
-                <IconButton
-                  onClick={() => toggleSave(recipe.id)}
-                  aria-label="save"
-                  color={recipe.saved ? 'primary' : 'default'}
-                >
-                  {recipe.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
-                </IconButton>
-                <IconButton
-                  onClick={() => toggleShare(recipe.id)}
-                  aria-label="share"
-                  color={recipe.shared ? 'secondary' : 'default'}
-                >
-                  {recipe.shared ? <ShareIcon /> : <ShareOutlinedIcon />}
-                </IconButton>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-        {/* Dialog for recipe details */}
-        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-          <DialogContent>
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
-              <Box component="img" src={selectedRecipe?.getPhoto()} alt={selectedRecipe?.getTitle()} sx={{ width: { xs: '100%', md: '50%' }, height: 300, objectFit: 'cover' }} />
-              <Box sx={{ p: 2, width: { xs: '100%', md: '50%' } }}>
-                <Typography variant="h5" gutterBottom>
-                  {selectedRecipe?.getTitle()}
-                </Typography>
-                <Typography variant="body1">
-                  {selectedRecipe?.getInstructions()[0]}
-                </Typography>
-              </Box>
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog} color="primary">
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
-    </Container>
-    </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseDialog} color="primary">
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Container>
+      </Box>
+    </Template>
   );
 };
 
