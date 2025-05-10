@@ -16,7 +16,7 @@ public class GcsConfig {
     public Storage storage() throws IOException {
         return StorageOptions.newBuilder()
                 .setCredentials(ServiceAccountCredentials.fromStream(
-                        new FileInputStream("/Users/burakkorkmaz/Desktop/cmpe352/bounswe2025group7/heatHBack/src/main/resources/gcp-connection.json")))
+                        new FileInputStream("")))
                 .build()
                 .getService();
     }
