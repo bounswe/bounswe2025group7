@@ -21,7 +21,7 @@ export default function SigninPage() {
     setError('');
     try {
       await authService.login(form);        
-      navigate('/');                        
+      navigate('/home');                        
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message || 'Login failed');
