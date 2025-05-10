@@ -11,15 +11,28 @@ export default function SigninPage() {
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
 
-  // If already authenticated, redirect on mount
+  // On mount, if token exists check first-login; invalid token sends to signin
   useEffect(() => {
-    const token = authService.getAccessToken();
-    if (token) {
-      interestFormService.checkFirstLogin().then((firstLogin) => {
+    const refresh = authService.getRefreshToken();
+    if (!refresh) {
+      authService.logout();
+      return;
+    }
+    // Validate token by attempting to refresh
+    authService.refreshToken()
+      .then(() => {
+        // If refresh succeeds, check first-login
+        return interestFormService.checkFirstLogin();
+      })
+      .then((firstLogin) => {
         if (firstLogin) navigate('/profile/setup');
         else navigate('/home');
+      })
+      .catch(() => {
+        // Invalid or expired tokens
+        authService.logout();
+        navigate('/signin');
       });
-    }
   }, [navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -30,13 +43,20 @@ export default function SigninPage() {
     setError('');
     try {
       await authService.login(form);
-      // After login, decide whether to show the interest form
-      const firstLogin = await interestFormService.checkFirstLogin();
-      if (firstLogin) {
-        navigate('/profile/setup');
-      } else {
-        navigate('/home');
+      // After login, decide next route: invalid token -> signin, else form or home
+      let firstLogin;
+      try {
+        firstLogin = await interestFormService.checkFirstLogin();
+      } catch (err) {
+        if (axios.isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
+          authService.logout();
+          navigate('/signin');
+          return;
+        }
+        firstLogin = true;
       }
+      if (firstLogin) navigate('/profile/setup');
+      else navigate('/home');
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message || 'Login failed');
