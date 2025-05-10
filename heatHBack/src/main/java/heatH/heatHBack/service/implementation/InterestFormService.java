@@ -31,6 +31,8 @@ public class InterestFormService {
         form.setHeight(request.getHeight());
         form.setWeight(request.getWeight());
         form.setUser(user);
+        form.setGender(request.getGender());
+        form.setProfilePhoto(request.getProfilePhoto());
 
         return interestFormRepository.save(form);
     }
@@ -65,4 +67,37 @@ public class InterestFormService {
         }
         return authentication.getName();
     }
+
+    public InterestForm updateForm(InterestFormRequest request) {
+        String email = getCurrentUserEmail(); // You should implement this
+        User user = userRepository.findByUsername(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        InterestForm form = interestFormRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("InterestForm not found"));
+
+        if (request.getName() != null)
+            form.setName(request.getName());
+
+        if (request.getSurname() != null)
+            form.setSurname(request.getSurname());
+
+        if (request.getDateOfBirth() != null)
+            form.setDateOfBirth(request.getDateOfBirth());
+
+        if (request.getHeight() != null)
+            form.setHeight(request.getHeight());
+
+        if (request.getWeight() != null)
+            form.setWeight(request.getWeight());
+
+        if (request.getProfilePhoto() != null)
+            form.setProfilePhoto(request.getProfilePhoto());
+
+        if (request.getGender() != null)
+            form.setGender(request.getGender());
+
+        return interestFormRepository.save(form);
+    }
+
 }

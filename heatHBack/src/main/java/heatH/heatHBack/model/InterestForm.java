@@ -17,6 +17,8 @@ public class InterestForm {
     private LocalDate dateOfBirth;
     private Integer height;
     private Double weight;
+    private String profilePhoto;
+    private String gender;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)

@@ -11,4 +11,7 @@ public class InterestFormRequest {
     private LocalDate dateOfBirth;
     private Integer height;
     private Double weight;
+    private String profilePhoto;
+    private String gender;
+
 }

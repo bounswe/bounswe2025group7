@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -13,6 +13,7 @@ import {
 import { styled } from '@mui/material/styles';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import Template from '../components/Template';
+import interestFormService from '../services/interestFormService';
 
 const Input = styled('input')({
   display: 'none',
@@ -30,6 +31,31 @@ const InitialProfileSetup = () => {
   });
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+
+  // On mount, fetch existing interest form to prefill fields
+  useEffect(() => {
+    const loadForm = async () => {
+      try {
+        const data = await interestFormService.getInterestForm();
+        console.log('Loaded interest form:', data);
+        // Format dateOfBirth for input type="date"
+        const dob = data.dateOfBirth ? data.dateOfBirth.split('T')[0] : '';
+        setFormData(prev => ({
+          ...prev,
+          firstName: data.name || '',
+          lastName: data.surname || '',
+          dateOfBirth: dob,
+          height: data.height != null ? data.height.toString() : '',
+          weight: data.weight != null ? data.weight.toString() : '',
+          gender: data.gender || prev.gender || '',
+        }));
+      } catch (err) {
+        console.log('No existing interest form, proceeding blank');
+        // if no form exists, do nothing
+      }
+    };
+    loadForm();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -54,9 +80,16 @@ const InitialProfileSetup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // TODO: Add API call to save profile data and photo
-      // After successful save, navigate to profile page
-      navigate('/profile');
+      // Submit interest-form data
+      await interestFormService.createInterestForm({
+        name: formData.firstName,
+        surname: formData.lastName,
+        dateOfBirth: formData.dateOfBirth,
+        height: Number(formData.height),
+        weight: Number(formData.weight),
+      });
+      // After successful submission, send user to home
+      navigate('/home');
     } catch (error) {
       console.error('Error saving profile:', error);
     }
