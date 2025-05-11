@@ -1,27 +1,59 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  TextField,
   Button,
-  Typography,
-  Paper,
   Grid,
+  Paper,
+  TextField,
+  Typography,
   Avatar,
   IconButton,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import Template from '../components/Template';
 import interestFormService from '../services/interestFormService';
 
-const Input = styled('input')({
-  display: 'none',
-});
+// --- helpers --------------------------------------------------------------
+const LETTERS_ONLY = /^[A-Za-zğüşöçıİĞÜŞÖÇ\s]+$/u;
+const todayStr = () => new Date().toISOString().split('T')[0];
+
+const validateField = (name, value) => {
+  switch (name) {
+    case 'firstName':
+    case 'lastName':
+      if (!value) return 'Required';
+      if (!LETTERS_ONLY.test(value)) return 'Only letters allowed';
+      return '';
+    case 'height':
+      if (!value) return 'Required';
+      if (+value < 50 || +value > 250) return 'Must be 50-250 cm';
+      return '';
+    case 'weight':
+      if (!value) return 'Required';
+      if (+value < 10 || +value > 300) return 'Must be 10-300 kg';
+      return '';
+    case 'dateOfBirth':
+      if (!value) return 'Required';
+      if (value > todayStr()) return 'Cannot be in the future';
+      return '';
+    case 'gender':
+      return value ? '' : 'Required';
+    default:
+      return '';
+  }
+};
+// -------------------------------------------------------------------------
+
+const Input = styled('input')({ display: 'none' });
 
 const EditProfile = () => {
   const navigate = useNavigate();
   const effectRan = useRef(false);
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -30,117 +62,114 @@ const EditProfile = () => {
     dateOfBirth: '',
     gender: '',
   });
+  const [errors, setErrors] = useState({});
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [notif, setNotif] = useState({ open: false, msg: '', severity: 'error' });
 
+  // ---------- load existing data once ------------------------------------
   useEffect(() => {
     if (effectRan.current) return;
     effectRan.current = true;
+    const controller = new AbortController();
 
-    const controller = new AbortController();  
-    const loadForm = async () => {
+    (async () => {
       try {
         const data = await interestFormService.getInterestForm({ signal: controller.signal });
-        console.log('Loaded interest form:', data);
         const dob = data.dateOfBirth ? data.dateOfBirth.split('T')[0] : '';
-        setFormData(prev => ({
-          ...prev,
+        setFormData({
           firstName: data.name || '',
           lastName: data.surname || '',
           dateOfBirth: dob,
           height: data.height != null ? data.height.toString() : '',
           weight: data.weight != null ? data.weight.toString() : '',
-          gender: data.gender || prev.gender || '',
-          profilePhoto: data.profilePhoto
-        }));
-        if (data.profilePhoto) {
-          setPreviewUrl(data.profilePhoto);
-        }
-      } catch (err) {
-        console.log('No existing interest form, proceeding blank');
+          gender: data.gender || '',
+        });
+        if (data.profilePhoto) setPreviewUrl(data.profilePhoto);
+      } catch {
+        /* empty -> new profile */
       }
-    };
-    loadForm();
-    return() => controller.abort();
+    })();
+
+    return () => controller.abort();
   }, []);
 
+  // ---------- handlers ---------------------------------------------------
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
   };
 
-  const handlePhotoChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setProfilePhoto(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setProfilePhoto(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setPreviewUrl(reader.result);
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // run a full validation pass
+    const newErrors = Object.fromEntries(
+      Object.keys(formData).map((k) => [k, validateField(k, formData[k])]),
+    );
+    setErrors(newErrors);
+
+    const hasError = Object.values(newErrors).some(Boolean);
+    if (hasError) {
+      setNotif({
+        open: true,
+        severity: 'error',
+        msg: 'Please fix the highlighted fields before saving.',
+      });
+      return;
+    }
+
     try {
-      const photoToSubmit = profilePhoto ? previewUrl : null;
-      
       await interestFormService.updateInterestForm({
         name: formData.firstName,
         surname: formData.lastName,
         dateOfBirth: formData.dateOfBirth,
-        height: Number(formData.height),
-        weight: Number(formData.weight),
+        height: +formData.height,
+        weight: +formData.weight,
         gender: formData.gender,
-        profilePhoto: photoToSubmit, 
+        profilePhoto: profilePhoto ? previewUrl : null,
       });
-      navigate('/home');
-    } catch (error) {
-      console.error('Error saving profile:', error);
+      setNotif({ open: true, severity: 'success', msg: 'Profile updated!' });
+      setTimeout(() => navigate('/home'), 1200);
+    } catch (err) {
+      console.error(err);
+      setNotif({ open: true, severity: 'error', msg: 'Save failed. Try again.' });
     }
   };
 
+  // ---------- UI ---------------------------------------------------------
   return (
     <Template>
       <Paper elevation={3} sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
+        <Typography variant="h4" align="center" gutterBottom>
           Edit Your Profile
         </Typography>
-        <Typography variant="body1" gutterBottom align="center" sx={{ mb: 4 }}>
+        <Typography variant="body1" align="center" sx={{ mb: 4 }}>
           Please provide your information to get started
         </Typography>
 
         <Box component="form" onSubmit={handleSubmit}>
           <Grid container spacing={3} justifyContent="center">
-            {/* Profile Photo Upload */}
+            {/* photo */}
             <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
               <Box sx={{ position: 'relative' }}>
-                <Avatar
-                  src={previewUrl}
-                  sx={{ width: 120, height: 120, mb: 2 }}
-                />
+                <Avatar src={previewUrl} sx={{ width: 120, height: 120, mb: 2 }} />
                 <label htmlFor="profile-photo">
-                  <Input
-                    accept="image/*"
-                    id="profile-photo"
-                    type="file"
-                    onChange={handlePhotoChange}
-                  />
+                  <Input id="profile-photo" type="file" accept="image/*" onChange={handlePhotoChange} />
                   <IconButton
-                    color="primary"
-                    aria-label="upload picture"
                     component="span"
-                    sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      right: 0,
-                      backgroundColor: 'white',
-                      '&:hover': { backgroundColor: 'white' },
-                    }}
+                    color="primary"
+                    sx={{ position: 'absolute', bottom: 0, right: 0, bgcolor: 'white' }}
                   >
                     <PhotoCamera />
                   </IconButton>
@@ -148,7 +177,7 @@ const EditProfile = () => {
               </Box>
             </Grid>
 
-            {/* Name Fields */}
+            {/* first / last name */}
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -156,7 +185,8 @@ const EditProfile = () => {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                required
+                error={!!errors.firstName}
+                helperText={errors.firstName}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -166,10 +196,13 @@ const EditProfile = () => {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                required
+                error={!!errors.lastName}
+                helperText={errors.lastName}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+
+            {/* height / weight */}
+            <Grid item xs={2} sm={2}>
               <TextField
                 fullWidth
                 label="Height (cm)"
@@ -177,11 +210,10 @@ const EditProfile = () => {
                 type="number"
                 value={formData.height}
                 onChange={handleChange}
-                required
+                error={!!errors.height}
+                helperText={errors.height}
               />
             </Grid>
-
-            {/* Physical Information */}
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -190,9 +222,12 @@ const EditProfile = () => {
                 type="number"
                 value={formData.weight}
                 onChange={handleChange}
-                required
+                error={!!errors.weight}
+                helperText={errors.weight}
               />
             </Grid>
+
+            {/* gender */}
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -201,10 +236,9 @@ const EditProfile = () => {
                 select
                 value={formData.gender}
                 onChange={handleChange}
-                required
-                SelectProps={{
-                  native: true,
-                }}
+                error={!!errors.gender}
+                helperText={errors.gender}
+                SelectProps={{ native: true }}
               >
                 <option value=""></option>
                 <option value="male">Male</option>
@@ -213,8 +247,7 @@ const EditProfile = () => {
               </TextField>
             </Grid>
 
-            {/* Personal Information */}
-           
+            {/* dob */}
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -223,30 +256,40 @@ const EditProfile = () => {
                 type="date"
                 value={formData.dateOfBirth}
                 onChange={handleChange}
-                required
-                InputLabelProps={{
-                  shrink: true,
-                }}
+                error={!!errors.dateOfBirth}
+                helperText={errors.dateOfBirth}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ max: todayStr() }}
               />
             </Grid>
 
-            {/* Submit Button */}
+            {/* save */}
             <Grid item xs={12} sx={{ mt: 2 }}>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                size="large"
-              >
+              <Button type="submit" variant="contained" color="primary" size="large" fullWidth>
                 Save Profile
               </Button>
             </Grid>
           </Grid>
         </Box>
       </Paper>
+
+      {/* notification */}
+      <Snackbar
+        open={notif.open}
+        autoHideDuration={3000}
+        onClose={() => setNotif((n) => ({ ...n, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setNotif((n) => ({ ...n, open: false }))}
+          severity={notif.severity}
+          variant="filled"
+        >
+          {notif.msg}
+        </Alert>
+      </Snackbar>
     </Template>
   );
 };
 
-export default EditProfile; 
+export default EditProfile;
