@@ -48,6 +48,7 @@ const EditProfile = () => {
           height: data.height != null ? data.height.toString() : '',
           weight: data.weight != null ? data.weight.toString() : '',
           gender: data.gender || prev.gender || '',
+          profilePhoto: data.profilePhoto
         }));
         // Set the profile photo preview if it exists
         if (data.profilePhoto) {
@@ -84,22 +85,19 @@ const EditProfile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const formDataToSubmit = {
+      // If there's a new photo, use its base64 data, otherwise use the existing previewUrl
+      const photoToSubmit = profilePhoto ? previewUrl : null;
+      
+      // Submit interest-form data
+      await interestFormService.updateInterestForm({
         name: formData.firstName,
         surname: formData.lastName,
         dateOfBirth: formData.dateOfBirth,
         height: Number(formData.height),
         weight: Number(formData.weight),
         gender: formData.gender,
-      };
-
-      // Only include profilePhoto in the request if a new photo was uploaded
-      if (profilePhoto) {
-        formDataToSubmit.profilePhoto = previewUrl;
-      }
-
-      // Submit interest-form data
-      await interestFormService.updateInterestForm(formDataToSubmit);
+        profilePhoto: photoToSubmit, // Send null if no new photo was uploaded
+      });
       // After successful submission, send user to home
       navigate('/home');
     } catch (error) {
