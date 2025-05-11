@@ -127,5 +127,9 @@ public class AuthService implements IAuthService{
         userVerificationRepository.deleteAllOlderThan(cutoff);
     }
 
+    public boolean exists(String email) {
+        return userRepository.existsByUsername(email);
+    }
+
 }
 

@@ -3,6 +3,7 @@ package heatH.heatHBack.controller;
 import heatH.heatHBack.model.request.*;
 import heatH.heatHBack.model.response.AuthResponse;
 import heatH.heatHBack.service.implementation.AuthService;
+import heatH.heatHBack.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -37,6 +38,11 @@ public class AuthController {
     @PostMapping("/verify-code")
     public ResponseEntity<Boolean> verifyCode(@RequestBody VerificationRequest verificationRequest) {
         return ResponseEntity.ok(authService.verifyCode(verificationRequest));
+    }
+
+    @GetMapping("/exists")
+    public ResponseEntity<Boolean> exists(@RequestParam String email) {
+        return ResponseEntity.ok(authService.exists(email));
     }
 
 }
