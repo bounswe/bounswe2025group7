@@ -27,13 +27,25 @@ export default function ForgotPasswordPage() {
   const handleSendCode = async () => {
     setError('');
     setMessage('');
+    // First check if email is registered
+    try {
+      const exists = await authService.exists(email);
+      if (!exists) {
+        setError('Email not registered.');
+        return;
+      }
+    } catch {
+      setError('Unable to verify email.');
+      return;
+    }
+    // Send code if email exists
+    setCodeSent(true);
+    setCountdown(15);
     try {
       await authService.sendVerificationCode(email);
-      setCodeSent(true);
-      setCountdown(15);
       setMessage('Verification code sent to your email.');
     } catch {
-      setError('Email not registered.');
+      setError('Failed to send verification code.');
     }
   };
 

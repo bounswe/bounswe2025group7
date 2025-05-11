@@ -50,4 +50,10 @@ export default {
     const response = await axios.post('/api/auth/verify-code', { email, code });
     return response.data;
   },
+
+  // Check if an email is already registered
+  exists: async (email) => {
+    const response = await axios.get('/api/auth/exists', { params: { email } });
+    return response.data;
+  },
 };
