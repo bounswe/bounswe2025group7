@@ -11,6 +11,7 @@ import ShareIcon from '@mui/icons-material/Share';
 import Template from '../components/Template';
 import Recipe from '../models/Recipe';
 import recipeService from '../services/recipeService';
+import feedService from '../services/feedService';
 
 // Static list for initial UI rendering - will be replaced with API data
 const initialRecipes = [
@@ -32,6 +33,7 @@ const HomePage = () => {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [feeds, setFeeds] = useState([]);
 
   // Post composer state
   const [userInputText, setUserInputText] = useState('');
@@ -43,50 +45,55 @@ const HomePage = () => {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [recipeSelectionDialogOpen, setRecipeSelectionDialogOpen] = useState(false);
 
-  // Fetch recipes on component mount
+  // Fetch feed posts on component mount
   useEffect(() => {
-    const fetchRecipes = async () => {
+    const fetchFeeds = async () => {
       try {
         setLoading(true);
-        // In a real app, you would have an API endpoint to get all recipes
-        // For now, we'll use our static data but transform it into Recipe objects
-        
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const fetchedRecipes = initialRecipes.map(r => {
-          const recipe = new Recipe({
-            id: r.id,
-            title: r.title,
-            photo: r.image,
-            instructions: [r.description],
-            totalCalory: 0,
-            ingredients: [],
-            tag: '',
-            price: 0,
-            type: '',
-            healthinessScore: 0,
-            easinessScore: 0,
-            whoShared: null,
-          });
-          recipe.liked = r.liked;
-          recipe.saved = r.saved;
-          recipe.shared = r.shared;
-          return recipe;
-        });
-        
-        setRecipes(fetchedRecipes);
+        const data = await feedService.getRecentFeeds();
+        console.log('Fetched feeds:', data);
+        setFeeds(data);
         setError(null);
       } catch (err) {
-        console.error("Failed to fetch recipes:", err);
-        setError("Failed to load recipes. Please try again later.");
+        console.error("Failed to fetch feeds:", err);
+        setError("Failed to load feeds. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRecipes();
+    fetchFeeds();
   }, []);
+
+  // Navigate to recipe detail page for feed items
+  const handleFeedClick = (feed) => {
+    if (feed.type === 'RECIPE' && feed.recipe) {
+      navigate(`/recipe/${feed.recipe.id}`);
+    }
+  };
+
+  // Handle like action for feeds
+  const handleLikeFeed = async (feedId) => {
+    const feed = feeds.find(f => f.id === feedId);
+    if (!feed) return;
+    const currentLiked = feed.likedByCurrentUser;
+    const newLiked = !currentLiked;
+    try {
+      setFeeds(prev => prev.map(f => f.id === feedId
+        ? { ...f, likedByCurrentUser: newLiked, likeCount: f.likeCount + (newLiked ? 1 : -1) }
+        : f
+      ));
+      if (newLiked) await feedService.likeFeed(feedId);
+      else await feedService.unlikeFeed(feedId);
+    } catch (err) {
+      console.error("Failed to update feed like:", err);
+      // Revert on error
+      setFeeds(prev => prev.map(f => f.id === feedId
+        ? { ...f, likedByCurrentUser: currentLiked, likeCount: f.likeCount + (currentLiked ? 1 : -1) }
+        : f
+      ));
+    }
+  };
 
   // Navigate to recipe detail page
   const handleRecipeClick = (recipe) => {
@@ -348,81 +355,71 @@ const HomePage = () => {
             </Box>
           ) : (
             <Box sx={{ maxWidth: 600, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {recipes.map((recipe) => (
-                <Card key={recipe.getId()} sx={{ width: '100%', boxShadow: 2, '&:hover': { boxShadow: 6 } }}>
-                  <Typography variant="h6" sx={{ m: 2, color: 'text.primary' }}>
-                    {recipe.getTitle()}
-                  </Typography>
-                  <Box
-                    onClick={() => handleRecipeClick(recipe)}
-                    sx={{
-                      position: 'relative',
-                      width: '100%',
-                      pt: '100%',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      '&:hover .descOverlay': {
-                        opacity: 1,
-                        transform: 'translateY(0)',
-                      },
-                    }}
-                  >
-                    <img
-                      src={recipe.getPhoto()}
-                      alt={recipe.getTitle()}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
-                    />
-                    <Box
-                      className="descOverlay"
-                      sx={{
-                        position: 'absolute',
-                        bottom: 0,
-                        width: '100%',
-                        bgcolor: alpha(theme.palette.primary.dark, 0.7),
-                        color: theme.palette.primary.contrastText,
-                        px: 1,
-                        py: 0.5,
-                        opacity: 0,
-                        transform: 'translateY(100%)',
-                        transition: 'all 0.3s ease-in-out',
-                      }}
-                    >
-                      <Typography variant="body2">
-                        {recipe.getInstructions()[0]}
-                      </Typography>
+              {feeds.map((feed) => (
+                <Card key={feed.id} sx={{ width: '100%', boxShadow: 2, '&:hover': { boxShadow: 6 } }}>
+                  {/* TEXT post */}
+                  {feed.type === 'TEXT' && (
+                    <Box sx={{ p: 2 }}>
+                      <Typography variant="body1">{feed.text}</Typography>
                     </Box>
-                  </Box>
+                  )}
+                  {/* IMAGE_AND_TEXT post */}
+                  {feed.type === 'IMAGE_AND_TEXT' && (
+                    <Box sx={{ p: 2 }}>
+                      {feed.image && <Box component="img" src={feed.image} alt="feed image" sx={{ width: '100%', mb: 1 }} />}
+                      {feed.text && <Typography variant="body1">{feed.text}</Typography>}
+                    </Box>
+                  )}
+                  {/* RECIPE post */}
+                  {feed.type === 'RECIPE' && feed.recipe && (
+                    <>
+                      <Typography variant="h6" sx={{ m: 2, color: 'text.primary' }}>
+                        {feed.recipe.title}
+                      </Typography>
+                      <Box
+                        onClick={() => handleFeedClick(feed)}
+                        sx={{
+                          position: 'relative',
+                          width: '100%',
+                          pt: '100%',
+                          overflow: 'hidden',
+                          cursor: 'pointer',
+                          '&:hover .descOverlay': { opacity: 1, transform: 'translateY(0)' },
+                        }}
+                      >
+                        <img
+                          src={feed.recipe.photo}
+                          alt={feed.recipe.title}
+                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                        <Box
+                          className="descOverlay"
+                          sx={{
+                            position: 'absolute',
+                            bottom: 0,
+                            width: '100%',
+                            bgcolor: alpha(theme.palette.primary.dark, 0.7),
+                            color: theme.palette.primary.contrastText,
+                            px: 1,
+                            py: 0.5,
+                            opacity: 0,
+                            transform: 'translateY(100%)',
+                            transition: 'all 0.3s ease-in-out',
+                          }}
+                        >
+                          <Typography variant="body2">{feed.recipe.instructions[0]}</Typography>
+                        </Box>
+                      </Box>
+                    </>
+                  )}
                   <CardActions disableSpacing>
-                    <React.Fragment>
-                      <IconButton
-                        onClick={() => handleLike(recipe.getId())}
-                        aria-label="like"
-                        color={recipe.liked ? 'error' : 'default'}
-                      >
-                        {recipe.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                      </IconButton>
-                      <IconButton
-                        onClick={() => handleSave(recipe.getId())}
-                        aria-label="save"
-                        color={recipe.saved ? 'primary' : 'default'}
-                      >
-                        {recipe.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
-                      </IconButton>
-                      <IconButton
-                        onClick={() => handleShare(recipe.getId())}
-                        aria-label="share"
-                        color={recipe.shared ? 'secondary' : 'default'}
-                      >
-                        {recipe.shared ? <ShareIcon /> : <ShareOutlinedIcon />}
-                      </IconButton>
-                    </React.Fragment>
+                    <IconButton
+                      onClick={() => handleLikeFeed(feed.id)}
+                      aria-label="like"
+                      color={feed.likedByCurrentUser ? 'error' : 'default'}
+                    >
+                      {feed.likedByCurrentUser ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                    </IconButton>
                   </CardActions>
                 </Card>
               ))}
