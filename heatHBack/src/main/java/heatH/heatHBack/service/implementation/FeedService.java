@@ -32,8 +32,12 @@ public class FeedService {
     public Feed createFeed(FeedRequest request) {
         FeedType type = FeedType.valueOf(request.getType());
         Feed feed = new Feed();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        User user = userRepository.findByUsername(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        feed.setUserId(request.getUserId());
+        feed.setUserId(user.getId());
         feed.setCreatedAt(LocalDateTime.now());
         feed.setType(type);
         feed.setLikeCount(0);
@@ -65,13 +69,14 @@ public class FeedService {
     // Fetch last 20 feeds sorted by createdAt DESC
     List<Feed> feeds = feedRepository.findTop20ByOrderByCreatedAtDesc();
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        User user = userRepository.findByUsername(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    String email = auth.getName();
+    User user = userRepository.findByUsername(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
 
     return feeds.stream().map(feed -> {
         FeedResponse response = new FeedResponse();
         response.setId(feed.getId());
+        response.setText(feed.getText());
         response.setUserId(feed.getUserId());
         response.setType(feed.getType());
         response.setCreatedAt(feed.getCreatedAt());

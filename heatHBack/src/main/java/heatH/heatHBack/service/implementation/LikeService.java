@@ -31,7 +31,8 @@ public class LikeService {
         like.setUser(user);
         like.setFeed(feed);
         likeRepository.save(like);
-        feed.setLikeCount(feed.getLikeCount() + 1);
+        int currentLikes = feed.getLikeCount() != null ? feed.getLikeCount() : 0;
+        feed.setLikeCount(currentLikes + 1);
         feedRepository.save(feed);
     }
 

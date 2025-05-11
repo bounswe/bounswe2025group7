@@ -25,7 +25,7 @@ public class FeedController {
     private final FeedService feedService;
     private final LikeService likeService;
 
-    @PostMapping
+    @PostMapping("/created-feed")
     public ResponseEntity<Feed> createFeed(@RequestBody FeedRequest request) {
         Feed createdFeed = feedService.createFeed(request);
         return ResponseEntity.ok(createdFeed);
