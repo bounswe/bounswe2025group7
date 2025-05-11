@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Container, Box, Typography, TextField, Button, Link } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import axios from 'axios';
@@ -14,6 +14,9 @@ export default function SignupPage() {
   const [countdown, setCountdown] = useState(0);
   const [message, setMessage] = useState('');
 
+  // refs for code input fields
+  const inputRefs = useRef([]);
+
   const handleChange = (e) =>
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
@@ -27,6 +30,7 @@ export default function SignupPage() {
 
   const handleResend = () => {
     setError(null);
+    setCode(Array(6).fill(''));
     // Immediately start countdown to disable the button
     setCountdown(15);
     setMessage('');
@@ -118,13 +122,29 @@ export default function SignupPage() {
                 {code.map((d, i) => (
                   <TextField
                     key={i}
-                    id={`code-${i}`}
+                    inputRef={(el) => inputRefs.current[i] = el}
                     inputProps={{ maxLength: 1, style: { textAlign: 'center' } }}
                     value={d}
                     onChange={(e) => {
                       const v = e.target.value.replace(/\D/, '');
                       const c = [...code]; c[i] = v; setCode(c);
-                      if (v && i < 5) document.getElementById(`code-${i+1}`)?.focus();
+                      if (v && i < code.length - 1) {
+                        inputRefs.current[i + 1]?.focus();
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Backspace') {
+                        e.preventDefault();
+                        const c = [...code];
+                        if (c[i] !== '') {
+                          c[i] = '';
+                          setCode(c);
+                        } else if (i > 0) {
+                          c[i - 1] = '';
+                          setCode(c);
+                          inputRefs.current[i - 1]?.focus();
+                        }
+                      }
                     }}
                     sx={{ width: '3rem' }}
                   />
