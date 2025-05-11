@@ -29,6 +29,8 @@ public class RecipeService {
         recipe.setIngredients(request.getIngredients());
         recipe.setTag(request.getTag());
         recipe.setType(request.getType());
+        recipe.setTotalCalorie(request.getTotalCalorie());
+        recipe.setPrice(request.getPrice());
 
         if (request.getPhoto() != null) {
             String fileName = "user-profile-" + UUID.randomUUID() + ".jpg";

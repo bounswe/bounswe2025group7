@@ -12,4 +12,6 @@ public class RecipeRequest {
     private String tag;
     private String type;
     private String photo;
+    private Integer totalCalorie;
+    private Double price;
 }
