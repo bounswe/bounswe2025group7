@@ -9,6 +9,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import logo from '../images/logo.png';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import authService from '../services/authService';
+import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'; 
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
@@ -109,6 +110,16 @@ const Template = ({ children }) => {
             >
               Profile
             </NavButton>
+
+            <NavButton
+              component={Link}
+              to="/myrecipes"
+              color={location.pathname === '/myrecipes' ? 'secondary' : 'inherit'}
+              startIcon={<RestaurantMenuIcon />}
+            >
+              My Recipes
+            </NavButton>
+
             <NavButton
               component={Link}
               to="/saved"
@@ -117,6 +128,7 @@ const Template = ({ children }) => {
             >
               Saved Recipes
             </NavButton>
+
             <IconButton
               color="inherit"
               onClick={handleLogout}

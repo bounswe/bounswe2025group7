@@ -20,6 +20,7 @@ import SavedRecipes from './pages/SavedRecipes';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import RecipeDetail from './pages/RecipeDetail';
+import MyRecipes from './pages/myRecipes';
 
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/setup" element={<InitialProfileSetup />} />
             <Route path="/saved" element={<SavedRecipes />} />
+            <Route path="/myrecipes" element={<MyRecipes />} /> 
             <Route path="/recipe/:id" element={<RecipeDetail />} />   
           </Route>  
         </Routes>
