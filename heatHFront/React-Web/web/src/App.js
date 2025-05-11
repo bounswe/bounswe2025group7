@@ -21,7 +21,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import RecipeDetail from './pages/RecipeDetail';
 import MyRecipes from './pages/myRecipes';
-
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsofService';
+import ContactUs from './pages/ContactUs';
 
 function App() {
   return (
@@ -34,6 +36,9 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/contact" element={<ContactUs />} />
 
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>

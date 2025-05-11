@@ -3,7 +3,7 @@ import authService from './authService';
 
 // Create an axios instance using a relative base URL so CRA's proxy can forward to the backend
 const apiClient = axios.create({
-  baseURL: 'http://167.172.162.159:3000/api',
+  baseURL: '/api',
 });
 
 // Attach access token to every request

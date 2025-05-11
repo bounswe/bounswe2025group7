@@ -90,7 +90,7 @@ const MyRecipes = () => {
           headers: {
             'Content-Type': 'application/json',
             // Include authorization if needed
-            'Authorization': `Bearer ${localStorage.getItem('token')}` 
+            'Authorization': `Bearer ${localStorage.getItem('<accessToken')}` 
           },
         });
         
@@ -376,13 +376,13 @@ const MyRecipes = () => {
   // Handle add/edit recipe submit
   const handleRecipeFormSubmit = async (e) => {
     e.preventDefault();
-    
+  
     try {
       setSubmitting(true);
-      
+  
       // Prepare ingredient list in the format expected by API
       const ingredientList = newIngredients.map(ing => `${ing.name}: ${ing.amount}`);
-      
+  
       // Create recipe data object according to API requirements
       const recipeData = {
         title: newTitle,
@@ -392,10 +392,9 @@ const MyRecipes = () => {
         type: newType,
         photo: newPhotoBase64 || 'https://picsum.photos/seed/default/300/300',
         totalCalory: Number(newTotalCalory),
-        price: Number(newPrice)
+        price: Number(newPrice),
       };
-      console.log("Recipe data to be sent:", recipeData);
-      
+  
       if (isEditing) {
         // Update existing recipe
         try {
@@ -403,41 +402,43 @@ const MyRecipes = () => {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+              'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
             },
-            body: recipeData
+            body: JSON.stringify(recipeData),
           });
-          
+  
           if (!response.ok) {
             throw new Error(`Error updating recipe: ${response.statusText}`);
           }
-          
+  
           // Update in local state
-          setRecipes(prev => prev.map(r => {
-            if (r.id === editingRecipeId) {
-              const updatedRecipe = new Recipe({
-                id: editingRecipeId,
-                totalCalory: Number(newTotalCalory),
-                ingredients: newIngredients,
-                tag: newTag,
-                price: Number(newPrice),
-                title: newTitle,
-                type: newType,
-                instructions: [newInstructions],
-                photo: newPhotoBase64 || r.getPhoto(),
-                healthinessScore: r.getHealthinessScore(),
-                easinessScore: r.getEasinessScore(),
-                whoShared: r.whoShared,
-              });
-              updatedRecipe.liked = r.liked;
-              updatedRecipe.saved = r.saved;
-              updatedRecipe.shared = r.shared;
-              updatedRecipe.isOwnRecipe = true;
-              return updatedRecipe;
-            }
-            return r;
-          }));
-          
+          setRecipes(prev =>
+            prev.map(r => {
+              if (r.id === editingRecipeId) {
+                const updatedRecipe = new Recipe({
+                  id: editingRecipeId,
+                  totalCalory: Number(newTotalCalory),
+                  ingredients: newIngredients,
+                  tag: newTag,
+                  price: Number(newPrice),
+                  title: newTitle,
+                  type: newType,
+                  instructions: [newInstructions],
+                  photo: newPhotoBase64 || r.getPhoto(),
+                  healthinessScore: r.getHealthinessScore(),
+                  easinessScore: r.getEasinessScore(),
+                  whoShared: r.whoShared,
+                });
+                updatedRecipe.liked = r.liked;
+                updatedRecipe.saved = r.saved;
+                updatedRecipe.shared = r.shared;
+                updatedRecipe.isOwnRecipe = true;
+                return updatedRecipe;
+              }
+              return r;
+            })
+          );
+  
           console.log("Recipe updated successfully");
         } catch (error) {
           console.error("Failed to update recipe:", error);
@@ -447,55 +448,26 @@ const MyRecipes = () => {
       } else {
         // Create new recipe with POST request
         try {
-          // First, ensure we're using the correct token name consistently
-          const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-          console.log("data : " , recipeData);
-          // Add proper CORS headers and credentials
-          const response = await apiClient.post("/recipe/create", recipeData)
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Server response:", errorText);
-            throw new Error(`Error creating recipe: ${response.status} ${response.statusText}`);
+          const response = await apiClient.post("/recipe/create", recipeData);
+  
+          if (response.status !== 200) {
+            throw new Error(`Error creating recipe: ${response.statusText}`);
           }
-          
-          // Get the response data
-          const responseData = await response.json();
-          console.log("Recipe created successfully:", responseData);
-          
-          // Add the new recipe to the UI immediately rather than re-fetching all recipes
-          const newRecipe = new Recipe({
-            id: responseData.id || Date.now(), // Use the ID from response or generate temporary one
-            title: newTitle,
-            photo: newPhotoBase64 || 'https://picsum.photos/seed/default/300/300',
-            instructions: [newInstructions],
-            totalCalory: Number(newTotalCalory),
-            ingredients: newIngredients,
-            tag: newTag,
-            price: Number(newPrice),
-            type: newType,
-            healthinessScore: 0,
-            easinessScore: 0,
-            whoShared: null,
-          });
-          newRecipe.liked = false;
-          newRecipe.saved = false;
-          newRecipe.shared = false;
-          newRecipe.isOwnRecipe = true;
-          
-          // Add to existing recipes
-          setRecipes(prevRecipes => [newRecipe, ...prevRecipes]);
+  
+          console.log("Recipe created successfully:", response.data);
+  
+          // Close the dialog and navigate to /myrecipes
+          setOpenAddDialog(false);
+          navigate('/myrecipes');
         } catch (error) {
           console.error("Failed to create recipe:", error);
           setError(`Failed to create recipe: ${error.message}`);
           throw error;
         }
       }
-      
-      // Clear form fields and close the dialog
+  
+      // Clear form fields
       resetForm();
-      setOpenAddDialog(false);
-      
     } catch (error) {
       // Error handling is done in the nested try-catch blocks
     } finally {
