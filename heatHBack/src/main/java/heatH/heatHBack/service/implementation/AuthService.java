@@ -4,6 +4,7 @@ import heatH.heatHBack.model.User;
 import heatH.heatHBack.model.UserMailVerification;
 import heatH.heatHBack.model.request.LoginRequest;
 import heatH.heatHBack.model.request.RegisterRequest;
+import heatH.heatHBack.model.request.ResetPasswordRequest;
 import heatH.heatHBack.model.request.VerificationRequest;
 import heatH.heatHBack.model.response.AuthResponse;
 import heatH.heatHBack.repository.UserRepository;
@@ -124,6 +125,23 @@ public class AuthService implements IAuthService{
 
     public boolean exists(String email) {
         return userRepository.existsByUsername(email);
+    }
+
+    @Override
+    public Boolean resetPassword(ResetPasswordRequest request) {
+        // Find the user by email
+        Optional<User> userOptional = userRepository.findByUsername(request.getEmail());
+        
+        if (userOptional.isEmpty()) {
+            return false;
+        }
+        
+        User user = userOptional.get();
+        
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        
+        return true;
     }
 
 }
