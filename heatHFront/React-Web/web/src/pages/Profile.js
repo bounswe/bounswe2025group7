@@ -40,7 +40,7 @@ const Profile = () => {
           height: data.height,
           dateOfBirth: data.dateOfBirth,
           gender: data.gender,      
-          profilePhoto: data.user?.profilePhoto || '',  
+          profilePhoto: data.profilePhoto || '',  
         });
         setLoading(false);
       } catch (err) {
@@ -65,7 +65,7 @@ const Profile = () => {
   };
 
   const handleEditProfile = () => {
-    navigate('/profile/setup');
+    navigate('/profile/edit');
   };
 
   if (loading) {
