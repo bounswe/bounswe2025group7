@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 @Service
@@ -105,30 +106,20 @@ public class AuthService implements IAuthService{
     @Override
     public Boolean verifyCode(VerificationRequest verificationRequest) {
         String email = verificationRequest.getEmail();
-        System.out.println("Email: " + email);
+        Integer code = verificationRequest.getCode();
 
         Optional<UserMailVerification> recordOpt = userVerificationRepository
-                .findTopByEmailOrderByCreatedAtDesc(email);
+                .findByEmailAndCode(email, code);
 
         if (recordOpt.isEmpty()) return false;
 
-        UserMailVerification record = recordOpt.get();
-
-        if (record.getCreatedAt().isBefore(LocalDateTime.now().minusMinutes(5))) {
-            return false;
-        }
-
-        return record.getCode().equals(verificationRequest.getCode());
+        return true;
     }
 
-    @Scheduled(fixedRate = 600_000)
+    @Scheduled(fixedRate = 300_000)
     public void cleanupExpiredCodes() {
-        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(5);
+        LocalDateTime cutoff = LocalDateTime.now(ZoneOffset.UTC).minusMinutes(5);
         userVerificationRepository.deleteAllOlderThan(cutoff);
-    }
-
-    public boolean exists(String email) {
-        return userRepository.existsByUsername(email);
     }
 
 }
