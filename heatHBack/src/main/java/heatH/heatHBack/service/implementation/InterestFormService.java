@@ -1,7 +1,6 @@
 package heatH.heatHBack.service.implementation;
 
 import heatH.heatHBack.model.User;
-import heatH.heatHBack.model.UserMailVerification;
 import heatH.heatHBack.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
