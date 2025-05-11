@@ -16,6 +16,11 @@ export default {
     localStorage.setItem('refreshToken', refreshToken);
     return response;
   },
+  sendVerification: async (userData) => {
+    const response = await axios.post('/api/auth/send-verification-code', userData);
+    console.log("data: ", response.data);
+    return response;
+  },
 
   refreshToken: async () => {
     const refresh = localStorage.getItem('refreshToken');
@@ -40,9 +45,9 @@ export default {
     return response.data;
   },
 
-  // Verify a received code
-  verifyCode: async (code) => {
-    const response = await axios.post('/api/auth/verify-code', null, { params: { code } });
+  // Verify a received code given email and code
+  verifyCode: async (email, code) => {
+    const response = await axios.post('/api/auth/verify-code', { email, code });
     return response.data;
   },
 };
