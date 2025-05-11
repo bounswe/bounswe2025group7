@@ -45,4 +45,18 @@ public class AuthController {
         return ResponseEntity.ok(authService.exists(email));
     }
 
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+        try {
+            boolean success = authService.resetPassword(request);
+            if (success) {
+                return ResponseEntity.ok("Password reset successfully");
+            } else {
+                return ResponseEntity.badRequest().body("Failed to reset password");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+
 }

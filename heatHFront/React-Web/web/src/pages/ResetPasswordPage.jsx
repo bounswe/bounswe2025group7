@@ -1,31 +1,64 @@
 import React, { useState } from 'react';
-import { Container, Box, Typography, TextField, Button } from '@mui/material';
+import { Container, Box, Typography, TextField, Button, CircularProgress } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
+import apiClient from '../services/apiClient'; // Import your API client
 
 const ResetPasswordPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const emailFromState = location.state?.email || '';
+  const token = location.state?.token || ''; // If using a token from URL or state
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false); // Add loading state
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Simple validation
+    setMessage('');
+    
+    // Client-side validation
     if (newPassword !== confirmPassword) {
       setMessage('Passwords do not match.');
       return;
     }
-    // Simulate a backend call for password reset
-    console.log(`Resetting password for: ${emailFromState}`);
-    console.log(`New Password: ${newPassword}`);
-    setMessage('Your password has been updated successfully.');
-    // Optionally navigate to sign in after a delay.
-    setTimeout(() => {
-      navigate('/signin');
-    }, 2000);
+    
+    if (newPassword.length < 6) {
+      setMessage('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      // Create payload for the backend API
+      const payload = {
+        email: emailFromState,
+        newPassword: newPassword,
+        token: token  // Include if your backend requires a token
+      };
+
+      // Make API call to reset password
+      const response = await apiClient.post('/api/auth/reset-password', payload);
+      
+      // Handle success
+      setMessage('Your password has been updated successfully.');
+      
+      // Navigate to sign in after a delay
+      setTimeout(() => {
+        navigate('/signin');
+      }, 2000);
+    } catch (error) {
+      // Handle errors
+      console.error('Password reset failed:', error);
+      
+      // Extract error message from response if available
+      const errorMessage = error.response?.data || 'Password reset failed. Please try again.';
+      setMessage(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,12 +91,22 @@ const ResetPasswordPage = () => {
             sx={{ mt: 2, mb: 2 }}
             required
           />
-          <Button type="submit" variant="contained" color="primary" fullWidth>
-            Reset Password
+          <Button 
+            type="submit" 
+            variant="contained" 
+            color="primary" 
+            fullWidth
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={24} /> : 'Reset Password'}
           </Button>
         </form>
         {message && (
-          <Typography variant="body2" color={message.includes('successfully') ? 'success.main' : 'error'} sx={{ mt: 2 }}>
+          <Typography 
+            variant="body2" 
+            color={message.includes('successfully') ? 'success.main' : 'error'} 
+            sx={{ mt: 2 }}
+          >
             {message}
           </Typography>
         )}
