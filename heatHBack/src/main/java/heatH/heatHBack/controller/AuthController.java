@@ -1,9 +1,6 @@
 package heatH.heatHBack.controller;
 
-import heatH.heatHBack.model.request.EmailRequest;
-import heatH.heatHBack.model.request.LoginRequest;
-import heatH.heatHBack.model.request.RefreshTokenRequest;
-import heatH.heatHBack.model.request.RegisterRequest;
+import heatH.heatHBack.model.request.*;
 import heatH.heatHBack.model.response.AuthResponse;
 import heatH.heatHBack.service.implementation.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -38,8 +35,8 @@ public class AuthController {
         return ResponseEntity.ok(authService.sendVerificationCode(emailRequest.getEmail()));
     }
     @PostMapping("/verify-code")
-    public ResponseEntity<Boolean> verifyCode(@RequestParam Integer code) {
-        return ResponseEntity.ok(authService.verifyCode(code));
+    public ResponseEntity<Boolean> verifyCode(@RequestBody VerificationRequest verificationRequest) {
+        return ResponseEntity.ok(authService.verifyCode(verificationRequest));
     }
 
 }
