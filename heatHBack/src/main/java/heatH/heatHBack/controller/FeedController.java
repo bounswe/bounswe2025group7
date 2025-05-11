@@ -47,5 +47,8 @@ public class FeedController {
         return feedService.getRecentFeedsForUser();
     }
 
-    
+    @GetMapping("/feed-by-user")
+    public List<FeedResponse> getFeedsByUser () {
+        return feedService.getFeedByUser();
+    }
 }

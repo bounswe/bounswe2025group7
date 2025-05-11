@@ -41,7 +41,7 @@ public class FeedService {
         feed.setCreatedAt(LocalDateTime.now());
         feed.setType(type);
         feed.setLikeCount(0);
-        
+
 
         switch (type) {
             case TEXT -> feed.setText(request.getText());
@@ -66,28 +66,48 @@ public class FeedService {
     }
 
     public List<FeedResponse> getRecentFeedsForUser() {
-    // Fetch last 20 feeds sorted by createdAt DESC
-    List<Feed> feeds = feedRepository.findTop20ByOrderByCreatedAtDesc();
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    String email = auth.getName();
-    User user = userRepository.findByUsername(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+        // Fetch last 20 feeds sorted by createdAt DESC
+        List<Feed> feeds = feedRepository.findTop20ByOrderByCreatedAtDesc();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        User user = userRepository.findByUsername(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-    return feeds.stream().map(feed -> {
-        FeedResponse response = new FeedResponse();
-        response.setId(feed.getId());
-        response.setText(feed.getText());
-        response.setUserId(feed.getUserId());
-        response.setType(feed.getType());
-        response.setCreatedAt(feed.getCreatedAt());
-        response.setLikeCount(feed.getLikeCount());
+        return feeds.stream().map(feed -> {
+            FeedResponse response = new FeedResponse();
+            response.setId(feed.getId());
+            response.setText(feed.getText());
+            response.setUserId(feed.getUserId());
+            response.setType(feed.getType());
+            response.setCreatedAt(feed.getCreatedAt());
+            response.setLikeCount(feed.getLikeCount());
 
-        // Check if this feed is liked by the user
-        boolean liked = likeRepository.findByUserAndFeedId(user, feed.getId()).isPresent();
-        response.setLikedByCurrentUser(liked);
+            // Check if this feed is liked by the user
+            boolean liked = likeRepository.findByUserAndFeedId(user, feed.getId()).isPresent();
+            response.setLikedByCurrentUser(liked);
 
-        return response;
-    }).toList();
-}
+            return response;
+        }).toList();
+    }
 
+    public List<FeedResponse> getFeedByUser() {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        User user = userRepository.findByUsername(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        List<Feed> feeds = feedRepository.findByUserId(user.getId());
+
+        return feeds.stream().map(feed -> {
+            FeedResponse response = new FeedResponse();
+            response.setId(feed.getId());
+            response.setText(feed.getText());
+            response.setUserId(feed.getUserId());
+            response.setType(feed.getType());
+            response.setCreatedAt(feed.getCreatedAt());
+            response.setLikeCount(feed.getLikeCount());
+
+            return response;
+        }).toList();
+    }
 }
