@@ -37,6 +37,8 @@ public class SavedRecipeService {
         SavedRecipe savedRecipe = new SavedRecipe();
         savedRecipe.setRecipe(recipe);
         savedRecipe.setUser(user);
+        savedRecipe.setTitle(recipe.getTitle());
+        savedRecipe.setPhoto(recipe.getPhoto());
         savedRecipeRepository.save(savedRecipe);
     }
 
@@ -63,6 +65,8 @@ public class SavedRecipeService {
         return savedRecipes.stream().map(s -> {
             SavedRecipeResponse response = new SavedRecipeResponse();
             response.setRecipeId(s.getRecipe().getId());
+            response.setPhoto(s.getPhoto());
+            response.setTitle(s.getTitle());
             return response;
         }).collect(Collectors.toList());
 
