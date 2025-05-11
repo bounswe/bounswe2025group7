@@ -7,7 +7,6 @@ const ResetPasswordPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const emailFromState = location.state?.email || '';
-  const token = location.state?.token || ''; // If using a token from URL or state
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -35,12 +34,11 @@ const ResetPasswordPage = () => {
       // Create payload for the backend API
       const payload = {
         email: emailFromState,
-        newPassword: newPassword,
-        token: token  // Include if your backend requires a token
+        newPassword: newPassword
       };
 
       // Make API call to reset password
-      const response = await apiClient.post('/api/auth/reset-password', payload);
+      const response = await apiClient.post('/auth/reset-password', payload);
       
       // Handle success
       setMessage('Your password has been updated successfully.');
