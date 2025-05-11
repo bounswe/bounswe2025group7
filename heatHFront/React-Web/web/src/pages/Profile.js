@@ -60,21 +60,9 @@ const Profile = () => {
 
     fetchProfileData();
 
-    // cleanup for the _intentional_ unmount
     return () => controller.abort();
   }, []);
 
-  const handlePhotoChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setProfilePhoto(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleEditProfile = () => {
     navigate('/profile/edit');
@@ -115,22 +103,8 @@ const Profile = () => {
                 accept="image/*"
                 id="profile-photo-edit"
                 type="file"
-                onChange={handlePhotoChange}
               />
-              <IconButton
-                color="primary"
-                aria-label="upload picture"
-                component="span"
-                sx={{
-                  position: 'absolute',
-                  bottom: 0,
-                  right: 0,
-                  backgroundColor: 'white',
-                  '&:hover': { backgroundColor: 'white' },
-                }}
-              >
-                <PhotoCamera />
-              </IconButton>
+             
             </label>
           </Box>
           <Typography variant="h4" component="h1" gutterBottom>
