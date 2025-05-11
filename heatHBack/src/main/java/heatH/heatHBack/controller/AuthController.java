@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
-    private final UserRepository userRepository;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
@@ -44,11 +43,9 @@ public class AuthController {
         return ResponseEntity.ok(authService.verifyCode(code));
     }
 
-    // Check if an email is already registered
     @GetMapping("/exists")
     public ResponseEntity<Boolean> exists(@RequestParam String email) {
-        boolean exists = userRepository.existsByUsername(email);
-        return ResponseEntity.ok(exists);
+        return ResponseEntity.ok(authService.exists(email));
     }
 
 }
