@@ -7,67 +7,38 @@ import {
   Button,
   CircularProgress,
   Avatar,
-  IconButton,
   Divider,
-  Card,
-  CardContent,
-  CardActions,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import PhotoCamera from '@mui/icons-material/PhotoCamera';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
-import BookmarkIcon from '@mui/icons-material/Bookmark';
-import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
-import ShareIcon from '@mui/icons-material/Share';
 import Template from '../components/Template';
 import interestFormService from '../services/interestFormService';
+import feedService from '../services/feedService';
 import { useNavigate } from 'react-router-dom';
 
 const Input = styled('input')({
   display: 'none',
 });
 
-// Simulated static posts data; replace with API call later
-const staticPosts = [
-  {
-    id: 1,
-    text: "Check out my new recipe for Avocado Quinoa Salad!",
-    image: "https://picsum.photos/seed/avocado-quinoa-salad/300/300",
-    liked: false,
-    saved: false,
-    shared: false,
-  },
-  {
-    id: 2,
-    text: "My Homemade Pizza is finally ready to share!",
-    image: "https://picsum.photos/seed/homemade-pizza/300/300",
-    liked: true,
-    saved: false,
-    shared: false,
-  },
-];
-
 const Profile = () => {
   const [profileData, setProfileData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // ⬇️ feeds state (array!) + loading flag
+  const [userFeed, setUserFeed] = useState([]);
+  const [loadingFeed, setLoadingFeed] = useState(true);
+
   const [error, setError] = useState(null);
-  const [profilePhoto, setProfilePhoto] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const effectRan = useRef(false);
   const navigate = useNavigate();
 
-  // New state for posts
-  const [posts, setPosts] = useState([]);
-  const [postsLoading, setPostsLoading] = useState(true);
-
   useEffect(() => {
-    // Stop after the first real run
     if (effectRan.current) return;
     effectRan.current = true;
 
     const controller = new AbortController();
+
+    // fetch profile details
     const fetchProfileData = async () => {
       try {
         const data = await interestFormService.getInterestForm({
@@ -83,41 +54,34 @@ const Profile = () => {
           profilePhoto: data.profilePhoto || '',
         });
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          setError('Failed to load profile data');
-        }
+        if (err.name !== 'AbortError') setError('Failed to load profile data');
       } finally {
-        setLoading(false);
+        setLoadingProfile(false);
       }
     };
 
-    // Fetch profile data
-    fetchProfileData();
-
-    // Simulate fetching posts – replace with your API call
-    const fetchPosts = async () => {
+    // fetch current user’s feeds
+    const fetchFeedByUser = async () => {
       try {
-        setPostsLoading(true);
-        // Simulate delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setPosts(staticPosts);
+        const data = await feedService.getFeedByUser(); // ‼️ returns an array
+        setUserFeed(data);
       } catch (err) {
-        console.error("Failed to load posts:", err);
+        console.error(err);
+        setError('Failed to load feeds');
       } finally {
-        setPostsLoading(false);
+        setLoadingFeed(false);
       }
     };
 
-    fetchPosts();
-
+    fetchProfileData();
+    fetchFeedByUser();
     return () => controller.abort();
   }, []);
 
-  const handleEditProfile = () => {
-    navigate('/profile/edit');
-  };
+  const handleEditProfile = () => navigate('/profile/edit');
 
-  if (loading) {
+  /* ---------------- RENDER ---------------- */
+  if (loadingProfile || loadingFeed) {
     return (
       <Template>
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -140,20 +104,12 @@ const Profile = () => {
   return (
     <Template>
       <Paper elevation={3} sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
-        {/* Profile Header with Photo and Name */}
+        {/* ---------- PROFILE HEADER ---------- */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
           <Box sx={{ position: 'relative', mb: 2 }}>
-            <Avatar
-              src={previewUrl || profileData.profilePhoto}
-              sx={{ width: 150, height: 150 }}
-            />
+            <Avatar src={previewUrl || profileData.profilePhoto} sx={{ width: 150, height: 150 }} />
             <label htmlFor="profile-photo-edit">
-              <Input
-                accept="image/*"
-                id="profile-photo-edit"
-                type="file"
-              />
-              {/* You can add an icon button here for photo upload if needed */}
+              <Input accept="image/*" id="profile-photo-edit" type="file" />
             </label>
           </Box>
           <Typography variant="h4" component="h1" gutterBottom>
@@ -163,138 +119,81 @@ const Profile = () => {
 
         <Divider sx={{ mb: 4 }} />
 
-        {/* Profile Information */}
+        {/* ---------- PROFILE INFO GRID ---------- */}
         <Grid container spacing={3} justifyContent="center">
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-              Weight
-            </Typography>
-            <Typography variant="h6" gutterBottom>
-              {profileData.weight} kg
-            </Typography>
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-              Gender
-            </Typography>
-            <Typography variant="h6" gutterBottom>
-              {profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1)}
-            </Typography>
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-              Height
-            </Typography>
-            <Typography variant="h6" gutterBottom>
-              {profileData.height} cm
-            </Typography>
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-              Date of Birth
-            </Typography>
-            <Typography variant="h6" gutterBottom>
-              {new Date(profileData.dateOfBirth).toLocaleDateString()}
-            </Typography>
-          </Grid>
+          {[
+            { label: 'Weight', value: `${profileData.weight} kg` },
+            { label: 'Height', value: `${profileData.height} cm` },
+            {
+              label: 'Gender',
+              value: profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1),
+            },
+            {
+              label: 'Date of Birth',
+              value: new Date(profileData.dateOfBirth).toLocaleDateString(),
+            },
+          ].map(({ label, value }) => (
+            <Grid item xs={12} sm={6} key={label}>
+              <Typography variant="subtitle1" color="textSecondary" gutterBottom>
+                {label}
+              </Typography>
+              <Typography variant="h6" gutterBottom>
+                {value}
+              </Typography>
+            </Grid>
+          ))}
 
           <Grid item xs={12}>
             <Box display="flex" justifyContent="center" mt={3}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleEditProfile}
-              >
+              <Button variant="contained" color="primary" onClick={handleEditProfile}>
                 Edit Profile
               </Button>
             </Box>
           </Grid>
         </Grid>
 
-        {/* Divider between profile info and posts */}
+        {/* ---------- MY FEEDS SECTION ---------- */}
         <Divider sx={{ my: 4 }} />
+        <Typography variant="h5" gutterBottom>
+          My Feeds
+        </Typography>
 
-        
-        {/* My Posts Feed */}
-        <Box
-          sx={{
-            maxWidth: 600,
-            mx: 'auto',
-            mt: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-            px: 2,
-          }}
-        >
-          <Typography variant="h5" gutterBottom align="center">
-            My Posts
-          </Typography>
-          {postsLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-              <CircularProgress />
+        {userFeed.length === 0 ? (
+          <Typography color="textSecondary">You haven’t posted anything yet.</Typography>
+        ) : (
+          userFeed.map((feed) => (
+            <Box
+              key={feed.id}
+              sx={{
+                mb: 2,
+                p: 2,
+                border: '1px solid',
+                borderColor: 'grey.300',
+                borderRadius: 2,
+              }}
+            >
+              <Typography variant="body1">{feed.text}</Typography>
+
+              {feed.image && (
+                <Box
+                  component="img"
+                  src={feed.image}
+                  alt="feed media"
+                  sx={{ width: '100%', mt: 1, borderRadius: 1 }}
+                />
+              )}
+
+              <Box mt={1} display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="caption" color="textSecondary">
+                  {new Date(feed.createdAt).toLocaleString()}
+                </Typography>
+                <Typography variant="caption" color="textSecondary">
+                  {feed.likeCount} {feed.likeCount === 1 ? 'like' : 'likes'}
+                </Typography>
+              </Box>
             </Box>
-          ) : posts.length === 0 ? (
-            <Typography align="center">
-              No posts yet. Start sharing your recipes!
-            </Typography>
-          ) : (
-            posts.map((post) => (
-              <Card key={post.id} sx={{ width: '100%', boxShadow: 2, '&:hover': { boxShadow: 6 } }}>
-                {post.image && (
-                  <Box
-                    onClick={() => {
-                      /* Optionally, you can add a click handler to navigate to post details */
-                    }}
-                    sx={{
-                      position: 'relative',
-                      width: '100%',
-                      pt: '100%', // maintains a square aspect ratio
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      '&:hover .descOverlay': {
-                        opacity: 1,
-                        transform: 'translateY(0)',
-                      },
-                    }}
-                  >
-                    <img
-                      src={post.image}
-                      alt="Post Image"
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
-                    />
-                  </Box>
-                )}
-                <CardContent>
-                  <Typography variant="body1">
-                    {post.text}
-                  </Typography>
-                </CardContent>
-                <CardActions disableSpacing>
-                  <IconButton color={post.liked ? 'error' : 'default'}>
-                    {post.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                  </IconButton>
-                  <IconButton color={post.saved ? 'primary' : 'default'}>
-                    {post.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
-                  </IconButton>
-                  <IconButton color={post.shared ? 'secondary' : 'default'}>
-                    {post.shared ? <ShareIcon /> : <ShareOutlinedIcon />}
-                  </IconButton>
-                </CardActions>
-              </Card>
-            ))
-          )}
-        </Box>
+          ))
+        )}
       </Paper>
     </Template>
   );

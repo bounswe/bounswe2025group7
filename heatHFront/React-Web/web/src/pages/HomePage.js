@@ -32,7 +32,7 @@ const HomePage = () => {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  
   // Post composer state
   const [userInputText, setUserInputText] = useState('');
   const [postType, setPostType] = useState(null);
@@ -48,8 +48,7 @@ const HomePage = () => {
     const fetchRecipes = async () => {
       try {
         setLoading(true);
-        // In a real app, you would have an API endpoint to get all recipes
-        // For now, we'll use our static data but transform it into Recipe objects
+
         
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 500));
