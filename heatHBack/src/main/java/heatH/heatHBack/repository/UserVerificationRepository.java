@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface UserVerificationRepository extends JpaRepository<UserMailVerification, Long> {
     Optional<UserMailVerification> findTopByEmailOrderByCreatedAtDesc(String email);
 
+    Optional<UserMailVerification> findByEmailAndCode(String email, Integer code);
     @Modifying
     @Query("DELETE FROM UserMailVerification e WHERE e.createdAt < :cutoff")
     void deleteAllOlderThan(LocalDateTime cutoff);
