@@ -18,7 +18,7 @@ import SignupPage from './pages/Login/SignupPage.jsx';
 import SignIn from './pages/Login/SignIn.tsx';
 import SavedRecipes from './pages/SavedRecipes';
 import ProtectedRoute from './components/ProtectedRoute';
-
+import EditProfile from './pages/EditProfile';
 import RecipeDetail from './pages/RecipeDetail';
 
 
@@ -39,6 +39,7 @@ function App() {
             <Route path="/home" element={<HomePage />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/setup" element={<InitialProfileSetup />} />
+            <Route path="/profile/edit" element={<EditProfile />} />   
             <Route path="/saved" element={<SavedRecipes />} />
             <Route path="/recipe/:id" element={<RecipeDetail />} />   
           </Route>  
