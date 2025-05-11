@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -21,6 +21,7 @@ const Input = styled('input')({
 
 const EditProfile = () => {
   const navigate = useNavigate();
+  const effectRan = useRef(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -32,13 +33,15 @@ const EditProfile = () => {
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
 
-  // On mount, fetch existing interest form to prefill fields
   useEffect(() => {
+    if (effectRan.current) return;
+    effectRan.current = true;
+
+    const controller = new AbortController();  
     const loadForm = async () => {
       try {
-        const data = await interestFormService.getInterestForm();
+        const data = await interestFormService.getInterestForm({ signal: controller.signal });
         console.log('Loaded interest form:', data);
-        // Format dateOfBirth for input type="date"
         const dob = data.dateOfBirth ? data.dateOfBirth.split('T')[0] : '';
         setFormData(prev => ({
           ...prev,
@@ -50,16 +53,15 @@ const EditProfile = () => {
           gender: data.gender || prev.gender || '',
           profilePhoto: data.profilePhoto
         }));
-        // Set the profile photo preview if it exists
         if (data.profilePhoto) {
           setPreviewUrl(data.profilePhoto);
         }
       } catch (err) {
         console.log('No existing interest form, proceeding blank');
-        // if no form exists, do nothing
       }
     };
     loadForm();
+    return() => controller.abort();
   }, []);
 
   const handleChange = (e) => {
@@ -85,10 +87,8 @@ const EditProfile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // If there's a new photo, use its base64 data, otherwise use the existing previewUrl
       const photoToSubmit = profilePhoto ? previewUrl : null;
       
-      // Submit interest-form data
       await interestFormService.updateInterestForm({
         name: formData.firstName,
         surname: formData.lastName,
@@ -96,9 +96,8 @@ const EditProfile = () => {
         height: Number(formData.height),
         weight: Number(formData.weight),
         gender: formData.gender,
-        profilePhoto: photoToSubmit, // Send null if no new photo was uploaded
+        profilePhoto: photoToSubmit, 
       });
-      // After successful submission, send user to home
       navigate('/home');
     } catch (error) {
       console.error('Error saving profile:', error);

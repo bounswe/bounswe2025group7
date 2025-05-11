@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -26,30 +26,42 @@ const Profile = () => {
   const [error, setError] = useState(null);
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const effectRan = useRef(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Stop after the first real run
+    if (effectRan.current) return;
+    effectRan.current = true;
+
+    const controller = new AbortController();   // allow early abort
     const fetchProfileData = async () => {
       try {
-        // Fetch real profile data from backend
-        const data = await interestFormService.getInterestForm();
+        const data = await interestFormService.getInterestForm(
+          { signal: controller.signal }        // pass AbortSignal if your service supports it
+        );
         setProfileData({
           firstName: data.name,
           lastName: data.surname,
           weight: data.weight,
           height: data.height,
           dateOfBirth: data.dateOfBirth,
-          gender: data.gender,      
-          profilePhoto: data.profilePhoto || '',  
+          gender: data.gender,
+          profilePhoto: data.profilePhoto || '',
         });
-        setLoading(false);
       } catch (err) {
-        setError('Failed to load profile data');
+        if (err.name !== 'AbortError') {
+          setError('Failed to load profile data');
+        }
+      } finally {
         setLoading(false);
       }
     };
 
     fetchProfileData();
+
+    // cleanup for the _intentional_ unmount
+    return () => controller.abort();
   }, []);
 
   const handlePhotoChange = (event) => {

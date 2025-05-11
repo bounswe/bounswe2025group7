@@ -33,29 +33,7 @@ const InitialProfileSetup = () => {
   const [previewUrl, setPreviewUrl] = useState('');
 
   // On mount, fetch existing interest form to prefill fields
-  useEffect(() => {
-    const loadForm = async () => {
-      try {
-        const data = await interestFormService.getInterestForm();
-        console.log('Loaded interest form:', data);
-        // Format dateOfBirth for input type="date"
-        const dob = data.dateOfBirth ? data.dateOfBirth.split('T')[0] : '';
-        setFormData(prev => ({
-          ...prev,
-          firstName: data.name || '',
-          lastName: data.surname || '',
-          dateOfBirth: dob,
-          height: data.height != null ? data.height.toString() : '',
-          weight: data.weight != null ? data.weight.toString() : '',
-          gender: data.gender || prev.gender || '',
-        }));
-      } catch (err) {
-        console.log('No existing interest form, proceeding blank');
-        // if no form exists, do nothing
-      }
-    };
-    loadForm();
-  }, []);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
