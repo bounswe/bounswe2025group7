@@ -81,88 +81,10 @@ const MyRecipes = () => {
   // Fetch my recipes on component mount
   useEffect(() => {
     const fetchMyRecipes = async () => {
-      try {
-        setLoading(true);
-        
-        // Use the real API endpoint with the specified server
-        const response = await fetch('http://167.172.162.159:8080/api/recipe/get-all', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            // Include authorization if needed
-            'Authorization': `Bearer ${localStorage.getItem('<accessToken')}` 
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Error fetching recipes: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        
-        // Convert API response to Recipe instances
-        const recipeInstances = data.map(recipe => {
-          const recipeObj = new Recipe({
-            id: recipe.id,
-            title: recipe.title,
-            photo: recipe.photo,
-            instructions: recipe.instructions || [],
-            totalCalory: recipe.totalCalory || 0,
-            ingredients: recipe.ingredients || [],
-            tag: recipe.tag || '',
-            price: recipe.price || 0,
-            type: recipe.type || '',
-            healthinessScore: recipe.healthinessScore || 0,
-            easinessScore: recipe.easinessScore || 0,
-            whoShared: recipe.whoShared,
-          });
-          
-          // Add the additional properties if they exist in API response
-          recipeObj.liked = recipe.liked || false;
-          recipeObj.saved = recipe.saved || false;
-          recipeObj.shared = recipe.shared || false;
-          recipeObj.isOwnRecipe = true; // These are my recipes
-          
-          return recipeObj;
-        });
-        
-        setRecipes(recipeInstances);
-        setError(null);
-      } catch (err) {
-        console.error("Failed to fetch my recipes:", err);
-        setError("Failed to load your recipes. Please try again.");
-        
-        // Fallback to the static data for development/testing
-        console.log("Using fallback data instead");
-        const recipeInstances = initialRecipes.map(recipe => {
-          const recipeObj = new Recipe({
-            id: recipe.id,
-            title: recipe.title,
-            photo: recipe.image,
-            instructions: [recipe.description],
-            totalCalory: 0,
-            ingredients: [],
-            tag: '',
-            price: 0,
-            type: '',
-            healthinessScore: 0,
-            easinessScore: 0,
-            whoShared: null,
-          });
-          
-          recipeObj.liked = recipe.liked;
-          recipeObj.saved = recipe.saved;
-          recipeObj.shared = recipe.shared;
-          recipeObj.isOwnRecipe = recipe.isOwnRecipe;
-          
-          return recipeObj;
-        });
-        
-        setRecipes(recipeInstances);
-      } finally {
-        setLoading(false);
-      }
-    };
+      const response = await apiClient.get('/recipe/get-all');
+      setRecipes(response.data)
+      setLoading(false);
+    }
     
     fetchMyRecipes();
   }, []);
@@ -184,134 +106,7 @@ const MyRecipes = () => {
     setSelectedRecipeId(null);
   };
 
-  // Handle edit recipe
-  const handleEditClick = () => {
-    handleMenuClose();
-    const recipeToEdit = recipes.find(r => r.id === selectedRecipeId);
-    if (recipeToEdit) {
-      setIsEditing(true);
-      setEditingRecipeId(recipeToEdit.id);
-      
-      // Populate form with recipe details
-      setNewTitle(recipeToEdit.getTitle());
-      setNewInstructions(recipeToEdit.getInstructions()[0] || '');
-      setNewPhotoBase64(recipeToEdit.getPhoto());
-      setImagePreview(recipeToEdit.getPhoto());
-      setNewTotalCalory(recipeToEdit.getTotalCalory());
-      setNewTag(recipeToEdit.getTag());
-      setNewPrice(recipeToEdit.getPrice());
-      setNewType(recipeToEdit.getType());
-      setNewIngredients(recipeToEdit.getIngredients() || []);
-      
-      setOpenAddDialog(true);
-    }
-  };
   
-  // Handle delete recipe
-  const handleDeleteClick = () => {
-    handleMenuClose();
-    setRecipeToDelete(selectedRecipeId);
-    setDeleteDialogOpen(true);
-  };
-  
-  const confirmDeleteRecipe = async () => {
-    if (!recipeToDelete) return;
-    
-    try {
-      setSubmitting(true);
-      
-      // API call to delete recipe
-      // await recipeService.deleteRecipe(recipeToDelete);
-      
-      // Remove from local state
-      setRecipes(prev => prev.filter(r => r.id !== recipeToDelete));
-      
-      setDeleteDialogOpen(false);
-      setRecipeToDelete(null);
-    } catch (error) {
-      console.error("Failed to delete recipe:", error);
-      setError("Failed to delete recipe. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Action handlers
-  const toggleLike = async (id) => {
-    try {
-      // Optimistic UI update
-      setRecipes(prev =>
-        prev.map(r => (r.id === id ? { ...r, liked: !r.liked } : r))
-      );
-      
-      // Get the current recipe
-      const recipe = recipes.find(r => r.id === id);
-      const newValue = !recipe.liked;
-      
-      // Call the API
-      await recipeService.updateRecipeAction(id, 'like', newValue);
-    } catch (error) {
-      console.error("Failed to update like status:", error);
-      // Revert optimistic update on error
-      setRecipes(prev =>
-        prev.map(r => (r.id === id ? { ...r, liked: !r.liked } : r))
-      );
-      // Show error to user
-      setError("Failed to update like status. Please try again.");
-      setTimeout(() => setError(null), 3000);
-    }
-  };
-
-  const toggleSave = async (id) => {
-    try {
-      // Optimistic UI update
-      setRecipes(prev =>
-        prev.map(r => (r.id === id ? { ...r, saved: !r.saved } : r))
-      );
-      
-      // Get the current recipe
-      const recipe = recipes.find(r => r.id === id);
-      const newValue = !recipe.saved;
-      
-      // Call the API
-      await recipeService.updateRecipeAction(id, 'save', newValue);
-    } catch (error) {
-      console.error("Failed to update save status:", error);
-      // Revert optimistic update on error
-      setRecipes(prev =>
-        prev.map(r => (r.id === id ? { ...r, saved: !r.saved } : r))
-      );
-      // Show error to user
-      setError("Failed to update save status. Please try again.");
-      setTimeout(() => setError(null), 3000);
-    }
-  };
-
-  const toggleShare = async (id) => {
-    try {
-      // Optimistic UI update
-      setRecipes(prev =>
-        prev.map(r => (r.id === id ? { ...r, shared: !r.shared } : r))
-      );
-      
-      // Get the current recipe
-      const recipe = recipes.find(r => r.id === id);
-      const newValue = !recipe.shared;
-      
-      // Call the API
-      await recipeService.updateRecipeAction(id, 'share', newValue);
-    } catch (error) {
-      console.error("Failed to update share status:", error);
-      // Revert optimistic update on error
-      setRecipes(prev =>
-        prev.map(r => (r.id === id ? { ...r, shared: !r.shared } : r))
-      );
-      // Show error to user
-      setError("Failed to update share status. Please try again.");
-      setTimeout(() => setError(null), 3000);
-    }
-  };
-
   // Handle file selection for image upload
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -391,7 +186,7 @@ const MyRecipes = () => {
         tag: newTag,
         type: newType,
         photo: newPhotoBase64 || 'https://picsum.photos/seed/default/300/300',
-        totalCalory: Number(newTotalCalory),
+        totalCalorie: Number(newTotalCalory),
         price: Number(newPrice),
       };
   
@@ -411,33 +206,7 @@ const MyRecipes = () => {
             throw new Error(`Error updating recipe: ${response.statusText}`);
           }
   
-          // Update in local state
-          setRecipes(prev =>
-            prev.map(r => {
-              if (r.id === editingRecipeId) {
-                const updatedRecipe = new Recipe({
-                  id: editingRecipeId,
-                  totalCalory: Number(newTotalCalory),
-                  ingredients: newIngredients,
-                  tag: newTag,
-                  price: Number(newPrice),
-                  title: newTitle,
-                  type: newType,
-                  instructions: [newInstructions],
-                  photo: newPhotoBase64 || r.getPhoto(),
-                  healthinessScore: r.getHealthinessScore(),
-                  easinessScore: r.getEasinessScore(),
-                  whoShared: r.whoShared,
-                });
-                updatedRecipe.liked = r.liked;
-                updatedRecipe.saved = r.saved;
-                updatedRecipe.shared = r.shared;
-                updatedRecipe.isOwnRecipe = true;
-                return updatedRecipe;
-              }
-              return r;
-            })
-          );
+      
   
           console.log("Recipe updated successfully");
         } catch (error) {
@@ -560,7 +329,7 @@ const MyRecipes = () => {
                       whiteSpace: 'nowrap',
                       flexGrow: 1,
                     }}>
-                      {recipe.getTitle()}
+                      {recipe.title}
                     </Typography>
                     
                     <IconButton
@@ -587,8 +356,8 @@ const MyRecipes = () => {
                     }}
                   >
                     <img
-                      src={recipe.getPhoto()}
-                      alt={recipe.getTitle()}
+                      src={recipe.photo}
+                      alt={recipe.photo}
                       style={{
                         position: 'absolute',
                         top: 0,
@@ -614,33 +383,11 @@ const MyRecipes = () => {
                       }}
                     >
                       <Typography variant="body2">
-                        {recipe.getInstructions()[0]}
+                        {recipe.instructions[0]}
                       </Typography>
                     </Box>
                   </Box>
-                  <CardActions disableSpacing sx={{ mt: 'auto', pt: 1 }}>
-                    <IconButton
-                      onClick={() => toggleLike(recipe.id)}
-                      aria-label="like"
-                      color={recipe.liked ? 'error' : 'default'}
-                    >
-                      {recipe.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                    </IconButton>
-                    <IconButton
-                      onClick={() => toggleSave(recipe.id)}
-                      aria-label="save"
-                      color={recipe.saved ? 'primary' : 'default'}
-                    >
-                      {recipe.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
-                    </IconButton>
-                    <IconButton
-                      onClick={() => toggleShare(recipe.id)}
-                      aria-label="share"
-                      color={recipe.shared ? 'secondary' : 'default'}
-                    >
-                      {recipe.shared ? <ShareIcon /> : <ShareOutlinedIcon />}
-                    </IconButton>
-                  </CardActions>
+            
                 </Card>
               ))}
             </Box>
@@ -652,14 +399,7 @@ const MyRecipes = () => {
             open={openMenu}
             onClose={handleMenuClose}
           >
-            <MenuItem onClick={handleEditClick}>
-              <EditIcon fontSize="small" sx={{ mr: 1 }} />
-              Edit Recipe
-            </MenuItem>
-            <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
-              <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-              Delete Recipe
-            </MenuItem>
+            
           </Menu>
           
           {/* Delete Confirmation Dialog */}
@@ -676,14 +416,7 @@ const MyRecipes = () => {
               <Button onClick={() => setDeleteDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button 
-                onClick={confirmDeleteRecipe} 
-                color="error" 
-                variant="contained"
-                disabled={submitting}
-              >
-                {submitting ? <CircularProgress size={24} color="inherit" /> : 'Delete'}
-              </Button>
+            
             </DialogActions>
           </Dialog>
 
