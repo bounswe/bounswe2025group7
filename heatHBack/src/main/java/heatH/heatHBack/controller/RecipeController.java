@@ -1,5 +1,6 @@
 package heatH.heatHBack.controller;
 
+import heatH.heatHBack.model.Recipe;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,8 @@ import heatH.heatHBack.model.request.RecipeRequest;
 import heatH.heatHBack.model.response.RecipeResponse;
 import heatH.heatHBack.service.implementation.RecipeService;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
 
 @Controller
 @RestController
@@ -34,5 +37,14 @@ public class RecipeController {
                 .orElse(ResponseEntity
                         .status(404)
                         .body(new RecipeResponse("ERROR")));
+    }
+
+    @GetMapping("/get-all")
+    public ResponseEntity<List<Recipe>> getAllRecipes() {
+        return recipeService.getAllRecipes()
+                .<ResponseEntity<List<Recipe>>>map(recipes -> ResponseEntity.ok(recipes))
+                .orElse(ResponseEntity
+                        .status(404)
+                        .body(null));
     }
 }
