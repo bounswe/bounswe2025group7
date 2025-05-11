@@ -26,4 +26,8 @@ public class SavedRecipe {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "recipe_id")
     private Recipe recipe;
+
+    private String photo;
+    
+    private String title;
 }
