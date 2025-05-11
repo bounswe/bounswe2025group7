@@ -9,7 +9,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import logo from '../images/logo.png';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import authService from '../services/authService';
-import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'; 
+import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
@@ -54,15 +54,15 @@ const Template = ({ children }) => {
   };
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
+    <Box sx={{
+      display: 'flex',
       flexDirection: 'column',
       minHeight: '100vh'
     }}>
       <StyledAppBar position="static">
         <StyledToolbar>
           {/* Logo at the far left */}
-          <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 48 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 48, gap: 2 }}>
             <img
               src={logo}
               alt="HeatH logo"
@@ -74,22 +74,12 @@ const Template = ({ children }) => {
                 objectFit: 'cover',
               }}
             />
-          </Box>
-
-          {/* Centered title */}
-          <Box
-            sx={{
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
             <Typography variant="h6" component="div">
               HeatH
             </Typography>
           </Box>
+
+
 
           {/* Navigation buttons on the right */}
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -144,8 +134,8 @@ const Template = ({ children }) => {
       </Container>
       <Footer>
         <Container>
-          <Box sx={{ 
-            display: 'flex', 
+          <Box sx={{
+            display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
