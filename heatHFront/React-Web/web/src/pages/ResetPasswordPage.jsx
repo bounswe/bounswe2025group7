@@ -7,7 +7,6 @@ const ResetPasswordPage = () => {
   const navigate = useNavigate();
   const emailFromState = location.state?.email || '';
 
-  const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -20,7 +19,6 @@ const ResetPasswordPage = () => {
       return;
     }
     // Simulate a backend call for password reset
-    console.log(`OTP entered: ${otp}`);
     console.log(`Resetting password for: ${emailFromState}`);
     console.log(`New Password: ${newPassword}`);
     setMessage('Your password has been updated successfully.');
@@ -37,18 +35,9 @@ const ResetPasswordPage = () => {
           Reset Password
         </Typography>
         <Typography variant="body1" gutterBottom>
-          Please enter the one-time code sent to <strong>{emailFromState}</strong> along with your new password.
+          Please enter your new password for <strong>{emailFromState}</strong>.
         </Typography>
         <form onSubmit={handleSubmit}>
-          <TextField
-            label="One-Time Code"
-            variant="outlined"
-            fullWidth
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            sx={{ mt: 2, mb: 2 }}
-            required
-          />
           <TextField
             label="New Password"
             variant="outlined"

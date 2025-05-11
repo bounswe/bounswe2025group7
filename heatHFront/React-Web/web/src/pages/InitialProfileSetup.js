@@ -9,6 +9,7 @@ import {
   Grid,
   Avatar,
   IconButton,
+  Alert,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
@@ -68,7 +69,8 @@ const InitialProfileSetup = () => {
         gender: formData.gender,
         profilePhoto: previewUrl,
       });
-      // After successful submission, send user to home
+      // After successful submission, mark setup done and send user to home
+      sessionStorage.setItem('profileSetupDone', 'true');
       navigate('/home');
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -84,6 +86,9 @@ const InitialProfileSetup = () => {
         <Typography variant="body1" gutterBottom align="center" sx={{ mb: 4 }}>
           Please provide your information to get started
         </Typography>
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          You must complete this profile setup before accessing the app.
+        </Alert>
 
         <Box component="form" onSubmit={handleSubmit}>
           <Grid container spacing={3} justifyContent="center">
