@@ -2,6 +2,7 @@ package heatH.heatHBack.service;
 
 import heatH.heatHBack.model.request.LoginRequest;
 import heatH.heatHBack.model.request.RegisterRequest;
+import heatH.heatHBack.model.request.VerificationRequest;
 import heatH.heatHBack.model.response.AuthResponse;
 
 public interface IAuthService {
@@ -9,5 +10,5 @@ public interface IAuthService {
     AuthResponse login(LoginRequest request);
     AuthResponse refreshToken(String refreshToken);
     String sendVerificationCode(String email);
-    Boolean verifyCode(Integer code);
+    Boolean verifyCode(VerificationRequest verificationRequest);
 }

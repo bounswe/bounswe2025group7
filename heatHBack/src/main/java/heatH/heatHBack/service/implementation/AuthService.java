@@ -4,6 +4,7 @@ import heatH.heatHBack.model.User;
 import heatH.heatHBack.model.UserMailVerification;
 import heatH.heatHBack.model.request.LoginRequest;
 import heatH.heatHBack.model.request.RegisterRequest;
+import heatH.heatHBack.model.request.VerificationRequest;
 import heatH.heatHBack.model.response.AuthResponse;
 import heatH.heatHBack.repository.UserRepository;
 import heatH.heatHBack.repository.UserVerificationRepository;
@@ -102,8 +103,9 @@ public class AuthService implements IAuthService{
     }
 
     @Override
-    public Boolean verifyCode(Integer code) {
-        String email = getCurrentUserEmail();
+    public Boolean verifyCode(VerificationRequest verificationRequest) {
+        String email = verificationRequest.getEmail();
+        System.out.println("Email: " + email);
 
         Optional<UserMailVerification> recordOpt = userVerificationRepository
                 .findTopByEmailOrderByCreatedAtDesc(email);
@@ -116,15 +118,7 @@ public class AuthService implements IAuthService{
             return false;
         }
 
-        return record.getCode().equals(code);
-    }
-
-    private String getCurrentUserEmail() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalStateException("User not authenticated");
-        }
-        return authentication.getName();
+        return record.getCode().equals(verificationRequest.getCode());
     }
 
     @Scheduled(fixedRate = 600_000)
