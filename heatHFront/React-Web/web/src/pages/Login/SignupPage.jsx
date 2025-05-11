@@ -1,20 +1,21 @@
 import { useState } from 'react';
-import { Container, Box, Typography, TextField, Button } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Container, Box, Typography, TextField, Button, Link } from '@mui/material';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import axios from 'axios';
 import authService from '../../services/authService';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 export default function SignupPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: '', password: '' });
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
   const handleChange = (e) =>
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError(null);
     try {
       await authService.register(form);
       // Clear tokens and mark newly registered
@@ -22,7 +23,17 @@ export default function SignupPage() {
       sessionStorage.setItem('justRegistered', 'true');
       navigate('/signin', { state: { success: 'Registration successful! Please sign in.' } });
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      if (axios.isAxiosError(err) && (err.response?.status === 409 || err.response?.status === 403)) {
+        setError(
+          <>An account is already registered with this email.{' '}
+            <Link component={RouterLink} to="/signin" underline="hover">
+              Sign in here.
+            </Link>
+          </>
+        );
+      } else {
+        setError(err.response?.data?.message || 'Registration failed');
+      }
     }
   };
 
