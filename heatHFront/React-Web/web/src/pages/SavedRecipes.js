@@ -95,7 +95,7 @@ const SavedRecipes = () => {
       console.error("Failed to unsave recipe:", error);
       
       // Fetch all saved recipes again to restore accurate state
-      const response = await apiClient.get('/saved-recipes');
+      const response = await apiClient.get('/saved-recipes/get');
       const savedRecipes = response.data;
       
       // Map API response to Recipe objects
