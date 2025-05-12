@@ -232,8 +232,8 @@ const MyRecipes = () => {
           }
   
           // Show success message
-          setSuccess("Recipe created successfully!");
-          setTimeout(() => setSuccess(null), 3000);
+          setError("Recipe created successfully!");
+          setTimeout(() => setError(null), 3000);
           
           // Close the dialog
           setOpenAddDialog(false);
