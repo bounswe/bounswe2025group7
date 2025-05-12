@@ -61,6 +61,30 @@ const HomePage = () => {
     }
   };
 
+  // Toggle like/unlike for a feed (optimistic UI update)
+  const handleLikeFeed = async (feedId, currentlyLiked) => {
+    const newLiked = !currentlyLiked;
+    // Optimistically update UI
+    setFeeds(prev => prev.map(f => f.id === feedId
+      ? { ...f, likedByCurrentUser: newLiked, likeCount: f.likeCount + (newLiked ? 1 : -1) }
+      : f
+    ));
+    try {
+      if (newLiked) {
+        await apiClient.post('/feeds/like', { feedId });
+      } else {
+        await apiClient.post('/feeds/unlike', { feedId });
+      }
+    } catch (err) {
+      console.error('Failed to toggle like:', err);
+      // Revert on error
+      setFeeds(prev => prev.map(f => f.id === feedId
+        ? { ...f, likedByCurrentUser: currentlyLiked, likeCount: f.likeCount + (currentlyLiked ? 1 : -1) }
+        : f
+      ));
+    }
+  };
+
   // Fetch posts on component mount
   useEffect(() => {
     fetchFeeds();
@@ -335,7 +359,7 @@ const HomePage = () => {
                     </Box>
                   </>}
                   <CardActions disableSpacing>
-                    <IconButton onClick={() => handleLike(feed.id)} aria-label="like" color={feed.likedByCurrentUser ? 'error' : 'default'}>
+                    <IconButton onClick={() => handleLikeFeed(feed.id, feed.likedByCurrentUser)} aria-label="like" color={feed.likedByCurrentUser ? 'error' : 'default'}>
                       {feed.likedByCurrentUser ? <FavoriteIcon /> : <FavoriteBorderIcon />}
                     </IconButton>
                     <Typography variant="body2" sx={{ ml: 1 }}>
