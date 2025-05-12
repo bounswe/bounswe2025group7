@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Container, Typography, Grid, Box, IconButton, useTheme, Button, Rating,
-  Chip, Divider, List, ListItem, ListItemText, Paper
+  Chip, Divider, List, ListItem, ListItemText, Paper, Avatar
 } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -12,20 +12,42 @@ import BookmarkIcon from '@mui/icons-material/Bookmark';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import ShareIcon from '@mui/icons-material/Share';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
 import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import PersonIcon from '@mui/icons-material/Person';
-import Recipe from '../models/Recipe';
+import PrintIcon from '@mui/icons-material/Print';
 import Template from '../components/Template';
 import apiClient from '../services/apiClient';
+import Snackbar from '@mui/material/Snackbar';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 
-
-// Reuse the styled components you already have
+// Recipe section styling
 const RecipeDetailSection = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(2),
-  margin: theme.spacing(0, 0, 2, 0),
+  padding: theme.spacing(3),
+  margin: theme.spacing(0, 0, 3, 0),
   borderRadius: theme.shape.borderRadius,
-  background: alpha(theme.palette.background.paper, 0.8),
+  background: theme.palette.background.paper,
+  boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
+}));
+
+// Recipe info box styling
+const RecipeInfoBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'column',
+  padding: theme.spacing(2),
+  borderRadius: theme.shape.borderRadius,
+  textAlign: 'center',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  background: alpha(theme.palette.primary.light, 0.05)
 }));
 
 const RecipeDetail = () => {
@@ -37,23 +59,89 @@ const RecipeDetail = () => {
   const [recipe, setRecipe] = useState(null);
   const [userRating, setUserRating] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('details');
   
-  // Fetch recipe data - in a real app, this would be an API call
+  // Share functionality states - MOVED INSIDE COMPONENT
+  const [shareAnchorEl, setShareAnchorEl] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  
+  // Fetch recipe data
   useEffect(() => {
     const fetchRecipe = async () => {
-      console.log(id)
-      const response = await apiClient.get(`/recipe/get?recipeId=${id}`);
-      setRecipe(response.data);
-      setLoading(false);
+      try {
+        const response = await apiClient.get(`/recipe/get?recipeId=${id}`);
+        setRecipe(response.data);
+      } catch (error) {
+        console.error("Error fetching recipe:", error);
+      } finally {
+        setLoading(false);
+      }
     };
   
     fetchRecipe();
   }, [id]);
   
-
+  const handlePrint = () => {
+    window.print();
+  };
   
-
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+  };
   
+  // Share functionality handlers - MOVED INSIDE COMPONENT
+  const handleShareClick = (event) => {
+    setShareAnchorEl(event.currentTarget);
+  };
+
+  const handleShareClose = () => {
+    setShareAnchorEl(null);
+  };
+
+  const copyLinkToClipboard = () => {
+    const recipeUrl = window.location.href;
+    navigator.clipboard.writeText(recipeUrl)
+      .then(() => {
+        setSnackbarMessage('Recipe link copied to clipboard!');
+        setSnackbarOpen(true);
+        handleShareClose();
+      })
+      .catch(err => {
+        setSnackbarMessage('Failed to copy link. Please try again.');
+        setSnackbarOpen(true);
+        console.error('Could not copy text: ', err);
+      });
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
+  const shareToSocial = (platform) => {
+    const recipeUrl = window.location.href;
+    // Now recipe is properly in scope
+    const recipeTitle = recipe?.title || 'Check out this recipe!';
+    let shareUrl;
+
+    switch (platform) {
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(recipeUrl)}`;
+        break;
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(recipeTitle)}&url=${encodeURIComponent(recipeUrl)}`;
+        break;
+      case 'whatsapp':
+        shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(recipeTitle + ' ' + recipeUrl)}`;
+        break;
+      default:
+        return;
+    }
+    
+    window.open(shareUrl, '_blank', 'noopener,noreferrer');
+    handleShareClose();
+  };
+
   if (loading) {
     return (
       <Template>
@@ -85,174 +173,407 @@ const RecipeDetail = () => {
   
   return (
     <Template>
-      <Box>
-        {/* Back button */}
-        <Container maxWidth="lg" sx={{ pt: 2 }}>
+      {/* Hero section with image and title overlay */}
+      <Box sx={{ position: 'relative', height: '50vh', overflow: 'hidden' }}>
+        <Box
+          component="img"
+          src={recipe["photo"]}
+          alt={recipe["title"]}
+          sx={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            bgcolor: alpha(theme.palette.common.black, 0.7),
+            color: 'white',
+            p: 3,
+          }}
+        >
+          <Container maxWidth="lg">
+            <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 1 }}>
+              {recipe["title"]}
+            </Typography>
+            
+            {recipe["tag"] && (
+              <Chip 
+                label={recipe["tag"]} 
+                size="small" 
+                sx={{ 
+                  mt: 1, 
+                  bgcolor: theme.palette.primary.main, 
+                  color: 'white',
+                  fontWeight: 'bold'
+                }} 
+              />
+            )}
+          </Container>
+        </Box>
+      </Box>
+      
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Button 
             startIcon={<ArrowBackIcon />} 
             onClick={() => navigate(-1)}
-            sx={{ mb: 2 }}
           >
             Back
           </Button>
-        </Container>
-        
-        {/* Hero section with image */}
-        <Box sx={{ position: 'relative', height: '40vh', overflow: 'hidden' }}>
-          <Box
-            component="img"
-            src={recipe["photo"]}
-            alt={recipe["photo"]}
-            sx={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-          />
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              bgcolor: alpha(theme.palette.common.black, 0.6),
-              color: 'white',
-              p: 2,
-            }}
-          >
-            <Container maxWidth="lg">
-              <Typography variant="h4">{recipe["title"]}</Typography>
-              
-              {recipe["tag"] && (
-                <Chip 
-                  label={recipe["tag"]} 
-                  size="small" 
-                  sx={{ mt: 1, bgcolor: alpha(theme.palette.primary.main, 0.8), color: 'white' }} 
-                />
-              )}
-            </Container>
+          
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+            Easiness Score
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Rating value={recipe.easinessScore || 3.5} readOnly precision={0.5} />
+            <Typography variant="body2" sx={{ ml: 1 }}>
+              (3.5)
+            </Typography>
           </Box>
         </Box>
-        
-        {/* Main content area */}
-        <Container maxWidth="lg">
-          <Box sx={{ py: 4 }}>
-            <Grid container spacing={3}>
-              {/* Left column - Recipe details */}
-              <Grid item xs={12} md={8}>
-                {/* Recipe type & meta information */}
-                <RecipeDetailSection>
-                  <Grid container spacing={2}>
-                    {recipe["type"] && (
-                      <Grid item xs={6} sm={3}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <LocalDiningIcon color="primary" />
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">Type</Typography>
-                            <Typography variant="body2">{recipe["type"]}</Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-                    )}
-                    
-                    {recipe["totalCalorie"] > 0 && (
-                      <Grid item xs={6} sm={3}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <LocalDiningIcon color="primary" />
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">Calories</Typography>
-                            <Typography variant="body2">{recipe["totalCalorie"]} cal</Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-                    )}
-                    
-                    {recipe["price"] > 0 && (
-                      <Grid item xs={6} sm={3}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <AttachMoneyIcon color="primary" />
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">Price</Typography>
-                            <Typography variant="body2">${recipe["price"]}</Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-                    )}
-                    
 
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+            Healthiness Score
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Rating value={recipe.healthinessScore || 3.5} readOnly precision={0.5} />
+            <Typography variant="body2" sx={{ ml: 1 }}>
+              (3.5)
+            </Typography>
+          </Box>
+        </Box>
+                  
+          <Button 
+            startIcon={<PrintIcon />} 
+            onClick={handlePrint}
+          >
+            Print
+          </Button>
+        </Box>
+        
+        {/* Tabs navigation - styled to match the image */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center',
+          mb: 3,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+        }}>
+          <Box sx={{ 
+            display: 'flex',
+            maxWidth: '600px',
+            width: '100%',
+            justifyContent: 'space-evenly'
+          }}>
+            <Button 
+              onClick={() => handleTabChange('details')}
+              sx={{ 
+                color: activeTab === 'details' ? theme.palette.primary.main : 'text.secondary',
+                borderBottom: activeTab === 'details' ? `2px solid ${theme.palette.primary.main}` : 'none',
+                borderRadius: 0,
+                px: 3,
+                py: 1,
+                fontWeight: activeTab === 'details' ? 'bold' : 'normal'
+              }}
+            >
+              Recipe Details
+            </Button>
+            <Button 
+              onClick={() => handleTabChange('instructions')}
+              sx={{ 
+                color: activeTab === 'instructions' ? theme.palette.primary.main : 'text.secondary',
+                borderBottom: activeTab === 'instructions' ? `2px solid ${theme.palette.primary.main}` : 'none',
+                borderRadius: 0,
+                px: 3,
+                py: 1,
+                fontWeight: activeTab === 'instructions' ? 'bold' : 'normal'
+              }}
+            >
+              Instructions
+            </Button>
+            <Button 
+              onClick={() => handleTabChange('ingredients')}
+              sx={{ 
+                color: activeTab === 'ingredients' ? theme.palette.primary.main : 'text.secondary',
+                borderBottom: activeTab === 'ingredients' ? `2px solid ${theme.palette.primary.main}` : 'none',
+                borderRadius: 0,
+                px: 3,
+                py: 1,
+                fontWeight: activeTab === 'ingredients' ? 'bold' : 'normal'
+              }}
+            >
+              Ingredients
+            </Button>
+            <Button 
+              onClick={() => handleTabChange('save')}
+              sx={{ 
+                color: activeTab === 'save' ? theme.palette.primary.main : 'text.secondary',
+                borderBottom: activeTab === 'save' ? `2px solid ${theme.palette.primary.main}` : 'none',
+                borderRadius: 0,
+                px: 3,
+                py: 1,
+                fontWeight: activeTab === 'save' ? 'bold' : 'normal'
+              }}
+            >
+              Save & Share
+            </Button>
+          </Box>
+        </Box>
+
+        {/* Conditionally render content based on active tab */}
+        <Box sx={{ 
+          display: 'flex',
+          justifyContent: 'center', 
+          my: 3
+        }}>
+          {/* Recipe details tab */}
+          {activeTab === 'details' && (
+            <Paper 
+              elevation={1} 
+              sx={{ 
+                p: 3, 
+                maxWidth: '400px',
+                width: '100%',
+                bgcolor: alpha(theme.palette.background.default, 0.7)
+              }}
+            >
+              <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                Recipe Details
+              </Typography>
+              <Grid container spacing={2} sx={{ mt: 1 }}>
+                {recipe["type"] && (
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1,
+              p: 1.5,
+              height: '100%',
+              bgcolor: alpha(theme.palette.background.paper, 0.4),
+              borderRadius: 1,
+              }}>
+                      <LocalDiningIcon color="primary" />
+                      <Box>
+                        <Typography variant="body2" fontWeight="medium">{recipe["type"]}</Typography>
+                      </Box>
+                    </Box>
                   </Grid>
-                </RecipeDetailSection>
+                )}
                 
-                {/* Recipe ratings */}
-                <RecipeDetailSection>
-                  <Typography variant="h6" gutterBottom>Ratings</Typography>
-                  <Grid container spacing={3}>
-                    <Grid item xs={6}>
-                      <Typography variant="body2" gutterBottom>Healthiness</Typography>
-                      <Rating 
-                        value={3} 
-                        readOnly 
-                        precision={0.5}
-                      />
-                    </Grid>
-                    
-                    <Grid item xs={6}>
-                      <Typography variant="body2" gutterBottom>Easiness</Typography>
-                      <Rating 
-                        value={3} 
-                        readOnly 
-                        precision={0.5}
-                      />
-                    </Grid>
+                {recipe["totalCalorie"] > 0 && (
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1,
+              p: 1.5,
+              height: '100%',
+              bgcolor: alpha(theme.palette.background.paper, 0.4),
+              borderRadius: 1, }}>
+                      <LocalDiningIcon color="primary" />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Calories</Typography>
+                        <Typography variant="body2" fontWeight="medium">{recipe["totalCalorie"]} kcal</Typography>
+                      </Box>
+                    </Box>
                   </Grid>
-                </RecipeDetailSection>
+                )}
                 
-                {/* Instructions */}
-                <RecipeDetailSection>
-                  <Typography variant="h6" gutterBottom>Instructions</Typography>
-                  {recipe["instructions"].map((instruction, idx) => (
-                    <Typography key={idx} variant="body1" paragraph>
+                {recipe["price"] > 0 && (
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1,
+              p: 1.5,
+              height: '100%',
+              bgcolor: alpha(theme.palette.background.paper, 0.4),
+              borderRadius: 1, }}>
+                      <AttachMoneyIcon color="primary" />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Price</Typography>
+                        <Typography variant="body2" fontWeight="medium">${recipe["price"]}</Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                )}
+              </Grid>
+            </Paper>
+          )}
+          
+          {/* Instructions tab */}
+          {activeTab === 'instructions' && (
+            <Paper 
+              elevation={1} 
+              sx={{ 
+                p: 3, 
+                maxWidth: '400px',
+                width: '100%',
+                bgcolor: alpha(theme.palette.background.default, 0.7)
+              }}
+            >
+              <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                Instructions
+              </Typography>
+              <Box>
+                {recipe["instructions"].map((instruction) => (
+                  <Box  sx={{ display: 'flex', mb: 3 }}>
+                    <Box 
+                      sx={{ 
+                        minWidth: 32, 
+                        height: 32, 
+                        borderRadius: '50%', 
+                        bgcolor: theme.palette.primary.main, 
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mr: 2,
+                        fontWeight: 'bold',
+                        flexShrink: 0
+                      }}
+                    >
+                      
+                    </Box>
+                    <Typography variant="body1">
                       {instruction}
                     </Typography>
-                  ))}
-                </RecipeDetailSection>
-              </Grid>
-              
-              {/* Right column - Ingredients and actions */}
-              <Grid item xs={12} md={4}>
-                {/* User actions */}
+                  </Box>
+                ))}
+              </Box>
+            </Paper>
+          )}
+          
+          {/* Ingredients tab */}
+          {activeTab === 'ingredients' && (
+            <Paper 
+              elevation={1} 
+              sx={{ 
+                p: 3, 
+                maxWidth: '200px',
+                width: '100%',
+                bgcolor: alpha(theme.palette.background.default, 0.7)
+              }}
+            >
+              <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                Ingredients
+              </Typography>
+              {recipe["ingredients"] && recipe["ingredients"].length > 0 ? (
+                <List disablePadding>
+                  {recipe["ingredients"].map((ingredientStr, idx) => {
+                    const parts = ingredientStr.split(':');
+                    const name = parts[0] ? parts[0].trim() : "";
+                    const amount = parts[1] ? parts[1].trim() : "";
+                    return (
+                      <ListItem 
+                        key={idx} 
+                        disablePadding 
+                        divider={idx < recipe["ingredients"].length - 1}
+                        sx={{ py: 1 }}
+                      >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '50%' }}>
+                          <Typography variant="body1" fontWeight="medium">{name}</Typography>
+                          <Typography variant="body1" color="text.secondary">{amount}</Typography>
+                        </Box>
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              ) : (
+                <Typography variant="body1" color="text.secondary" align="center">
+                  No ingredients listed
+                </Typography>
+              )}
+            </Paper>
+          )}
+          
+          {/* Save & Share tab */}
+          {activeTab === 'save' && (
+            <Paper 
+              elevation={1} 
+              sx={{ 
+                p: 3, 
+                maxWidth: '300px',
+                width: '100%',
+                bgcolor: alpha(theme.palette.background.default, 0.7)
+              }}
+            >
+              <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                Save & Share
+              </Typography>
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-around', 
+                mt: 4,
+                mb: 4,
+                height: '50px',
+                alignItems: 'center'
+              }}>
+                {/* <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <IconButton color="error" sx={{ mb: 1, p: 2 }}>
+                    <FavoriteIcon fontSize="large" />
+                  </IconButton>
+                  <Typography color="error" variant="body2">Like</Typography>
+                </Box> */}
                 
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <IconButton color="primary" sx={{ mb: 1, p: 2 }}>
+                    <BookmarkIcon fontSize="large" />
+                  </IconButton>
+                  <Typography color="primary" variant="body2">Save</Typography>
+                </Box>
                 
-                {/* Ingredients list */}
-                <Paper elevation={1} sx={{ p: 2 }}>
-  <Typography variant="h6" gutterBottom>Ingredients</Typography>
-  {recipe["ingredients"] && recipe["ingredients"].length > 0 ? (
-    <List>
-      {recipe["ingredients"].map((ingredientStr, idx) => {
-        const parts = ingredientStr.split(':');
-        const name = parts[0] ? parts[0].trim() : "";
-        const amount = parts[1] ? parts[1].trim() : "";
-        return (
-          <ListItem key={idx} divider={idx < recipe["ingredients"].length - 1}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-              <Typography variant="body1">{name}</Typography>
-              <Typography variant="body1">{amount}</Typography>
-            </Box>
-          </ListItem>
-        );
-      })}
-    </List>
-  ) : (
-    <Typography variant="body2" color="text.secondary" align="center">
-      No ingredients listed
-    </Typography>
-  )}
-</Paper>
-              </Grid>
-            </Grid>
-          </Box>
-        </Container>
-      </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <IconButton 
+                    color="info" 
+                    sx={{ mb: 1, p: 2 }}
+                    onClick={handleShareClick}
+                  >
+                    <ShareIcon fontSize="large" />
+                  </IconButton>
+                  <Typography color="info" variant="body2">Share</Typography>
+                </Box>
+                <Menu
+                  anchorEl={shareAnchorEl}
+                  open={Boolean(shareAnchorEl)}
+                  onClose={handleShareClose}
+                  anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'center',
+                  }}
+                  transformOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'center',
+                  }}
+                >
+                  <MenuItem onClick={copyLinkToClipboard} dense>
+                    <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} />
+                    Copy Link
+                  </MenuItem>
+                  <MenuItem onClick={() => shareToSocial('facebook')} dense>
+                    <FacebookIcon fontSize="small" sx={{ mr: 1 }} />
+                    Share to Facebook
+                  </MenuItem>
+                  <MenuItem onClick={() => shareToSocial('twitter')} dense>
+                    <TwitterIcon fontSize="small" sx={{ mr: 1 }} />
+                    Share to Twitter
+                  </MenuItem>
+                  <MenuItem onClick={() => shareToSocial('whatsapp')} dense>
+                    <WhatsAppIcon fontSize="small" sx={{ mr: 1 }} />
+                    Share via WhatsApp
+                  </MenuItem>
+                </Menu>
+
+                <Snackbar
+                  open={snackbarOpen}
+                  autoHideDuration={3000}
+                  onClose={handleSnackbarClose}
+                  message={snackbarMessage}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                />
+              </Box>
+            </Paper>
+          )}
+        </Box>
+      </Container>
     </Template>
   );
 };
