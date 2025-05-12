@@ -19,7 +19,7 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import PersonIcon from '@mui/icons-material/Person';
 import PrintIcon from '@mui/icons-material/Print';
 import Template from '../components/Template';
-import apiClient from '../services/apiClient';
+import apiClient, { checkIfRecipeSaved, saveRecipe, unsaveRecipe } from '../services/apiClient';
 import Snackbar from '@mui/material/Snackbar';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -66,6 +66,10 @@ const RecipeDetail = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   
+  // Add these states inside your RecipeDetail component
+  const [isSaved, setIsSaved] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  
   // Fetch recipe data
   useEffect(() => {
     const fetchRecipe = async () => {
@@ -81,6 +85,18 @@ const RecipeDetail = () => {
   
     fetchRecipe();
   }, [id]);
+  
+  // Add this effect to check if recipe is saved when the component loads
+  useEffect(() => {
+    const fetchSavedStatus = async () => {
+      if (recipe?.id) {
+        const savedStatus = await checkIfRecipeSaved(recipe.id);
+        setIsSaved(savedStatus);
+      }
+    };
+    
+    fetchSavedStatus();
+  }, [recipe]);
   
   const handlePrint = () => {
     window.print();
@@ -140,6 +156,30 @@ const RecipeDetail = () => {
     
     window.open(shareUrl, '_blank', 'noopener,noreferrer');
     handleShareClose();
+  };
+
+  // Add this function to handle save/unsave actions
+  const handleSaveToggle = async () => {
+    if (!recipe?.id) return;
+    
+    setSaveLoading(true);
+    try {
+      if (isSaved) {
+        await unsaveRecipe(recipe.id);
+        setSnackbarMessage('Recipe removed from saved items');
+      } else {
+        await saveRecipe(recipe.id);
+        setSnackbarMessage('Recipe saved successfully!');
+      }
+      setIsSaved(!isSaved);
+      setSnackbarOpen(true);
+    } catch (error) {
+      setSnackbarMessage('Error saving recipe. Please try again.');
+      setSnackbarOpen(true);
+      console.error('Error toggling save status:', error);
+    } finally {
+      setSaveLoading(false);
+    }
   };
 
   if (loading) {
@@ -491,7 +531,7 @@ const RecipeDetail = () => {
               elevation={1} 
               sx={{ 
                 p: 3, 
-                maxWidth: '300px',
+                maxWidth: '200px',
                 width: '100%',
                 bgcolor: alpha(theme.palette.background.default, 0.7)
               }}
@@ -504,7 +544,7 @@ const RecipeDetail = () => {
                 justifyContent: 'space-around', 
                 mt: 4,
                 mb: 4,
-                height: '50px',
+                height: '30px',
                 alignItems: 'center'
               }}>
                 {/* <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -515,16 +555,52 @@ const RecipeDetail = () => {
                 </Box> */}
                 
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <IconButton color="primary" sx={{ mb: 1, p: 2 }}>
-                    <BookmarkIcon fontSize="large" />
+                  <IconButton 
+                    onClick={handleSaveToggle}
+                    disabled={saveLoading}
+                    sx={{ 
+                      mb: 1, 
+                      p: 1,
+                      color: isSaved ? 'primary.main' : 'text.secondary',
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        backgroundColor: isSaved ? 'primary.light' : alpha(theme.palette.primary.light, 0.1),
+                        color: isSaved ? 'white' : 'primary.main',
+                      },
+                      '&:active': {
+                        backgroundColor: 'primary.dark',
+                        transform: 'scale(0.95)',
+                      }
+                    }}
+                  >
+                    {isSaved ? (
+                      <BookmarkIcon fontSize="large" />
+                    ) : (
+                      <BookmarkBorderIcon fontSize="large" />
+                    )}
                   </IconButton>
-                  <Typography color="primary" variant="body2">Save</Typography>
+                  <Typography 
+                    color={isSaved ? "primary" : "text.secondary"} 
+                    variant="body2"
+                  >
+                    {isSaved ? 'Saved' : 'Save'}
+                  </Typography>
                 </Box>
                 
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <IconButton 
                     color="info" 
-                    sx={{ mb: 1, p: 2 }}
+                    sx={{ mb: 1, p: 1,
+                      color: 'info.main',
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        backgroundColor: 'info.light',
+                        color: 'white',
+                      },
+                      '&:active': {
+                        backgroundColor: 'info.dark',
+                        transform: 'scale(0.50)',
+                      } }}
                     onClick={handleShareClick}
                   >
                     <ShareIcon fontSize="large" />

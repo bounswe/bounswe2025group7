@@ -37,4 +37,26 @@ apiClient.interceptors.response.use(
   }
 );
 
-export default apiClient; 
+// Check if a recipe is saved by current user
+export const checkIfRecipeSaved = async (recipeId) => {
+  try {
+    const response = await apiClient.get('/saved-recipes/get');
+    const savedRecipes = response.data;
+    return savedRecipes.some(recipe => recipe.recipeId === recipeId);
+  } catch (error) {
+    console.error('Error checking saved recipe:', error);
+    return false;
+  }
+};
+
+// Save a recipe
+export const saveRecipe = async (recipeId) => {
+  return apiClient.post('/saved-recipes/save', { recipeId });
+};
+
+// Unsave a recipe
+export const unsaveRecipe = async (recipeId) => {
+  return apiClient.post('/saved-recipes/unsave', { recipeId });
+};
+
+export default apiClient;
