@@ -335,9 +335,12 @@ const HomePage = () => {
                     </Box>
                   </>}
                   <CardActions disableSpacing>
-                    <IconButton onClick={() => handleLike(feed.id)} aria-label="like" color={feed.likedByCurrentUser?'error':'default'}>
-                      {feed.likedByCurrentUser?<FavoriteIcon/>:<FavoriteBorderIcon/>}
+                    <IconButton onClick={() => handleLike(feed.id)} aria-label="like" color={feed.likedByCurrentUser ? 'error' : 'default'}>
+                      {feed.likedByCurrentUser ? <FavoriteIcon /> : <FavoriteBorderIcon />}
                     </IconButton>
+                    <Typography variant="body2" sx={{ ml: 1 }}>
+                      {feed.likeCount}
+                    </Typography>
                   </CardActions>
                 </Card>
               ))}
