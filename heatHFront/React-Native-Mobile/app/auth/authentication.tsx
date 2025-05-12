@@ -1,5 +1,5 @@
 import {Image, View, ImageBackground, StyleSheet, SafeAreaView, Text} from 'react-native'
-import backgroundImage from '../../assets/images/auth/login.jpg'
+import backgroundImage from '../../assets/images/auth/login.jpg';
 
 // custom components
 import {AuthForm} from '../../components/auth/ThemedAuth'
@@ -21,7 +21,7 @@ const Login = () => {
 
       {/* Auth container */}
       <Spacer height = '13%'/>
-      <AuthForm type = 'register'/>
+      <AuthForm type = 'login'/>
 
       
       
