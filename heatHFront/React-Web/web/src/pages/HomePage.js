@@ -362,7 +362,7 @@ const HomePage = () => {
                     <IconButton onClick={() => handleLikeFeed(feed.id, feed.likedByCurrentUser)} aria-label="like" color={feed.likedByCurrentUser ? 'error' : 'default'}>
                       {feed.likedByCurrentUser ? <FavoriteIcon /> : <FavoriteBorderIcon />}
                     </IconButton>
-                    <Typography variant="body2" sx={{ ml: 1 }}>
+                    <Typography variant="body2" sx={{ ml: 0 }}>
                       {feed.likeCount}
                     </Typography>
                   </CardActions>
