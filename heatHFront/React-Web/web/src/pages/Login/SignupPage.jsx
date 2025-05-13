@@ -89,12 +89,25 @@ export default function SignupPage() {
     }
   };
 
+  // Handler for Enter key press to send code or register
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      setError(null);
+      if (!codeSent) {
+        handleSendCode();
+      } else {
+        handleSubmit(e);
+      }
+    }
+  };
+
   return (
     <Container maxWidth="sm">
       <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         
         <Typography variant="h5">Sign Up</Typography>
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, width: '100%' }}>
+        <Box component="form" onSubmit={handleSubmit} onKeyDown={handleKeyDown} sx={{ mt: 2, width: '100%' }}>
           {/* Always show email/password */}
           <TextField
             label="Email Address"
@@ -176,7 +189,7 @@ export default function SignupPage() {
                 variant="text"
                 onClick={handleResend}
                 disabled={countdown > 0}
-                sx={{ ml: 1 }}
+                sx={{ ml: 1, width: '17ch', whiteSpace: 'nowrap', textAlign: 'center' }}
               >
                 {countdown > 0 ? `Resend Code (${countdown}s)` : 'Resend Code'}
               </Button>
@@ -187,7 +200,7 @@ export default function SignupPage() {
             <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ alignSelf: 'flex-start', mb: 5 }}>
               Back
             </Button>
-          </Box>
+        </Box>
       </Box>
     </Container>
   );

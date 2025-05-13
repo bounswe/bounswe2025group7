@@ -86,6 +86,15 @@ export default function SigninPage() {
     }
   };
 
+  // Handler for Enter key press to submit login
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      setError('');
+      handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
+    }
+  };
+
   return (
     <Container maxWidth="sm">
       <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -98,7 +107,7 @@ export default function SigninPage() {
           </Typography>
         )}
 
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, width: '100%' }}>
+        <Box component="form" onSubmit={handleSubmit} onKeyDown={handleKeyDown} sx={{ mt: 2, width: '100%' }}>
           <TextField
             label="Username"
             name="username"
