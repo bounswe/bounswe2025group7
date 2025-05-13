@@ -5,7 +5,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import heatH.heatHBack.model.User;
+import heatH.heatHBack.repository.SavedRecipeRepository;
 import heatH.heatHBack.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ public class RecipeService {
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
     private final GcsService gcsService;
+    private final SavedRecipeRepository savedRecipeRepository;
 
     public Recipe saveRecipe(RecipeRequest request) {
         Recipe recipe = new Recipe();
@@ -49,12 +52,18 @@ public class RecipeService {
     public Optional<Recipe> getRecipeById(Long id) {
         return recipeRepository.findById(id);
     }
+    @Transactional
+    public void deleteRecipeById(Long id) {
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Recipe not found"));
+        savedRecipeRepository.deleteByRecipe(recipe);
+        recipeRepository.deleteById(id);
+    }
     public Optional<List<Recipe>> getAllRecipes() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
         User user = userRepository.findByUsername(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         return recipeRepository.findAllByUser(user);
     }
 }

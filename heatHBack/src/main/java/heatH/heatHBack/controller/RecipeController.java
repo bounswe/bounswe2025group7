@@ -1,14 +1,10 @@
 package heatH.heatHBack.controller;
 
 import heatH.heatHBack.model.Recipe;
+import heatH.heatHBack.model.request.DeleteRecipeRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import heatH.heatHBack.model.request.RecipeRequest;
 import heatH.heatHBack.model.response.RecipeResponse;
@@ -46,5 +42,11 @@ public class RecipeController {
                 .orElse(ResponseEntity
                         .status(404)
                         .body(null));
+    }
+
+    @DeleteMapping("/delete-recipe")
+    public ResponseEntity<String> deleteRecipe(@RequestBody DeleteRecipeRequest deleteRecipeRequest){
+         recipeService.deleteRecipeById(deleteRecipeRequest.getId());
+         return  ResponseEntity.ok("Recipe deleted.");
     }
 }
