@@ -15,8 +15,8 @@ export default function SignupPage() {
   const [message, setMessage] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [emailError, setEmailError] = useState('');
+  const emailRegex =  /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i; 
 
-  // refs for code input fields
   const inputRefs = useRef([]);
 
   const handleChange = (e) => {
@@ -29,7 +29,7 @@ export default function SignupPage() {
     }
     else if (name === 'username') {
       setEmailError(
-        value.length < 1 ? 'Username can not be empty.' : ''
+        emailRegex.test(value) ? '' : 'Please enter a valid email address'
       );
     }
   }
@@ -181,14 +181,14 @@ export default function SignupPage() {
               fullWidth
               sx={{ mt: 3 }}
               onClick={handleSendCode}
-              disabled={!!passwordError || !form.password || !form.username}
+              disabled={!!passwordError || !form.password || !form.username || !!emailError }
             >
               Send Verification Code
             </Button>
           )}
           {codeSent && (
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-              <Button type="submit" disabled={!!passwordError} variant="contained" sx={{ flex: 1, mr: 1 }}>
+              <Button type="submit" disabled={!!emailError || !!passwordError}  variant="contained" sx={{ flex: 1, mr: 1 }}>
                 Register
               </Button>
               <Button
