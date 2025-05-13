@@ -13,6 +13,8 @@ import Recipe from '../models/Recipe';
 import recipeService from '../services/recipeService';
 import feedService from '../services/feedService';
 import apiClient from '../services/apiClient';
+import Drawer from '@mui/material/Drawer';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 
 // Static list for initial UI rendering - will be replaced with API data
 const initialRecipes = [
@@ -45,6 +47,10 @@ const HomePage = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [recipeSelectionDialogOpen, setRecipeSelectionDialogOpen] = useState(false);
+  const [commentDrawerOpen, setCommentDrawerOpen] = useState(false);
+  const [commentFeed, setCommentFeed] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
 
   // Function to fetch recent posts from API
   const fetchFeeds = async () => {
@@ -251,6 +257,20 @@ const HomePage = () => {
     return recipes.find(r => r.getId() === selectedRecipeForPost);
   };
 
+  const handleCommentClick = (feed) => {
+    setCommentFeed(feed);
+    setComments(feed.comments || []);
+    setNewComment('');
+    setCommentDrawerOpen(true);
+  };
+
+  const handlePostComment = (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    setComments(prev => [...prev, { user: 'You', text: newComment }]);
+    setNewComment('');
+  };
+
   return (
     <Template>
       <Box>
@@ -365,6 +385,9 @@ const HomePage = () => {
                     <Typography variant="body2" sx={{ ml: 1 }}>
                       {feed.likeCount}
                     </Typography>
+                    <IconButton onClick={() => handleCommentClick(feed)} aria-label="comment" sx={{ ml: 1 }}>
+                      <ChatBubbleOutlineIcon />
+                    </IconButton>
                   </CardActions>
                 </Card>
               ))}
@@ -440,6 +463,41 @@ const HomePage = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        <Drawer anchor="right" open={commentDrawerOpen} onClose={() => setCommentDrawerOpen(false)}>
+          <Box sx={{ width: 350, display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+              <Typography variant="h6">Comments</Typography>
+              {commentFeed && (
+                <Typography variant="subtitle1" sx={{ mt: 1 }} noWrap>
+                  {commentFeed.text || commentFeed.recipe?.title || 'Post'}
+                </Typography>
+              )}
+            </Box>
+            <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
+              {comments.length > 0 ? comments.map((c, i) => (
+                <Box key={i} sx={{ mb: 2 }}>
+                  <Typography variant="body2"><strong>{c.user}</strong> {c.text}</Typography>
+                </Box>
+              )) : (
+                <Typography color="text.secondary">No comments yet.</Typography>
+              )}
+            </Box>
+            <Box component="form" onSubmit={handlePostComment} sx={{ p: 2 }}>
+              <TextField
+                label="Add a comment"
+                fullWidth
+                multiline
+                rows={2}
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+              />
+              <Button type="submit" variant="contained" sx={{ mt: 1 }} fullWidth>
+                Post Comment
+              </Button>
+            </Box>
+          </Box>
+        </Drawer>
       </Box>
     </Template>
   );
