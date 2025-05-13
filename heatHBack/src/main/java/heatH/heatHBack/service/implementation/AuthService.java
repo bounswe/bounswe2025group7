@@ -96,11 +96,8 @@ public class AuthService implements IAuthService{
     @Override
     public String sendVerificationCode(String email) {
         Integer verificationCode = (int) (Math.random() * 900000) + 100000;
-        // Build a cool HTML email template for verification
-        String htmlBody = "<p>Welcome to <strong>HeatH</strong>!</p>" +
-            "<p>Your verification code is:</p>" +
-            "<div class=\"code\">" + verificationCode + "</div>";
-        mailService.sendEmail(email, "HeatH Verification Code", htmlBody);
+
+        mailService.sendEmail(email, "Verification Code", "Your verification code is: " + verificationCode);
 
         userVerificationRepository.save(new UserMailVerification(email, verificationCode));
 
