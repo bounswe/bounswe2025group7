@@ -41,6 +41,7 @@ public class FeedService {
         feed.setCreatedAt(LocalDateTime.now());
         feed.setType(type);
         feed.setLikeCount(0);
+        feed.setLikedByCurrentUser(false);
 
 
         switch (type) {
