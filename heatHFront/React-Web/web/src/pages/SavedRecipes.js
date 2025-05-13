@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Container, Typography, Grid, Card, Box, CardActions, IconButton, useTheme, 
-  CircularProgress, Alert, Button, Snackbar
+  CircularProgress, Alert, Button
 } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -32,7 +32,6 @@ const HeaderSection = styled(Box)(({ theme }) => ({
 const SavedRecipes = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [copySuccess, setCopySuccess] = useState(false);
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -177,17 +176,6 @@ const SavedRecipes = () => {
     }
   };
 
-  // Copy recipe link to clipboard
-  const handleCopyLink = (id) => {
-    const url = `${window.location.origin}/recipe/${id}`;
-    navigator.clipboard.writeText(url)
-      .then(() => {
-        console.log('Copied link to clipboard:', url);
-        setCopySuccess(true);
-      })
-      .catch(err => console.error('Failed to copy link:', err));
-  };
-
   return (
     <Template>
       <Box>
@@ -319,10 +307,11 @@ const SavedRecipes = () => {
                       {recipe.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
                     </IconButton>
                     <IconButton
-                      onClick={() => handleCopyLink(recipe.id)}
-                      aria-label="copy link"
+                      onClick={() => toggleShare(recipe.id)}
+                      aria-label="share"
+                      color={recipe.shared ? 'secondary' : 'default'}
                     >
-                      <ShareOutlinedIcon />
+                      {recipe.shared ? <ShareIcon /> : <ShareOutlinedIcon />}
                     </IconButton>
                   </CardActions>
                 </Card>
@@ -330,17 +319,6 @@ const SavedRecipes = () => {
             </Box>
           )}
         </Container>
-
-        {/* Snackbar notification for copy action */}
-        <Snackbar
-          open={copySuccess}
-          autoHideDuration={3000}
-          onClose={() => setCopySuccess(false)}
-        >
-          <Alert onClose={() => setCopySuccess(false)} severity="success" sx={{ width: '100%' }}>
-            Link copied to clipboard!
-          </Alert>
-        </Snackbar>
       </Box>
     </Template>
   );
