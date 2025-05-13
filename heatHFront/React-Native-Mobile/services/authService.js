@@ -1,78 +1,48 @@
-// authService.js
+import axios from 'axios';
 
 const BASE_URL = 'http://167.172.162.159:8080/api/auth';
 
 export const register = async (username, password) => {
-    console.log('requested register');
-  const response = await fetch(`${BASE_URL}/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
+  console.log($`Trying to register: ${username}`);
+  const response = await axios.post(`${BASE_URL}/register`, {
+    username,
+    password,
   });
-
-  if (!response.ok) {
-    throw new Error('Registration failed');
-  }
-
-  return await response.json(); // { accessToken, refreshToken }
+  return response.data; // { accessToken, refreshToken }
 };
 
 export const login = async (username, password) => {
-  const response = await fetch(`${BASE_URL}/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
+  console.log(`Trying to login from: ${username}`)
+  const response = await axios.post(`${BASE_URL}/login`, {
+    username,
+    password,
   });
-
-  if (!response.ok) {
-    throw new Error('Login failed');
-  }
-
-  return await response.json(); // { accessToken, refreshToken }
+  return response.data; // { accessToken, refreshToken }
 };
 
 export const refreshAccessToken = async (refreshToken) => {
-  const response = await fetch(`${BASE_URL}/refresh-token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refreshToken }),
+  console.log(`Requested refreshAccessToken!`);
+  const response = await axios.post(`${BASE_URL}/refresh-token`, {
+    refreshToken,
   });
-
-  if (!response.ok) {
-    throw new Error('Token refresh failed');
-  }
-
-  return await response.json(); // { accessToken, refreshToken }
+  return response.data; // { accessToken, refreshToken }
 };
 
 export const sendVerificationCode = async (email) => {
-  const response = await fetch(`${BASE_URL}/send-verification-code`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
+  console.log(`Verification code is sent to ${email}!`)
+  const response = await axios.post(`${BASE_URL}/send-verification-code`, {
+    email,
   });
-
-  if (!response.ok) {
-    throw new Error('Sending verification code failed');
-  }
-
-  return await response.text(); // "Mail has send"
+  return response.data; // "Mail has send"
 };
 
 export const verifyCode = async (email, code) => {
-  const response = await fetch(`${BASE_URL}/verify-code?`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code, email }),
+  const response = await axios.post(`${BASE_URL}/verify-code`, {
+    email,
+    code,
   });
-
-  if (!response.ok) {
-    throw new Error('Code verification failed');
-  }
-
-  return await response.json(); // true or false
+  return response.data; // true or false
 };
-
 
 /*
 baseUrl : 167.172.162.159:8080

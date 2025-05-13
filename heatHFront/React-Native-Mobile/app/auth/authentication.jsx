@@ -12,7 +12,6 @@ const Login = () => {
     <SafeAreaView style = {styles.container}>
       {/* app's logo */}
 
-
       {/* login header */}
       <Spacer height = '10%'/>
       <Text style = {styles.header}>
@@ -21,9 +20,7 @@ const Login = () => {
 
       {/* Auth container */}
       <Spacer height = '13%'/>
-      <AuthForm type = 'verificationSuccess'/>
-
-      
+      <AuthForm type = 'login'/>
       
     </SafeAreaView>
   </ImageBackground>
