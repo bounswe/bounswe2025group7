@@ -49,5 +49,8 @@ public class Feed {
     
     private boolean likedByCurrentUser;
 
+    @Column(name = "comment_count")
+    private Integer commentCount;
+
     
 }
