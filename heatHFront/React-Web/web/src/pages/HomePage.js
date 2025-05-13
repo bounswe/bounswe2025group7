@@ -11,8 +11,6 @@ import ShareIcon from '@mui/icons-material/Share';
 import Template from '../components/Template';
 import Recipe from '../models/Recipe';
 import recipeService from '../services/recipeService';
-import feedService from '../services/feedService';
-import apiClient from '../services/apiClient';
 
 // Static list for initial UI rendering - will be replaced with API data
 const initialRecipes = [
@@ -32,7 +30,6 @@ const HomePage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [recipes, setRecipes] = useState([]);
-  const [feeds, setFeeds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -46,48 +43,48 @@ const HomePage = () => {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [recipeSelectionDialogOpen, setRecipeSelectionDialogOpen] = useState(false);
 
-  // Function to fetch recent posts from API
-  const fetchFeeds = async () => {
-    try {
-      setLoading(true);
-      const response = await apiClient.get('/feeds/recent');
-      setFeeds(response.data);
-      setError(null);
-    } catch (err) {
-      console.error('Failed to fetch feeds:', err);
-      setError('Failed to load feeds. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Toggle like/unlike for a feed (optimistic UI update)
-  const handleLikeFeed = async (feedId, currentlyLiked) => {
-    const newLiked = !currentlyLiked;
-    // Optimistically update UI
-    setFeeds(prev => prev.map(f => f.id === feedId
-      ? { ...f, likedByCurrentUser: newLiked, likeCount: f.likeCount + (newLiked ? 1 : -1) }
-      : f
-    ));
-    try {
-      if (newLiked) {
-        await apiClient.post('/feeds/like', { feedId });
-      } else {
-        await apiClient.post('/feeds/unlike', { feedId });
-      }
-    } catch (err) {
-      console.error('Failed to toggle like:', err);
-      // Revert on error
-      setFeeds(prev => prev.map(f => f.id === feedId
-        ? { ...f, likedByCurrentUser: currentlyLiked, likeCount: f.likeCount + (currentlyLiked ? 1 : -1) }
-        : f
-      ));
-    }
-  };
-
-  // Fetch posts on component mount
+  // Fetch recipes on component mount
   useEffect(() => {
-    fetchFeeds();
+    const fetchRecipes = async () => {
+      try {
+        setLoading(true);
+
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const fetchedRecipes = initialRecipes.map(r => {
+          const recipe = new Recipe({
+            id: r.id,
+            title: r.title,
+            photo: r.image,
+            instructions: [r.description],
+            totalCalory: 0,
+            ingredients: [],
+            tag: '',
+            price: 0,
+            type: '',
+            healthinessScore: 0,
+            easinessScore: 0,
+            whoShared: null,
+          });
+          recipe.liked = r.liked;
+          recipe.saved = r.saved;
+          recipe.shared = r.shared;
+          return recipe;
+        });
+        
+        setRecipes(fetchedRecipes);
+        setError(null);
+      } catch (err) {
+        console.error("Failed to fetch recipes:", err);
+        setError("Failed to load recipes. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecipes();
   }, []);
 
   // Navigate to recipe detail page
@@ -220,9 +217,10 @@ const HomePage = () => {
   };
 
   // Send handler for post composer
-  const handleSend = async () => {
+  const handleSend = () => {
     let type;
     if (postType === 'recipe') type = 'RECIPE';
+    else if (postType === 'image' && userInputText) type = 'IMAGE_AND_TEXT';
     else if (postType === 'image') type = 'IMAGE_AND_TEXT';
     else type = 'TEXT';
     
@@ -232,13 +230,9 @@ const HomePage = () => {
       image: postImage, 
       recipeId: selectedRecipeForPost 
     };
-    console.log('Posting feed:', postPayload);
-    try {
-      await feedService.createFeed(postPayload);
-      await fetchFeeds();
-    } catch (err) {
-      console.error('Failed to create feed:', err);
-    }
+    
+    console.log('Posting:', postPayload);
+    
     // Clear composer
     setUserInputText('');
     setPostImage(null);
@@ -335,36 +329,99 @@ const HomePage = () => {
             </Box>
           </Card>
 
-          {/* Feed listing */}
+          {/* Loading state */}
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}><CircularProgress/></Box>
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
           ) : error ? (
             <Box sx={{ textAlign: 'center', my: 4 }}>
               <Typography color="error">{error}</Typography>
-              <Button sx={{ mt: 2 }} variant="contained" onClick={() => window.location.reload()}>Retry</Button>
+              <Button 
+                sx={{ mt: 2 }} 
+                variant="contained"
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </Button>
             </Box>
           ) : (
             <Box sx={{ maxWidth: 600, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {feeds.map(feed => (
-                <Card key={feed.id} sx={{ width: '100%', boxShadow: 2, '&:hover': { boxShadow: 6 } }}>
-                  {feed.type === 'TEXT' && <Box sx={{ p:2 }}><Typography>{feed.text}</Typography></Box>}
-                  {feed.type === 'IMAGE_AND_TEXT' && <Box sx={{ p:2 }}><Box component="img" src={feed.image} alt="feed" sx={{ width:'100%', mb:1 }}/><Typography>{feed.text}</Typography></Box>}
-                  {feed.type === 'RECIPE' && feed.recipe && <>
-                    <Typography variant="h6" sx={{ m:2 }}>{feed.recipe.title}</Typography>
-                    <Box onClick={() => navigate(`/recipe/${feed.recipe.id}`)} sx={{ position:'relative', width:'100%', pt:'100%', overflow:'hidden', cursor:'pointer', '&:hover .descOverlay': { opacity:1, transform:'translateY(0)' } }}>
-                      <img src={feed.recipe.photo} alt={feed.recipe.title} style={{ position:'absolute', top:0,left:0,width:'100%',height:'100%',objectFit:'cover' }}/>
-                      <Box className="descOverlay" sx={{ position:'absolute', bottom:0, width:'100%', bgcolor: alpha(theme.palette.primary.dark,0.7), color: theme.palette.primary.contrastText, px:1, py:0.5, opacity:0, transform:'translateY(100%)', transition:'all 0.3s ease-in-out' }}>
-                        <Typography variant="body2">{feed.recipe.instructions[0]}</Typography>
-                      </Box>
+              {recipes.map((recipe) => (
+                <Card key={recipe.getId()} sx={{ width: '100%', boxShadow: 2, '&:hover': { boxShadow: 6 } }}>
+                  <Typography variant="h6" sx={{ m: 2, color: 'text.primary' }}>
+                    {recipe.getTitle()}
+                  </Typography>
+                  <Box
+                    onClick={() => handleRecipeClick(recipe)}
+                    sx={{
+                      position: 'relative',
+                      width: '100%',
+                      pt: '100%',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      '&:hover .descOverlay': {
+                        opacity: 1,
+                        transform: 'translateY(0)',
+                      },
+                    }}
+                  >
+                    <img
+                      src={recipe.getPhoto()}
+                      alt={recipe.getTitle()}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                    <Box
+                      className="descOverlay"
+                      sx={{
+                        position: 'absolute',
+                        bottom: 0,
+                        width: '100%',
+                        bgcolor: alpha(theme.palette.primary.dark, 0.7),
+                        color: theme.palette.primary.contrastText,
+                        px: 1,
+                        py: 0.5,
+                        opacity: 0,
+                        transform: 'translateY(100%)',
+                        transition: 'all 0.3s ease-in-out',
+                      }}
+                    >
+                      <Typography variant="body2">
+                        {recipe.getInstructions()[0]}
+                      </Typography>
                     </Box>
-                  </>}
+                  </Box>
                   <CardActions disableSpacing>
-                    <IconButton onClick={() => handleLikeFeed(feed.id, feed.likedByCurrentUser)} aria-label="like" color={feed.likedByCurrentUser ? 'error' : 'default'}>
-                      {feed.likedByCurrentUser ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                    </IconButton>
-                    <Typography variant="body2" sx={{ ml: 1 }}>
-                      {feed.likeCount}
-                    </Typography>
+                    <React.Fragment>
+                      <IconButton
+                        onClick={() => handleLike(recipe.getId())}
+                        aria-label="like"
+                        color={recipe.liked ? 'error' : 'default'}
+                      >
+                        {recipe.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleSave(recipe.getId())}
+                        aria-label="save"
+                        color={recipe.saved ? 'primary' : 'default'}
+                      >
+                        {recipe.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleShare(recipe.getId())}
+                        aria-label="share"
+                        color={recipe.shared ? 'secondary' : 'default'}
+                      >
+                        {recipe.shared ? <ShareIcon /> : <ShareOutlinedIcon />}
+                      </IconButton>
+                    </React.Fragment>
                   </CardActions>
                 </Card>
               ))}
