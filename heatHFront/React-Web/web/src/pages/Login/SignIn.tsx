@@ -79,9 +79,9 @@ export default function SigninPage() {
 
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Login failed');
+        setError(err.response?.data?.message || 'Your email or password is wrong. Please try again.');
       } else {
-        setError('Login failed');
+        setError('Your email or password is wrong. Please try again.');
       }
     }
   };
