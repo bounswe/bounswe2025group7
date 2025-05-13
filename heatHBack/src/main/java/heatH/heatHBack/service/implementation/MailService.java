@@ -18,7 +18,7 @@ public class MailService {
     @Value("${sendgrid.api-key}")
     private String sendGridApiKey;
 
-    @Value("${app.base-url:http://167.172.162.159:8080}")
+    @Value("${app.base-url:http://167.172.162.159:3000}")
     private String baseUrl;
 
     public void sendEmail(String to, String subject, String body) {
@@ -59,7 +59,7 @@ public class MailService {
                                 "<p>Please enter this code in the login prompt to access your account. If you did not request this code or you are not trying to access your account, please contact us immediately for support.</p>" +
                             "</div>" +
                             "<div class=\"button-container\">" +
-                                "<a href=\"" + baseUrl + "\" class=\"button\">Visit your account</a>" +
+                                "<a href=\"" + baseUrl + "/signin" + "\" class=\"button\">Visit your account</a>" +
                             "</div>" +
                             "<div class=\"tips\">" +
                                 "<h3>Security Tips</h3>" +
@@ -70,9 +70,9 @@ public class MailService {
                                 "</ul>" +
                             "</div>" +
                     "<div class=\"footer\">" +
-                    "<p><a href=\"" + baseUrl + "\">Privacy Policy</a> | " +
-                    "<a href=\"" + baseUrl + "\">Contact Us</a> | " +
-                    "<a href=\"" + baseUrl + "\">Unsubscribe</a></p>" +
+                    "<p><a href=\"" + baseUrl + "/privacy" + "\">Privacy Policy</a> | " +
+                    "<a href=\"" + baseUrl + "/contact" + "\">Contact Us</a> | " +
+                    "<a href=\"" + baseUrl +  "/terms" +"\">Unsubscribe</a></p>" +
                     "</div>" +
                         "</div>" +
                     "</div>" +
