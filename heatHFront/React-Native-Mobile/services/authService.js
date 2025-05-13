@@ -59,9 +59,11 @@ export const sendVerificationCode = async (email) => {
   return await response.text(); // "Mail has send"
 };
 
-export const verifyCode = async (code) => {
-  const response = await fetch(`${BASE_URL}/verify-code?code=${code}`, {
+export const verifyCode = async (email, code) => {
+  const response = await fetch(`${BASE_URL}/verify-code?`, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, email }),
   });
 
   if (!response.ok) {
@@ -135,4 +137,8 @@ return : Boolean : true or false
 
 my reg
 {"username": "amin.abuhilga.140705@gmail.com", "password": "mypassword12"}
+amin.abuhilga@gmail.com, pass12
+
+aliihsanuslu17@gmail.com
+12345
 */

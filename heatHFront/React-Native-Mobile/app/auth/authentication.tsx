@@ -21,7 +21,7 @@ const Login = () => {
 
       {/* Auth container */}
       <Spacer height = '13%'/>
-      <AuthForm type = 'login'/>
+      <AuthForm type = 'verificationSuccess'/>
 
       
       

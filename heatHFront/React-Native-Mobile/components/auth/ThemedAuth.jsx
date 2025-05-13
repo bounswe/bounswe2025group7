@@ -4,7 +4,8 @@ import {Link} from 'expo-router'
 import {AuthColors} from '../../styles/Colors'
 import Spacer from '../general/Spacer'
 
-import verificationLogo from '../../assets/images/auth/email.png'
+import verificationLogo from '../../assets/images/auth/verif.png'
+import verificationSuccessLogo from '../../assets/images/auth/verif_success.png'
 
 // Import authService methods
 import { login as loginUser, register as registerUser, sendVerificationCode, verifyCode } from '../../services/authService';
@@ -37,7 +38,7 @@ export const AuthInput = ({style, placeholder = 'email', ...props}) => {
     const theme = AuthColors[useColorScheme() ?? 'light'];
     
     return (
-        <TextInput placeholder = {placeholder} style = {[style, theme.authInput]} placeholderTextColor= {'white'}  autoCapitalize = "none" {...props}/>
+        <TextInput authoCapitalize = "none" placeholder = {placeholder} style = {[style, theme.authInput]} placeholderTextColor= {'white'}  autoCapitalize = "none" {...props}/>
     )
 }
 
@@ -139,18 +140,19 @@ export const AuthForm = ({type = 'login'}) => {
             // send verification code
             const message = await sendVerificationCode(email);
             console.log(message);
+            console.log("email: " + email);
         }
         else if(authState === 'verification'){ // verification passed - can register !
             
             // check entered verification code
             console.log("Code: ",code.join(''), " sent to verification !")
-            const isValid = await verifyCode(code.join(''));
+            const isValid = await verifyCode(email, code.join(''));
             
             
-            if(isValid) {
+            if(isValid) { // verification passed
                 console.log("Code verified successfully!");
-                setState('verificationSuccess');
-                const { accessToken, refreshToken } = await registerUser(login, password);
+                setState('verificationSuccess');    // set verfiSuccess State
+                const { accessToken, refreshToken } = await registerUser(email, password); // register this email
                 console.log('Registration Successful', { accessToken, refreshToken }); // Log result here
             
                 // TODO: store tokens and maybe redirect to login or dashboard
@@ -171,9 +173,9 @@ export const AuthForm = ({type = 'login'}) => {
     return (    
         <AuthContainer>
             {/* header title */}
-            <Spacer/>
+            {(authState === 'login' || authState === 'registration' || authState == 'verfication') ? <Spacer/> : null}
             <Text style = {theme.authTitle}>
-                {(authState === 'login') ? 'Login' : ((authState === 'verification') ? 'Verify Code' : 'Register')}
+                {(authState === 'login') ? 'Login' : ((authState === 'verification') ? 'Verify Code' : (authState === 'registration') ? 'Register' : null)}
             </Text>
             
 
@@ -207,38 +209,62 @@ export const AuthForm = ({type = 'login'}) => {
                     </>
                 )
                 :
-                <>
-                    {/* Don't have an account ? */}
-                    <Spacer height = {13}/>
-                    <Text style = {{color: '#D2CBC2'}}>
-                            {(authState === 'login') ? "Don't have an account yet ?" : "Already have an account ?"}
-                        <Text> </Text>
-                        <Text onPress = {() => setState((authState === 'login') ? "registration" : "login")}>
-                            <Text style = {{color: '#FBCB27', textDecorationLine: 'underline'}}>
-                                {(authState === 'login') ? "Sign Up" : "Sign In"}
+                (
+                    (authState === 'verificationSuccess') ?
+                    <>
+                        {/* Verification Logo */}
+                        <Image style = {{width: 70, height: 70}} source = {verificationSuccessLogo}/>
+                        
+                        {/* Info */}
+                        <Spacer/>
+                        <Text style = {{color: '#DFD6DB', fontSize: 15, fontWeight: 'bold'}}>
+                            Successfully Verified!
+                        </Text>
+
+                        {/* Submit Button */}
+                        <Spacer height = {20}/>
+                        <Pressable onPress = {() => setState('login')} style = {({pressed}) => [theme.authButton, pressed && theme.authButtonPressed, {width: 100}]}>
+                            <Text style = {theme.authButtonText}>
+                                Login.
+                            </Text>
+                        </Pressable>
+                        <Spacer/>  
+                    </>
+                    :
+                    // LOGIN / REGISTER
+                    <>
+                        {/* Don't have an account ? */}
+                        <Spacer height = {13}/>
+                        <Text style = {{color: '#D2CBC2'}}>
+                                {(authState === 'login') ? "Don't have an account yet ?" : "Already have an account ?"}
+                            <Text> </Text>
+                            <Text onPress = {() => setState((authState === 'login') ? "registration" : "login")}>
+                                <Text style = {{color: '#FBCB27', textDecorationLine: 'underline'}}>
+                                    {(authState === 'login') ? "Sign Up" : "Sign In"}
+                                </Text>
                             </Text>
                         </Text>
-                    </Text>
 
-                
-                    {/* Email Input */}
-                    <Spacer/>
-                    <AuthInput onChangeText = {setEmail} value = {email} placeholder = {'Email'} />
                     
-                    {/* Password Input */}
-                    <Spacer/>
-                    <AuthInput onChangeText = {setPassword} value = {password} placeholder = 'Password'/>
-                
+                        {/* Email Input */}
+                        <Spacer/>
+                        <AuthInput onChangeText = {setEmail} value = {email} placeholder = {'Email'} />
+                        
+                        {/* Password Input */}
+                        <Spacer/>
+                        <AuthInput onChangeText = {setPassword} value = {password} placeholder = 'Password'/>
+                    
 
-                    {/* Submit Button */}
-                    <Spacer height = {30}/>
-                    <Pressable onPress = {handleSubmit} style = {({pressed}) => [theme.authButton, pressed && theme.authButtonPressed]}>
-                        <Text style = {theme.authButtonText}>
-                            {(authState === 'login') ? 'Login' : 'Register'}
-                        </Text>
-                    </Pressable>
-                    <Spacer/>    
-                </>
+                        {/* Submit Button */}
+                        <Spacer height = {50}/>
+                        <Pressable onPress = {handleSubmit} style = {({pressed}) => [theme.authButton, pressed && theme.authButtonPressed]}>
+                            <Text style = {theme.authButtonText}>
+                                {(authState === 'login') ? 'Login' : 'Register'}
+                            </Text>
+                        </Pressable>
+                        <Spacer/>    
+                    </>
+                )
             }
 
             
