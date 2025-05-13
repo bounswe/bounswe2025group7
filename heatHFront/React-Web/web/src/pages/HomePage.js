@@ -501,3 +501,5 @@ const HomePage = () => {
     </Template>
   );
 };
+
+export default HomePage;
