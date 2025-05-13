@@ -79,13 +79,21 @@ const MyRecipes = () => {
   const [recipeToDelete, setRecipeToDelete] = useState(null);
 
   // Fetch my recipes on component mount
-  useEffect(() => {
-    const fetchMyRecipes = async () => {
+  const fetchMyRecipes = async () => {
+    try {
+      setLoading(true);
       const response = await apiClient.get('/recipe/get-all');
-      setRecipes(response.data)
+      setRecipes(response.data);
+      setError(null); // Clear any previous errors
+    } catch (err) {
+      console.error("Failed to fetch recipes:", err);
+      setError("Failed to load recipes. Please try again.");
+    } finally {
       setLoading(false);
     }
-    
+  };
+
+  useEffect(() => {
     fetchMyRecipes();
   }, []);
 
@@ -223,11 +231,16 @@ const MyRecipes = () => {
             throw new Error(`Error creating recipe: ${response.statusText}`);
           }
   
-          console.log("Recipe created successfully:", response.data);
-  
-          // Close the dialog and navigate to /myrecipes
+          // Show success message
+          setError("Recipe created successfully!");
+          setTimeout(() => setError(null), 3000);
+          
+          // Close the dialog
           setOpenAddDialog(false);
-          navigate('/myrecipes');
+          
+          // Refresh the recipes list
+          await fetchMyRecipes();
+          
         } catch (error) {
           console.error("Failed to create recipe:", error);
           setError(`Failed to create recipe: ${error.message}`);
@@ -256,7 +269,10 @@ const MyRecipes = () => {
         <Container maxWidth="md" sx={{ py: 4 }}>
           {/* Error message display */}
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert 
+              severity={error.includes("successfully") ? "success" : "error"} 
+              sx={{ mb: 2 }}
+            >
               {error}
             </Alert>
           )}

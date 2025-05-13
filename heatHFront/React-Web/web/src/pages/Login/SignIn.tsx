@@ -100,7 +100,7 @@ export default function SigninPage() {
 
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, width: '100%' }}>
           <TextField
-            label="Username"
+            label="Email Address"
             name="username"
             type="email"
             value={form.username}
