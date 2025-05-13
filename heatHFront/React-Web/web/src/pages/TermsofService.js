@@ -34,10 +34,9 @@ const TermsOfService = () => {
       {/* Navigation Bar */}
       <StyledAppBar>
         <Toolbar sx={{ position: 'relative', justifyContent: 'space-between' }}>
-          <Link component={RouterLink} to="/" color="inherit" underline="none" sx={{ display: 'flex', alignItems: 'center', minWidth: 48 }}>
+          {/* Logo and title */}
+          <Link component={RouterLink} to="/" color="inherit" underline="none" sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 48 }}>
             <img src={logo} alt="HeatH logo" style={{ height: 42, width: 42, borderRadius: '50%', background: 'white', objectFit: 'cover' }} />
-          </Link>
-          <Link component={RouterLink} to="/" color="inherit" underline="none" sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="h6" component="div" color="inherit">HeatH</Typography>
           </Link>
           {loggedIn ? (
