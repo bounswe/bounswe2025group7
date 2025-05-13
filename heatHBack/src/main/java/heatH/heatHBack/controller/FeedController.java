@@ -2,7 +2,9 @@ package heatH.heatHBack.controller;
 
 import java.util.List;
 
-import heatH.heatHBack.model.request.CommentRequest;
+import heatH.heatHBack.model.Comment;
+import heatH.heatHBack.model.request.*;
+import heatH.heatHBack.model.response.CommentResponse;
 import heatH.heatHBack.service.implementation.CommentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import heatH.heatHBack.model.Feed;
-import heatH.heatHBack.model.request.FeedRequest;
-import heatH.heatHBack.model.request.LikeRequest;
 import heatH.heatHBack.model.response.FeedResponse;
 import heatH.heatHBack.service.implementation.FeedService;
 import heatH.heatHBack.service.implementation.LikeService;
@@ -50,10 +50,16 @@ public class FeedController {
         return ResponseEntity.ok("Comment added");
     }
 
-    @PostMapping("/deletecomment")
-    public ResponseEntity<?> deleteCommentFeed(@RequestBody CommentRequest request) {
+    @PostMapping("/delete-comment")
+    public ResponseEntity<?> deleteCommentFeed(@RequestBody CommentDeleteRequest request) {
         commentService.deleteCommentFeed(request);
         return ResponseEntity.ok("Comment deleted");
+    }
+
+    @GetMapping("/get-feed-comments")
+    public ResponseEntity<?> getFeedComments(@RequestBody GetCommentRequest getCommentRequest) {
+        List<CommentResponse> comments = commentService.getFeedComments(getCommentRequest);
+        return ResponseEntity.ok(comments);
     }
 
     @GetMapping("/recent")

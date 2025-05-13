@@ -1,20 +1,17 @@
 package heatH.heatHBack.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+
 @Entity
-@Table(name = "comments", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "feed_id"}))
+@Table(name = "comments")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -31,4 +28,13 @@ public class Comment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "feed_id", nullable = false)
     private Feed feed;
+
+    private String message;
+
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {;
+        createdAt = LocalDateTime.now(ZoneId.of("Europe/Istanbul"));
+    }
 }
