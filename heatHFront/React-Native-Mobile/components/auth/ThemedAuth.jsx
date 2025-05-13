@@ -1,5 +1,5 @@
 import {useRef, useEffect, useState} from 'react'
-import {View, StyleSheet, useColorScheme, Image, Text, TextInput, Pressable} from 'react-native'
+import {View, StyleSheet, useColorScheme, Image, Text, Animated, TextInput, Pressable} from 'react-native'
 import {Link} from 'expo-router'
 import {AuthColors} from '../../styles/Colors'
 import Spacer from '../general/Spacer'
@@ -8,7 +8,7 @@ import verificationLogo from '../../assets/images/auth/verif.png'
 import verificationSuccessLogo from '../../assets/images/auth/verif_success.png'
 
 // Import authService methods
-import { login as loginUser, register as registerUser, sendVerificationCode, verifyCode } from '../../services/authService';
+import {exists, login as loginUser, register as registerUser, sendVerificationCode, verifyCode } from '../../services/authService';
 
 // Decode token
 // import jwtDecode from 'jwt-decode'; TO DO
@@ -34,11 +34,21 @@ export const AuthContainer = ({style ,children, ...props}) => {
 }
 
 
-export const AuthInput = ({style, placeholder = 'email', ...props}) => {
+export const AuthInput = ({style, inputState, placeholder = 'email', ...props}) => {
     const theme = AuthColors[useColorScheme() ?? 'light'];
     
     return (
-        <TextInput authoCapitalize = "none" placeholder = {placeholder} style = {[style, theme.authInput]} placeholderTextColor= {'white'}  autoCapitalize = "none" {...props}/>
+        <>
+            <TextInput autoCapitalize = "none" autoCorrect={false} placeholder = {placeholder} style = {[style, theme.authInput, (inputState === 'invalid')? {borderColor: '#FF3B30'} : null]} placeholderTextColor= {'white'}  {...props}/>
+            {/* Show error message if inputState is 'invalid' */}
+            {inputState === 'invalid' && (
+
+                <Text style={{ color: '#FF3B30', fontSize: 15, marginTop: 5, marginBottom: 0, textAlign: 'left', width: theme.authContainer.width}}>
+                    🌶 Invalid email address
+                </Text>
+            )}
+        </>
+        
     )
 }
 
@@ -105,7 +115,8 @@ export const AuthCodeInput = ({ length = 6, code, setCode, onCodeFilled }) => {
 
 
 
-export const AuthForm = ({type = 'login'}) => {
+export const AuthForm = ({type = 'login'}) => 
+{
     const theme = AuthColors[useColorScheme() ?? 'light'];
 
     // rendering cases
@@ -122,51 +133,100 @@ export const AuthForm = ({type = 'login'}) => {
     const [code, setCode] = useState(Array(6).fill('')); // verification code
     const [loading, setLoading] = useState(false);
     
+    const [inputState, setInputState] = useState(''); // for email AuthInput field - red on wrong input, green by default!
+
     const handleSubmit = async () => {
     setLoading(true);
     console.log('Submitting...');
 
     
-    try {
-        if (authState === 'login') {
-            const { accessToken, refreshToken } = await loginUser(email, password);
-            console.log(`Login Successful ${accessToken} ${refreshToken}`); // Log result here
-            
-            // TODO: store tokens and navigate to main app
-        } 
-        else if(authState === 'registration'){
-            // set code verification state
-            setState('verification');
-            // send verification code
-            const message = await sendVerificationCode(email);
-            console.log(message);
-            console.log("email: " + email);
-        }
-        else if(authState === 'verification'){ // verification passed - can register !
-            
-            // check entered verification code
-            console.log("Code: ",code.join(''), " sent to verification !")
-            const isValid = await verifyCode(email, code.join(''));
-            
-            
-            if(isValid) { // verification passed
-                console.log("Code verified successfully!");
-                setState('verificationSuccess');    // set verfiSuccess State
-                const { accessToken, refreshToken } = await registerUser(email, password); // register this email
-                console.log('Registration Successful', { accessToken, refreshToken }); // Log result here
-            
-                // TODO: store tokens and maybe redirect to login or dashboard
+           
+    if (authState === 'login') {
+        try {
+                console.log(`Checking if ${email} exists...`);
+                const result = await exists(email);
+                console.log(result);
+                if (result === true) {
+                console.log('✅ User exists!');
+
+                // Email Exists!
+                
+                // Logging in
+                // const { accessToken, refreshToken } = await loginUser(email, password);
+            } else {
+                // Invalid Email!
+                console.log('❌ Invalid user!');
+                triggerShake(); // trigger AuthInput shake Animation
+                setInputState('invalid'); // trigger AuthInput 'invalid' state!
             }
-            else {
-                console.log("Wrong verification code!");
-                setState('verificationFail');
-            }
-        }
-    } catch (err) {
-        console.error('[Error]:', err);  // Log error if something goes wrong
-    } finally {
-        setLoading(false);
+        } catch (error) {
+            console.log('❌ Error checking user existence.');
+            console.error(error?.response?.data || error.message); // More helpful error info
+        }    
+        // TODO: store tokens and navigate to main app
+    } 
+    else if(authState === 'registration'){
+        // set code verification state
+        setState('verification');
+        // send verification code
+        const message = await sendVerificationCode(email);
+        console.log(message);
+        console.log("email: " + email);
     }
+    else if(authState === 'verification'){ // verification passed - can register !
+        
+        // check entered verification code
+        console.log("Code: ",code.join(''), " sent to verification !")
+        const isValid = await verifyCode(email, code.join(''));
+        
+        
+        if(isValid) { // verification passed
+            console.log("Code verified successfully!");
+            setState('verificationSuccess');    // set verfiSuccess State
+            const { accessToken, refreshToken } = await registerUser(email, password); // register this email
+            console.log('Registration Successful', { accessToken, refreshToken }); // Log result here
+        
+            // TODO: store tokens and maybe redirect to login or dashboard
+        }
+        else {
+            console.log("Wrong verification code!");
+            setState('verificationFail');
+        }
+    }
+    }
+    
+
+    // Animation for Wrong Data Input 
+    const shakeAnim = useRef(new Animated.Value(0)).current;
+    
+    const triggerShake = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 6,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: -6,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
     };
 
 
@@ -248,11 +308,15 @@ export const AuthForm = ({type = 'login'}) => {
                     
                         {/* Email Input */}
                         <Spacer/>
-                        <AuthInput onChangeText = {setEmail} value = {email} placeholder = {'Email'} />
+                        <Animated.View style={[{ transform: [{ translateX: shakeAnim}], width: '100%', alignItems: 'center' }]}>
+                            <AuthInput onChangeText = {setEmail} inputState = {inputState} value = {email} placeholder = {'Email'} />
+                        </Animated.View>
+                        
                         
                         {/* Password Input */}
                         <Spacer/>
                         <AuthInput onChangeText = {setPassword} value = {password} placeholder = 'Password'/>
+                    
                     
 
                         {/* Submit Button */}
@@ -265,9 +329,7 @@ export const AuthForm = ({type = 'login'}) => {
                         <Spacer/>    
                     </>
                 )
-            }
-
-            
+            }        
         </AuthContainer>
     )
 }

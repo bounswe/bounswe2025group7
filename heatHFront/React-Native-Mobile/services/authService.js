@@ -44,6 +44,35 @@ export const verifyCode = async (email, code) => {
   return response.data; // true or false
 };
 
+
+
+// NOTE: reason of not using axios for this function.
+/*
+  exists funciton is implemented with 'fetch' - react-native CLI 
+  Using axios gives 403 error.
+*/
+export const exists = async (email) => {
+  const url = `http://167.172.162.159:8080/api/auth/exists?email=${encodeURIComponent(email)}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': '*/*',
+      'User-Agent': 'curl/7.64.1', // optional, mimics curl
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`HTTP ${response.status} - ${errorText}`);
+  }
+
+  const text = await response.text(); // because `true` or `false` is plain text
+  return text === 'true';
+};
+
+
+
 /*
 baseUrl : 167.172.162.159:8080
 

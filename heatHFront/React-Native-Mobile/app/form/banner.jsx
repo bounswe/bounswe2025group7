@@ -11,7 +11,7 @@ const InterestFormPage = () => {
     return (
         <SafeAreaView style = {styles.container}>
             
-                <View style = {{ flex: 5,  borderColor: 'red', borderWidth: 3, justifyContent: 'center'}}>
+                <View style = {{ flex: 5, borderWidth: 3, justifyContent: 'center'}}>
                     <Spacer height ='30%'/>
                     
                     <View style = {{paddingHorizontal: '4%'}}>
@@ -104,7 +104,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-end',
-        borderColor: 'red', 
         borderWidth: 3,
         paddingBottom: '5%'
     },
