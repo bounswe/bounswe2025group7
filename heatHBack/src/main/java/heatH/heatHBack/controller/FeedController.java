@@ -2,6 +2,8 @@ package heatH.heatHBack.controller;
 
 import java.util.List;
 
+import heatH.heatHBack.model.request.CommentRequest;
+import heatH.heatHBack.service.implementation.CommentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 public class FeedController {
     private final FeedService feedService;
     private final LikeService likeService;
+    private final CommentService commentService;
 
     @PostMapping("/created-feed")
     public ResponseEntity<Feed> createFeed(@RequestBody FeedRequest request) {
@@ -40,6 +43,17 @@ public class FeedController {
     public ResponseEntity<?> unlikeFeed(@RequestBody LikeRequest request) {
         likeService.unlikeFeed(request);
         return ResponseEntity.ok("Feed unliked");
+    }
+    @PostMapping("/comment")
+    public ResponseEntity<?> commentFeed(@RequestBody CommentRequest request) {
+        commentService.commentFeed(request);
+        return ResponseEntity.ok("Comment added");
+    }
+
+    @PostMapping("/deletecomment")
+    public ResponseEntity<?> deleteCommentFeed(@RequestBody CommentRequest request) {
+        commentService.deleteCommentFeed(request);
+        return ResponseEntity.ok("Comment deleted");
     }
 
     @GetMapping("/recent")
