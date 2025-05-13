@@ -41,9 +41,6 @@ public class Feed {
     @JoinColumn(name = "recipe_id")
     private Recipe recipe;
 
-    @OneToMany(mappedBy = "feed", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Like> likes = new ArrayList<>();
-
     @Column(name = "like_count")
     private Integer likeCount;
 
