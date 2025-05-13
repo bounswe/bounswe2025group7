@@ -1,8 +1,14 @@
 import React from 'react';
-import { Box, Container, Typography, AppBar, Toolbar, Link, useMediaQuery } from '@mui/material';
+import { Box, Container, Typography, AppBar, Toolbar, Link, useMediaQuery, Button, IconButton } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import logo from '../images/logo.png';
+import authService from '../services/authService';
+import HomeIcon from '@mui/icons-material/Home';
+import PersonIcon from '@mui/icons-material/Person';
+import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   background: theme.palette.primary.main,
@@ -21,6 +27,8 @@ const Footer = styled(Box)(({ theme }) => ({
 const PrivacyPolicy = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
+  const loggedIn = !!authService.getRefreshToken();
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* Navigation Bar */}
@@ -42,14 +50,21 @@ const PrivacyPolicy = () => {
           <Box sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="h6" component="div">HeatH</Typography>
           </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Link component={RouterLink} to="/signin" color="inherit" underline="none" sx={{ '&:hover': { color: theme.palette.secondary.main } }}>
-              Sign In
-            </Link>
-            <Link component={RouterLink} to="/signup" color="inherit" underline="none" sx={{ '&:hover': { color: theme.palette.secondary.main } }}>
-              Sign Up
-            </Link>
-          </Box>
+          {/* Navigation buttons (signed in vs guest) */}
+          {loggedIn ? (
+            <Box sx={{ display: 'flex', gap: isMobile ? 1 : 2, alignItems: 'center' }}>
+              <Button component={RouterLink} to="/home" color="inherit" startIcon={<HomeIcon />}>Home</Button>
+              <Button component={RouterLink} to="/profile" color="inherit" startIcon={<PersonIcon />}>Profile</Button>
+              <Button component={RouterLink} to="/myrecipes" color="inherit" startIcon={<RestaurantMenuIcon />}>My Recipes</Button>
+              <Button component={RouterLink} to="/saved" color="inherit" startIcon={<BookmarkIcon />}>Saved</Button>
+              <IconButton color="inherit" onClick={() => { authService.logout(); navigate('/'); }}><LogoutIcon /></IconButton>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Link component={RouterLink} to="/signin" color="inherit" underline="none" sx={{ '&:hover': { color: theme.palette.secondary.main } }}>Sign In</Link>
+              <Link component={RouterLink} to="/signup" color="inherit" underline="none" sx={{ '&:hover': { color: theme.palette.secondary.main } }}>Sign Up</Link>
+            </Box>
+          )}
         </Toolbar>
       </StyledAppBar>
       <Container maxWidth="md" sx={{ flex: 1, py: 4, mt: 8 }}>
