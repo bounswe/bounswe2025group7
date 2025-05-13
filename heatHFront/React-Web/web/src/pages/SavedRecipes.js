@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Container, Typography, Grid, Card, Box, CardActions, IconButton, useTheme, 
-  CircularProgress, Alert, Button
+  CircularProgress, Alert, Button, Snackbar
 } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -13,7 +13,14 @@ import ShareIcon from '@mui/icons-material/Share';
 import Recipe from '../models/Recipe';
 import Template from '../components/Template';
 import { useNavigate } from 'react-router-dom';
-import apiClient from '../services/apiClient';
+import recipeService from '../services/recipeService'; // Import the recipe service
+
+// Static list for initial UI rendering - will be replaced with API data
+const initialRecipes = [
+  { id: 1, title: 'Avocado Quinoa Salad', image: 'https://picsum.photos/seed/avocado-quinoa-salad/300/300', description: 'A refreshing blend of avocado, quinoa, and fresh vegetables', liked: false, saved: true, shared: false },
+  { id: 2, title: 'Mediterranean Chickpea Bowl', image: 'https://picsum.photos/seed/mediterranean-chickpea-bowl/300/300', description: 'Protein-packed chickpeas with olives, tomatoes, and feta', liked: false, saved: true, shared: false },
+  // ...other recipes
+];
 
 const HeaderSection = styled(Box)(({ theme }) => ({
   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
@@ -25,6 +32,7 @@ const HeaderSection = styled(Box)(({ theme }) => ({
 const SavedRecipes = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const [copySuccess, setCopySuccess] = useState(false);
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,18 +43,16 @@ const SavedRecipes = () => {
       try {
         setLoading(true);
         
-        // Call the saved recipes endpoint
-        const response = await apiClient.get('/saved-recipes/get');
-        const savedRecipes = response.data;
+        // Simulating API delay
+        await new Promise(resolve => setTimeout(resolve, 800));
         
-        // Map API response to Recipe objects
-        const recipeInstances = savedRecipes.map(recipe => {
+        // Convert plain objects to Recipe instances
+        const recipeInstances = initialRecipes.map(recipe => {
           const recipeObj = new Recipe({
-            id: recipe.recipeId,
+            id: recipe.id,
             title: recipe.title,
-            photo: recipe.photo,
-            // Set these properties with defaults as needed
-            instructions: [], 
+            photo: recipe.image,
+            instructions: [recipe.description], // Use description as the first instruction
             totalCalory: 0,
             ingredients: [],
             tag: '',
@@ -57,15 +63,18 @@ const SavedRecipes = () => {
             whoShared: null,
           });
           
-          // Set saved state to true since these are saved recipes
-          recipeObj.saved = true;
-          recipeObj.liked = false; // Default state
-          recipeObj.shared = false; // Default state
+          // Add the additional properties
+          recipeObj.liked = recipe.liked;
+          recipeObj.saved = recipe.saved;
+          recipeObj.shared = recipe.shared;
           
           return recipeObj;
         });
         
-        setRecipes(recipeInstances);
+        // Filter to only include saved recipes
+        const savedRecipes = recipeInstances.filter(recipe => recipe.saved);
+        
+        setRecipes(savedRecipes);
         setError(null);
       } catch (err) {
         console.error("Failed to fetch saved recipes:", err);
@@ -83,76 +92,100 @@ const SavedRecipes = () => {
     navigate(`/recipe/${recipe.id}`);
   };
 
-  const toggleSave = async (id) => {
+  // Updated to use recipeService
+  const toggleLike = async (id) => {
     try {
-      // Optimistic UI update - remove from list immediately
-      setRecipes(prev => prev.filter(r => r.id !== id));
+      // Optimistic UI update
+      setRecipes(prev =>
+        prev.map(r => (r.id === id ? { ...r, liked: !r.liked } : r))
+      );
       
-      // Call the API to unsave the recipe
-      await apiClient.post('/saved-recipes/unsave', { recipeId: id });
+      // Get the current recipe
+      const recipe = recipes.find(r => r.id === id);
+      const newValue = !recipe.liked;
       
+      // Call the API
+      await recipeService.updateRecipeAction(id, 'like', newValue);
     } catch (error) {
-      console.error("Failed to unsave recipe:", error);
-      
-      // Fetch all saved recipes again to restore accurate state
-      const response = await apiClient.get('/saved-recipes/get');
-      const savedRecipes = response.data;
-      
-      // Map API response to Recipe objects
-      const recipeInstances = savedRecipes.map(recipe => {
-        const recipeObj = new Recipe({
-          id: recipe.recipeId,
-          title: recipe.title,
-          photo: recipe.photo,
-          instructions: [], 
-          totalCalory: 0,
-          ingredients: [],
-          tag: '',
-          price: 0,
-          type: '',
-          healthinessScore: 0,
-          easinessScore: 0,
-          whoShared: null,
-        });
-        
-        recipeObj.saved = true;
-        recipeObj.liked = false;
-        recipeObj.shared = false;
-        
-        return recipeObj;
-      });
-      
-      setRecipes(recipeInstances);
-      
+      console.error("Failed to update like status:", error);
+      // Revert optimistic update on error
+      setRecipes(prev =>
+        prev.map(r => (r.id === id ? { ...r, liked: !r.liked } : r))
+      );
       // Show error to user
-      setError("Failed to unsave recipe. Please try again.");
+      setError("Failed to update like status. Please try again.");
       setTimeout(() => setError(null), 3000);
     }
   };
 
-  // Share functionality
-  const handleShare = (recipe) => {
-    if (navigator.share) {
-      navigator.share({
-        title: recipe.getTitle(),
-        text: `Check out this recipe: ${recipe.getTitle()}`,
-        url: `${window.location.origin}/recipe/${recipe.id}`,
-      })
-      .catch(err => console.error('Error sharing:', err));
-    } else {
-      // Fallback for browsers that don't support navigator.share
-      const recipeUrl = `${window.location.origin}/recipe/${recipe.id}`;
-      navigator.clipboard.writeText(recipeUrl)
-        .then(() => {
-          setError("Link copied to clipboard!");
-          setTimeout(() => setError(null), 3000);
-        })
-        .catch(err => {
-          console.error('Failed to copy link:', err);
-          setError("Failed to copy link. Please try again.");
-          setTimeout(() => setError(null), 3000);
-        });
+  // Updated to use recipeService
+  const toggleSave = async (id) => {
+    try {
+      // Optimistic UI update
+      setRecipes(prev =>
+        prev.map(r => (r.id === id ? { ...r, saved: !r.saved } : r))
+      );
+      
+      // Get the current recipe
+      const recipe = recipes.find(r => r.id === id);
+      const newValue = !recipe.saved;
+      
+      // Call the API
+      await recipeService.updateRecipeAction(id, 'save', newValue);
+      
+      // If unsaved, remove from the list after a short delay
+      if (!newValue) {
+        setTimeout(() => {
+          setRecipes(prev => prev.filter(r => r.id !== id));
+        }, 300);
+      }
+    } catch (error) {
+      console.error("Failed to update save status:", error);
+      // Revert optimistic update on error
+      setRecipes(prev =>
+        prev.map(r => (r.id === id ? { ...r, saved: !r.saved } : r))
+      );
+      // Show error to user
+      setError("Failed to update save status. Please try again.");
+      setTimeout(() => setError(null), 3000);
     }
+  };
+
+  // Updated to use recipeService
+  const toggleShare = async (id) => {
+    try {
+      // Optimistic UI update
+      setRecipes(prev =>
+        prev.map(r => (r.id === id ? { ...r, shared: !r.shared } : r))
+      );
+      
+      // Get the current recipe
+      const recipe = recipes.find(r => r.id === id);
+      const newValue = !recipe.shared;
+      
+      // Call the API
+      await recipeService.updateRecipeAction(id, 'share', newValue);
+    } catch (error) {
+      console.error("Failed to update share status:", error);
+      // Revert optimistic update on error
+      setRecipes(prev =>
+        prev.map(r => (r.id === id ? { ...r, shared: !r.shared } : r))
+      );
+      // Show error to user
+      setError("Failed to update share status. Please try again.");
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  // Copy recipe link to clipboard
+  const handleCopyLink = (id) => {
+    const url = `${window.location.origin}/recipe/${id}`;
+    navigator.clipboard.writeText(url)
+      .then(() => {
+        console.log('Copied link to clipboard:', url);
+        setCopySuccess(true);
+      })
+      .catch(err => console.error('Failed to copy link:', err));
   };
 
   return (
@@ -167,7 +200,7 @@ const SavedRecipes = () => {
         <Container maxWidth="md" sx={{ py: 4 }}>
           {/* Error message display */}
           {error && (
-            <Alert severity={error.includes("Failed") ? "error" : "success"} sx={{ mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
           )}
@@ -199,17 +232,9 @@ const SavedRecipes = () => {
               <Typography variant="body1" color="text.secondary">
                 You haven't saved any recipes yet. Browse recipes and save ones you like!
               </Typography>
-              <Button 
-                variant="outlined" 
-                color="primary" 
-                sx={{ mt: 2 }}
-                onClick={() => navigate('/home')}
-              >
-                Browse Recipes
-              </Button>
             </Box>
           ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: theme.spacing(3) }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: theme.spacing(3) }}>
               {recipes.map((recipe) => (
                 <Card key={recipe.id} sx={{
                   height: '100%',
@@ -224,11 +249,11 @@ const SavedRecipes = () => {
                     m: 2, 
                     color: 'text.primary',
                     height: '40px',
-                    display: '-webkit-box',
+                    display: 'flex',
+                    alignItems: 'center',
                     overflow: 'hidden',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
                     textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
                   }}>
                     {recipe.getTitle()}
                   </Typography>
@@ -237,7 +262,7 @@ const SavedRecipes = () => {
                     sx={{
                       position: 'relative',
                       width: '100%',
-                      pt: '75%', // 4:3 aspect ratio
+                      pt: '100%', // This creates a perfect square (1:1 aspect ratio)
                       overflow: 'hidden',
                       cursor: 'pointer',
                       '&:hover .descOverlay': {
@@ -258,33 +283,46 @@ const SavedRecipes = () => {
                         objectFit: 'cover',
                       }}
                     />
-                  </Box>
-                  <CardActions disableSpacing sx={{ mt: 'auto', pt: 1, justifyContent: 'space-evenly' }}>
-                    <IconButton
-                      onClick={() => handleRecipeClick(recipe)}
-                      aria-label="view recipe"
-                      color="default"
-                      sx={{ fontSize: '0.75rem' }}
+                    <Box
+                      className="descOverlay"
+                      sx={{
+                        position: 'absolute',
+                        bottom: 0,
+                        width: '100%',
+                        bgcolor: alpha(theme.palette.primary.dark, 0.7),
+                        color: theme.palette.primary.contrastText,
+                        px: 1,
+                        py: 0.5,
+                        opacity: 0,
+                        transform: 'translateY(100%)',
+                        transition: 'all 0.3s ease-in-out',
+                      }}
                     >
-                      <Typography variant="caption">View</Typography>
+                      <Typography variant="body2">
+                        {recipe.getInstructions()[0]}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <CardActions disableSpacing sx={{ mt: 'auto', pt: 1 }}>
+                    <IconButton
+                      onClick={() => toggleLike(recipe.id)}
+                      aria-label="like"
+                      color={recipe.liked ? 'error' : 'default'}
+                    >
+                      {recipe.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
                     </IconButton>
                     <IconButton
                       onClick={() => toggleSave(recipe.id)}
-                      aria-label="unsave"
-                      color="primary"
-                      sx={{ fontSize: '0.75rem' }}
+                      aria-label="save"
+                      color={recipe.saved ? 'primary' : 'default'}
                     >
-                      <BookmarkIcon sx={{ mr: 0.5 }} />
-                      <Typography variant="caption">Remove</Typography>
+                      {recipe.saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
                     </IconButton>
                     <IconButton
-                      onClick={() => handleShare(recipe)}
-                      aria-label="share"
-                      color="info"
-                      sx={{ fontSize: '0.75rem' }}
+                      onClick={() => handleCopyLink(recipe.id)}
+                      aria-label="copy link"
                     >
-                      <ShareOutlinedIcon sx={{ mr: 0.5 }} />
-                      <Typography variant="caption">Share</Typography>
+                      <ShareOutlinedIcon />
                     </IconButton>
                   </CardActions>
                 </Card>
@@ -292,6 +330,17 @@ const SavedRecipes = () => {
             </Box>
           )}
         </Container>
+
+        {/* Snackbar notification for copy action */}
+        <Snackbar
+          open={copySuccess}
+          autoHideDuration={3000}
+          onClose={() => setCopySuccess(false)}
+        >
+          <Alert onClose={() => setCopySuccess(false)} severity="success" sx={{ width: '100%' }}>
+            Link copied to clipboard!
+          </Alert>
+        </Snackbar>
       </Box>
     </Template>
   );

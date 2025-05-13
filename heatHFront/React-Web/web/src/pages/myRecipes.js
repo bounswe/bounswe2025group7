@@ -73,27 +73,23 @@ const MyRecipes = () => {
   const [currentAmount, setCurrentAmount] = useState('');
   
   const fileInputRef = useRef(null);
+  const ingredientInputRef = useRef(null);
   
   // For delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState(null);
 
+  // Check if all form fields are filled
+  const isFormComplete = newTitle && newType && newTag && newInstructions && newIngredients.length > 0 && newTotalCalory && newPrice;
+
   // Fetch my recipes on component mount
-  const fetchMyRecipes = async () => {
-    try {
-      setLoading(true);
+  useEffect(() => {
+    const fetchMyRecipes = async () => {
       const response = await apiClient.get('/recipe/get-all');
-      setRecipes(response.data);
-      setError(null); // Clear any previous errors
-    } catch (err) {
-      console.error("Failed to fetch recipes:", err);
-      setError("Failed to load recipes. Please try again.");
-    } finally {
+      setRecipes(response.data)
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
+    
     fetchMyRecipes();
   }, []);
 
@@ -147,6 +143,9 @@ const MyRecipes = () => {
       ]);
       setCurrentIngredient('');
       setCurrentAmount('');
+      if (ingredientInputRef.current) {
+        ingredientInputRef.current.focus();
+      }
     }
   };
   
@@ -231,16 +230,11 @@ const MyRecipes = () => {
             throw new Error(`Error creating recipe: ${response.statusText}`);
           }
   
-          // Show success message
-          setError("Recipe created successfully!");
-          setTimeout(() => setError(null), 3000);
-          
-          // Close the dialog
+          console.log("Recipe created successfully:", response.data);
+  
+          // Close the dialog and navigate to /myrecipes
           setOpenAddDialog(false);
-          
-          // Refresh the recipes list
-          await fetchMyRecipes();
-          
+          navigate('/myrecipes');
         } catch (error) {
           console.error("Failed to create recipe:", error);
           setError(`Failed to create recipe: ${error.message}`);
@@ -269,10 +263,7 @@ const MyRecipes = () => {
         <Container maxWidth="md" sx={{ py: 4 }}>
           {/* Error message display */}
           {error && (
-            <Alert 
-              severity={error.includes("successfully") ? "success" : "error"} 
-              sx={{ mb: 2 }}
-            >
+            <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
           )}
@@ -437,12 +428,24 @@ const MyRecipes = () => {
           </Dialog>
 
           {/* Add/Edit Recipe Dialog */}
-          <Dialog open={openAddDialog} onClose={() => !submitting && setOpenAddDialog(false)} maxWidth="md" fullWidth>
-            <DialogContent>
-              <Box component="form" onSubmit={handleRecipeFormSubmit} sx={{ p: 2 }}>
-                <Typography variant="h5" sx={{ mb: 3 }}>
+          <Dialog
+            open={openAddDialog}
+            onClose={() => !submitting && setOpenAddDialog(false)}
+            maxWidth="sm"
+            fullWidth
+            PaperProps={{ sx: { borderRadius: 3, boxShadow: 24 } }}
+          >
+            <DialogContent sx={{ backgroundColor: 'background.paper', p: 4, overflowY: 'auto', '&::-webkit-scrollbar': { display: 'none' }, '-ms-overflow-style': 'none', scrollbarWidth: 'none' }}>
+              <Box component="form" onSubmit={handleRecipeFormSubmit} sx={{ p: 2, width: '94%', maxWidth: 650, mx: 'auto' }}>
+                <Typography variant="h5" align="center" sx={{ mb: 3, fontWeight: 600 }}>
                   {isEditing ? 'Edit Recipe' : 'Create New Recipe'}
                 </Typography>
+                
+                {!isFormComplete && !submitting && (
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    Please fill in all fields to create a recipe.
+                  </Alert>
+                )}
                 
                 <Grid container spacing={3}>
                   {/* Left column */}
@@ -457,12 +460,13 @@ const MyRecipes = () => {
                       disabled={submitting}
                     />
                     
-                    <FormControl fullWidth sx={{ mb: 2 }} disabled={submitting}>
+                    <FormControl fullWidth sx={{ mb: 2 }} disabled={submitting} required>
                       <InputLabel>Type</InputLabel>
                       <Select
                         value={newType}
                         label="Type"
                         onChange={(e) => setNewType(e.target.value)}
+                        required
                       >
                         <MenuItem value="breakfast">Breakfast</MenuItem>
                         <MenuItem value="lunch">Lunch</MenuItem>
@@ -473,6 +477,7 @@ const MyRecipes = () => {
                     </FormControl>
                     
                     <TextField
+                      required
                       fullWidth
                       label="Tag"
                       value={newTag}
@@ -484,6 +489,7 @@ const MyRecipes = () => {
                     
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                       <TextField
+                        required
                         label="Total Calorie"
                         type="number"
                         value={newTotalCalory}
@@ -492,6 +498,7 @@ const MyRecipes = () => {
                         disabled={submitting}
                       />
                       <TextField
+                        required
                         label="Price"
                         type="number"
                         value={newPrice}
@@ -565,11 +572,18 @@ const MyRecipes = () => {
                         onChange={(e) => setCurrentIngredient(e.target.value)}
                         fullWidth
                         disabled={submitting}
+                        inputRef={ingredientInputRef}
                       />
                       <TextField
                         label="Amount"
                         value={currentAmount}
                         onChange={(e) => setCurrentAmount(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddIngredient();
+                          }
+                        }}
                         fullWidth
                         disabled={submitting}
                       />
@@ -612,7 +626,7 @@ const MyRecipes = () => {
                 </Grid>
               </Box>
             </DialogContent>
-            <DialogActions>
+            <DialogActions sx={{ px: 4, py: 2, justifyContent: 'flex-end', gap: 2 }}>
               <Button 
                 onClick={() => {
                   resetForm();
@@ -626,7 +640,7 @@ const MyRecipes = () => {
                 onClick={handleRecipeFormSubmit} 
                 variant="contained" 
                 color="primary"
-                disabled={!newTitle || !newInstructions || submitting}
+                disabled={!isFormComplete || submitting}
               >
                 {submitting ? (
                   <CircularProgress size={24} color="inherit" />
