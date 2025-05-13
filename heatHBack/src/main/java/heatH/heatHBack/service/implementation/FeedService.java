@@ -42,8 +42,6 @@ public class FeedService {
         feed.setCreatedAt(LocalDateTime.now(ZoneId.of("Europe/Istanbul")));
         feed.setType(type);
         feed.setLikeCount(0);
-        feed.setLikedByCurrentUser(false);
-
 
         switch (type) {
             case TEXT -> feed.setText(request.getText());
