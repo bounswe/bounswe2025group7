@@ -79,10 +79,19 @@ export default function SigninPage() {
 
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Login failed');
+        setError(err.response?.data?.message || 'Your email or password is wrong. Please try again.');
       } else {
-        setError('Login failed');
+        setError('Your email or password is wrong. Please try again.');
       }
+    }
+  };
+
+  // Handler for Enter key press to submit login
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      setError('');
+      handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
     }
   };
 
@@ -98,9 +107,9 @@ export default function SigninPage() {
           </Typography>
         )}
 
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, width: '100%' }}>
+        <Box component="form" onSubmit={handleSubmit} onKeyDown={handleKeyDown} sx={{ mt: 2, width: '100%' }}>
           <TextField
-            label="Username"
+            label="Email Address"
             name="username"
             type="email"
             value={form.username}

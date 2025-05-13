@@ -79,6 +79,7 @@ public class MailService {
                 "</body>" +
             "</html>";
             Content content = new Content("text/html", htmlBody);
+          
             Mail mail = new Mail(from, subject, toEmail, content);
 
             SendGrid sg = new SendGrid(sendGridApiKey);
