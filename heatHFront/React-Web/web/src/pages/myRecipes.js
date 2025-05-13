@@ -73,6 +73,7 @@ const MyRecipes = () => {
   const [currentAmount, setCurrentAmount] = useState('');
   
   const fileInputRef = useRef(null);
+  const ingredientInputRef = useRef(null);
   
   // For delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -142,6 +143,9 @@ const MyRecipes = () => {
       ]);
       setCurrentIngredient('');
       setCurrentAmount('');
+      if (ingredientInputRef.current) {
+        ingredientInputRef.current.focus();
+      }
     }
   };
   
@@ -568,6 +572,7 @@ const MyRecipes = () => {
                         onChange={(e) => setCurrentIngredient(e.target.value)}
                         fullWidth
                         disabled={submitting}
+                        inputRef={ingredientInputRef}
                       />
                       <TextField
                         label="Amount"
