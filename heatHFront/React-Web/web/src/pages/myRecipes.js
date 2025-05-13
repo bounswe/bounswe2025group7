@@ -234,7 +234,8 @@ const MyRecipes = () => {
   
           // Close the dialog and navigate to /myrecipes
           setOpenAddDialog(false);
-          navigate('/myrecipes');
+          navigate(0);
+
         } catch (error) {
           console.error("Failed to create recipe:", error);
           setError(`Failed to create recipe: ${error.message}`);
