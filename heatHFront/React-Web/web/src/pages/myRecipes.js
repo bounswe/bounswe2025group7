@@ -78,9 +78,6 @@ const MyRecipes = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState(null);
 
-  // Check if all form fields are filled
-  const isFormComplete = newTitle && newType && newTag && newInstructions && newIngredients.length > 0 && newTotalCalory && newPrice;
-
   // Fetch my recipes on component mount
   useEffect(() => {
     const fetchMyRecipes = async () => {
@@ -424,24 +421,12 @@ const MyRecipes = () => {
           </Dialog>
 
           {/* Add/Edit Recipe Dialog */}
-          <Dialog
-            open={openAddDialog}
-            onClose={() => !submitting && setOpenAddDialog(false)}
-            maxWidth="sm"
-            fullWidth
-            PaperProps={{ sx: { borderRadius: 3, boxShadow: 24 } }}
-          >
-            <DialogContent sx={{ backgroundColor: 'background.paper', p: 4, overflowY: 'auto', '&::-webkit-scrollbar': { display: 'none' }, '-ms-overflow-style': 'none', scrollbarWidth: 'none' }}>
-              <Box component="form" onSubmit={handleRecipeFormSubmit} sx={{ p: 2, width: '94%', maxWidth: 650, mx: 'auto' }}>
-                <Typography variant="h5" align="center" sx={{ mb: 3, fontWeight: 600 }}>
+          <Dialog open={openAddDialog} onClose={() => !submitting && setOpenAddDialog(false)} maxWidth="md" fullWidth>
+            <DialogContent>
+              <Box component="form" onSubmit={handleRecipeFormSubmit} sx={{ p: 2 }}>
+                <Typography variant="h5" sx={{ mb: 3 }}>
                   {isEditing ? 'Edit Recipe' : 'Create New Recipe'}
                 </Typography>
-                
-                {!isFormComplete && !submitting && (
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    Please fill in all fields to create a recipe.
-                  </Alert>
-                )}
                 
                 <Grid container spacing={3}>
                   {/* Left column */}
@@ -456,13 +441,12 @@ const MyRecipes = () => {
                       disabled={submitting}
                     />
                     
-                    <FormControl fullWidth sx={{ mb: 2 }} disabled={submitting} required>
+                    <FormControl fullWidth sx={{ mb: 2 }} disabled={submitting}>
                       <InputLabel>Type</InputLabel>
                       <Select
                         value={newType}
                         label="Type"
                         onChange={(e) => setNewType(e.target.value)}
-                        required
                       >
                         <MenuItem value="breakfast">Breakfast</MenuItem>
                         <MenuItem value="lunch">Lunch</MenuItem>
@@ -473,7 +457,6 @@ const MyRecipes = () => {
                     </FormControl>
                     
                     <TextField
-                      required
                       fullWidth
                       label="Tag"
                       value={newTag}
@@ -485,7 +468,6 @@ const MyRecipes = () => {
                     
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                       <TextField
-                        required
                         label="Total Calorie"
                         type="number"
                         value={newTotalCalory}
@@ -494,7 +476,6 @@ const MyRecipes = () => {
                         disabled={submitting}
                       />
                       <TextField
-                        required
                         label="Price"
                         type="number"
                         value={newPrice}
@@ -573,12 +554,6 @@ const MyRecipes = () => {
                         label="Amount"
                         value={currentAmount}
                         onChange={(e) => setCurrentAmount(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddIngredient();
-                          }
-                        }}
                         fullWidth
                         disabled={submitting}
                       />
@@ -621,7 +596,7 @@ const MyRecipes = () => {
                 </Grid>
               </Box>
             </DialogContent>
-            <DialogActions sx={{ px: 4, py: 2, justifyContent: 'flex-end', gap: 2 }}>
+            <DialogActions>
               <Button 
                 onClick={() => {
                   resetForm();
@@ -635,7 +610,7 @@ const MyRecipes = () => {
                 onClick={handleRecipeFormSubmit} 
                 variant="contained" 
                 color="primary"
-                disabled={!isFormComplete || submitting}
+                disabled={!newTitle || !newInstructions || submitting}
               >
                 {submitting ? (
                   <CircularProgress size={24} color="inherit" />
