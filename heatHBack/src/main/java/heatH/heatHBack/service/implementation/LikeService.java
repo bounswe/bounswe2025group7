@@ -33,7 +33,6 @@ public class LikeService {
         likeRepository.save(like);
         int currentLikes = feed.getLikeCount() != null ? feed.getLikeCount() : 0;
         feed.setLikeCount(currentLikes + 1);
-        feed.setLikedByCurrentUser(true);
         feedRepository.save(feed);
     }
 
@@ -48,7 +47,6 @@ public class LikeService {
 
         likeRepository.delete(like);
         feed.setLikeCount(feed.getLikeCount() - 1);
-        feed.setLikedByCurrentUser(false);
         feedRepository.save(feed);
     }
     
