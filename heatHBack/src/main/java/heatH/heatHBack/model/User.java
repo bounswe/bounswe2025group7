@@ -40,6 +40,9 @@ public class User implements UserDetails {
     @Column(name = "profile_photo", columnDefinition = "TEXT")
     private String profilePhoto;
 
+    private String name;
+    private String surname;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

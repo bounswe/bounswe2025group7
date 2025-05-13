@@ -34,6 +34,8 @@ public class InterestFormService {
         form.setWeight(request.getWeight());
         form.setUser(user);
         form.setGender(request.getGender());
+        user.setName(request.getName());
+        user.setSurname(request.getSurname());
 
         if (request.getProfilePhoto() != null) {
             String fileName = "user-profile-" + UUID.randomUUID() + ".jpg";
@@ -43,7 +45,9 @@ public class InterestFormService {
 
         // Update user's profile photo
         if (request.getProfilePhoto() != null && !request.getProfilePhoto().isEmpty()) {
-            user.setProfilePhoto(request.getProfilePhoto());
+            String fileName = "user-profile-" + UUID.randomUUID() + ".jpg";
+            String imageUrl = gcsService.uploadBase64Image(request.getProfilePhoto(), fileName);
+            user.setProfilePhoto(imageUrl);
             userRepository.save(user);
         }
 
@@ -92,9 +96,11 @@ public class InterestFormService {
 
         if (request.getName() != null) {
             form.setName(request.getName());
+            user.setName(request.getName());
         }
         if (request.getSurname() != null) {
             form.setSurname(request.getSurname());
+            user.setSurname(request.getSurname());
         }
         if (request.getDateOfBirth() != null) {
             form.setDateOfBirth(request.getDateOfBirth());
@@ -109,6 +115,8 @@ public class InterestFormService {
             String fileName = "user-profile-" + UUID.randomUUID() + ".jpg";
             String imageUrl = gcsService.uploadBase64Image(request.getProfilePhoto(), fileName);
             form.setProfilePhoto(imageUrl);
+            user.setProfilePhoto(imageUrl);
+            userRepository.save(user);
         }
         if (request.getGender() != null) {
             form.setGender(request.getGender());

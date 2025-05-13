@@ -1,6 +1,7 @@
 package heatH.heatHBack.service.implementation;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -38,7 +39,7 @@ public class FeedService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         feed.setUserId(user.getId());
-        feed.setCreatedAt(LocalDateTime.now());
+        feed.setCreatedAt(LocalDateTime.now(ZoneId.of("Europe/Istanbul")));
         feed.setType(type);
         feed.setLikeCount(0);
 
