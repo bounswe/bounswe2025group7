@@ -69,9 +69,11 @@ public class MailService {
                                     "<li>Use a trusted device and secure connection when accessing your account.</li>" +
                                 "</ul>" +
                             "</div>" +
-                            "<div class=\"footer\">" +
-                                "<p><a href=\"" + baseUrl>Privacy Policy</a> | <a href=\"" + baseUrl>Contact Us</a> | <a href=\"" + baseUrl>Unsubscribe</a></p>" +
-                            "</div>" ++
+                    "<div class=\"footer\">" +
+                    "<p><a href=\"" + baseUrl + "\">Privacy Policy</a> | " +
+                    "<a href=\"" + baseUrl + "\">Contact Us</a> | " +
+                    "<a href=\"" + baseUrl + "\">Unsubscribe</a></p>" +
+                    "</div>" +
                         "</div>" +
                     "</div>" +
                 "</body>" +
