@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles';
+import '@fontsource/sora';
 
 const theme = createTheme({
   palette: {
@@ -20,7 +21,7 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Sora", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
       fontWeight: 800,
       fontSize: '3.5rem',
