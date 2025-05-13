@@ -47,4 +47,10 @@ public class RecipeController {
                         .status(404)
                         .body(null));
     }
+
+    @GetMapping("/delete-recipe")
+    public ResponseEntity<String> deleteRecipe(long id){
+         recipeService.deleteRecipeById(id);
+         return  ResponseEntity.ok("Recipe deleted.");
+    }
 }

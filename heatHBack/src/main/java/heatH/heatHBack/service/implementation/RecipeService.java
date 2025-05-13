@@ -49,12 +49,14 @@ public class RecipeService {
     public Optional<Recipe> getRecipeById(Long id) {
         return recipeRepository.findById(id);
     }
+    public void deleteRecipeById(Long id) {
+         recipeRepository.deleteById(id);
+    }
     public Optional<List<Recipe>> getAllRecipes() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
         User user = userRepository.findByUsername(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         return recipeRepository.findAllByUser(user);
     }
 }
