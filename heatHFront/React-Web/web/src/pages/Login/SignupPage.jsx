@@ -13,12 +13,26 @@ export default function SignupPage() {
   const [code, setCode] = useState(Array(6).fill(''));
   const [countdown, setCountdown] = useState(0);
   const [message, setMessage] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   // refs for code input fields
   const inputRefs = useRef([]);
 
-  const handleChange = (e) =>
+  const handleChange = (e) => {
+    const { name, value } = e.target;
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+    if (name === 'password') {
+      setPasswordError(
+        value.length < 6 ? 'Password must be at least 6 characters' : ''
+      );
+    }
+    else if (name === 'username') {
+      setEmailError(
+        value.length < 1 ? 'Username can not be empty.' : ''
+      );
+    }
+  }
 
   useEffect(() => {
     let timer;
@@ -105,7 +119,7 @@ export default function SignupPage() {
   return (
     <Container maxWidth="sm">
       <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        
+
         <Typography variant="h5">Sign Up</Typography>
         <Box component="form" onSubmit={handleSubmit} onKeyDown={handleKeyDown} sx={{ mt: 2, width: '100%' }}>
           {/* Always show email/password */}
@@ -116,6 +130,8 @@ export default function SignupPage() {
             value={form.username}
             onChange={handleChange}
             required fullWidth margin="normal"
+            error={!!emailError}
+            helperText={emailError}
           />
           <TextField
             label="Password"
@@ -124,6 +140,8 @@ export default function SignupPage() {
             value={form.password}
             onChange={handleChange}
             required fullWidth margin="normal"
+            error={!!passwordError}
+            helperText={passwordError}
           />
           {/* Show code inputs once sent */}
           {codeSent && (
@@ -176,13 +194,14 @@ export default function SignupPage() {
               fullWidth
               sx={{ mt: 3 }}
               onClick={handleSendCode}
+              disabled={!!passwordError || !form.password || !form.username}
             >
               Send Verification Code
             </Button>
           )}
           {codeSent && (
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-              <Button type="submit" variant="contained" sx={{ flex: 1, mr: 1 }}>
+              <Button type="submit" disabled={!!passwordError} variant="contained" sx={{ flex: 1, mr: 1 }}>
                 Register
               </Button>
               <Button
@@ -197,9 +216,11 @@ export default function SignupPage() {
           )}
         </Box>
         <Box textAlign="center" mt={3}>
-            <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ alignSelf: 'flex-start', mb: 5 }}>
-              Back
-            </Button>
+
+          <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ alignSelf: 'flex-start', mb: 5 }}>
+            Back
+          </Button>
+
         </Box>
       </Box>
     </Container>

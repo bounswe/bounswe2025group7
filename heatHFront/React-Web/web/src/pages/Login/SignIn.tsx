@@ -79,9 +79,9 @@ export default function SigninPage() {
 
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Login failed');
+        setError(err.response?.data?.message || 'Your email or password is wrong. Please try again.');
       } else {
-        setError('Login failed');
+        setError('Your email or password is wrong. Please try again.');
       }
     }
   };
@@ -109,7 +109,7 @@ export default function SigninPage() {
 
         <Box component="form" onSubmit={handleSubmit} onKeyDown={handleKeyDown} sx={{ mt: 2, width: '100%' }}>
           <TextField
-            label="Username"
+            label="Email Address"
             name="username"
             type="email"
             value={form.username}

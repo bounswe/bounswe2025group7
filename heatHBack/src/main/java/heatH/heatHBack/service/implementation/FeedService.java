@@ -1,6 +1,7 @@
 package heatH.heatHBack.service.implementation;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -38,9 +39,10 @@ public class FeedService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         feed.setUserId(user.getId());
-        feed.setCreatedAt(LocalDateTime.now());
+        feed.setCreatedAt(LocalDateTime.now(ZoneId.of("Europe/Istanbul")));
         feed.setType(type);
         feed.setLikeCount(0);
+        feed.setLikedByCurrentUser(false);
 
 
         switch (type) {
@@ -72,8 +74,8 @@ public class FeedService {
         String email = auth.getName();
         User user = userRepository.findByUsername(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         return feeds.stream().map(feed -> {
+            Recipe recipe = feed.getRecipe();
             FeedResponse response = new FeedResponse();
             response.setId(feed.getId());
             response.setText(feed.getText());
@@ -81,6 +83,7 @@ public class FeedService {
             response.setType(feed.getType());
             response.setCreatedAt(feed.getCreatedAt());
             response.setLikeCount(feed.getLikeCount());
+            response.setRecipe(recipe);
 
             // Check if this feed is liked by the user
             boolean liked = likeRepository.findByUserAndFeedId(user, feed.getId()).isPresent();

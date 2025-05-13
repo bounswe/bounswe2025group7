@@ -2,7 +2,7 @@
 
 export const AuthColors = {
     light: {
-        authContainer: {
+        authContainer: { // auth page
             position: 'relative',
             alignItems: 'center',
             borderWidth: 3,
@@ -59,7 +59,11 @@ export const AuthColors = {
             fontSize: 16,
             fontWeight: 800,
             color: 'white'
+        },
+        mainButton: { // Main page
+
         }
+
     },
     dark: {
         container: {
