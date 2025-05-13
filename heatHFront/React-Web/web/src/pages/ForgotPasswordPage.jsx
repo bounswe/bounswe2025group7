@@ -59,6 +59,22 @@ export default function ForgotPasswordPage() {
       .catch(() => setError('Failed to resend code.'));
   };
 
+  // Handler for Enter key press to send verification code
+  const handleKeyDownInitial = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSendCode();
+    }
+  };
+
+  // Handler for Enter key press to verify the code
+  const handleKeyDownVerify = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleVerify(e);
+    }
+  };
+
   const handleVerify = async (e) => {
     e.preventDefault();
     setError('');
@@ -86,7 +102,7 @@ export default function ForgotPasswordPage() {
           Forgot Password
         </Typography>
         {!codeSent ? (
-          <form>
+          <form onKeyDown={handleKeyDownInitial}>
             <TextField
               label="Email Address"
               variant="outlined"
@@ -112,7 +128,7 @@ export default function ForgotPasswordPage() {
             </Button>
           </form>
         ) : (
-          <Box component="form" onSubmit={handleVerify}>
+          <Box component="form" onSubmit={handleVerify} onKeyDown={handleKeyDownVerify}>
             <Typography variant="body1" gutterBottom>
               Enter the 6-digit code sent to <strong>{email}</strong>
             </Typography>
@@ -169,7 +185,7 @@ export default function ForgotPasswordPage() {
                 variant="text"
                 onClick={handleResend}
                 disabled={countdown > 0}
-                sx={{ ml: 1 }}
+                sx={{ ml: 1, width: '17ch', whiteSpace: 'nowrap', textAlign: 'center' }}
               >
                 {countdown > 0 ? `Resend Code (${countdown}s)` : 'Resend Code'}
               </Button>
