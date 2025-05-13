@@ -13,5 +13,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "app/index.jsx", "components/auth/ThemedAuth.jsx"  ]
+, "app/index.jsx", "components/auth/ThemedAuth.jsx", "app/auth/authentication.jsx", "app/form/banner.jsx", "app/form/interestForm.jsx"  ]
 }
