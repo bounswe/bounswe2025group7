@@ -102,8 +102,8 @@ const LandingPage = () => {
       {/* Navigation Bar */}
       <StyledAppBar>
         <Toolbar sx={{ position: 'relative', justifyContent: 'space-between' }}>
-          {/* Logo at the far left */}
-          <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 48 }}>
+          {/* Logo and title */}
+          <Link component={RouterLink} to="/" color="inherit" underline="none" sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 48 }}>
             <img
               src={logo}
               alt="HeatH logo"
@@ -115,22 +115,8 @@ const LandingPage = () => {
                 objectFit: 'cover',
               }}
             />
-          </Box>
-          {/* Centered title */}
-          <Box
-            sx={{
-              position: 'absolute',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <Typography variant="h6" component="div">
-              HeatH
-            </Typography>
-          </Box>
+            <Typography variant="h6" component="div">HeatH</Typography>
+          </Link>
           {/* Navigation buttons on the right */}
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Link
