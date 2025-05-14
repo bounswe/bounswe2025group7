@@ -33,6 +33,12 @@ const interestFormService = {
     const response = await apiClient.get('/interest-form/get-form');
     return response.data;
   },
+
+  // Update existing interest form data
+  updateInterestForm: async (data) => {
+    const response = await apiClient.put('/interest-form/update-form', data);
+    return response.data;
+  },
 };
 
 export default interestFormService;
