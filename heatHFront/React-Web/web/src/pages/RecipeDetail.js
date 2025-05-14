@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
+import {
   Container, Typography, Grid, Box, IconButton, useTheme, Button, Rating,
   Chip, Divider, List, ListItem, ListItemText, Paper, Avatar
 } from '@mui/material';
@@ -54,22 +54,22 @@ const RecipeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
-  
+
   // States
   const [recipe, setRecipe] = useState(null);
   const [userRating, setUserRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('details');
-  
+
   // Share functionality states - MOVED INSIDE COMPONENT
   const [shareAnchorEl, setShareAnchorEl] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  
+
   // Add these states inside your RecipeDetail component
   const [isSaved, setIsSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
-  
+
   // Fetch recipe data
   useEffect(() => {
     const fetchRecipe = async () => {
@@ -82,10 +82,10 @@ const RecipeDetail = () => {
         setLoading(false);
       }
     };
-  
+
     fetchRecipe();
   }, [id]);
-  
+
   // Add this effect to check if recipe is saved when the component loads
   useEffect(() => {
     const fetchSavedStatus = async () => {
@@ -94,18 +94,18 @@ const RecipeDetail = () => {
         setIsSaved(savedStatus);
       }
     };
-    
+
     fetchSavedStatus();
   }, [recipe]);
-  
+
   const handlePrint = () => {
     window.print();
   };
-  
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
   };
-  
+
   // Share functionality handlers - MOVED INSIDE COMPONENT
   const handleShareClick = (event) => {
     setShareAnchorEl(event.currentTarget);
@@ -153,7 +153,7 @@ const RecipeDetail = () => {
       default:
         return;
     }
-    
+
     window.open(shareUrl, '_blank', 'noopener,noreferrer');
     handleShareClose();
   };
@@ -161,7 +161,7 @@ const RecipeDetail = () => {
   // Add this function to handle save/unsave actions
   const handleSaveToggle = async () => {
     if (!recipe?.id) return;
-    
+
     setSaveLoading(true);
     try {
       if (isSaved) {
@@ -193,7 +193,7 @@ const RecipeDetail = () => {
       </Template>
     );
   }
-  
+
   if (!recipe) {
     return (
       <Template>
@@ -210,7 +210,7 @@ const RecipeDetail = () => {
       </Template>
     );
   }
-  
+
   return (
     <Template>
       {/* Hero section with image and title overlay */}
@@ -240,81 +240,81 @@ const RecipeDetail = () => {
             <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 1 }}>
               {recipe["title"]}
             </Typography>
-            
+
             {recipe["tag"] && (
-              <Chip 
-                label={recipe["tag"]} 
-                size="small" 
-                sx={{ 
-                  mt: 1, 
-                  bgcolor: theme.palette.primary.main, 
+              <Chip
+                label={recipe["tag"]}
+                size="small"
+                sx={{
+                  mt: 1,
+                  bgcolor: theme.palette.primary.main,
                   color: 'white',
                   fontWeight: 'bold'
-                }} 
+                }}
               />
             )}
           </Container>
         </Box>
       </Box>
-      
+
       <Container maxWidth="lg" sx={{ mt: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Button 
-            startIcon={<ArrowBackIcon />} 
+          <Button
+            startIcon={<ArrowBackIcon />}
             onClick={() => navigate(-1)}
           >
             Back
           </Button>
-          
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-            Easiness Score
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Rating value={recipe.easinessScore || 3.5} readOnly precision={0.5} />
-            <Typography variant="body2" sx={{ ml: 1 }}>
-              (3.5)
-            </Typography>
-          </Box>
-        </Box>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-            Healthiness Score
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Rating value={recipe.healthinessScore || 3.5} readOnly precision={0.5} />
-            <Typography variant="body2" sx={{ ml: 1 }}>
-              (3.5)
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+              Easiness Score
             </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Rating value={recipe.easinessScore || 3.5} readOnly precision={0.5} />
+              <Typography variant="body2" sx={{ ml: 1 }}>
+                (3.5)
+              </Typography>
+            </Box>
           </Box>
-        </Box>
-                  
-          <Button 
-            startIcon={<PrintIcon />} 
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+              Healthiness Score
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Rating value={recipe.healthinessScore || 3.5} readOnly precision={0.5} />
+              <Typography variant="body2" sx={{ ml: 1 }}>
+                (3.5)
+              </Typography>
+            </Box>
+          </Box>
+
+          <Button
+            startIcon={<PrintIcon />}
             onClick={handlePrint}
           >
             Print
           </Button>
         </Box>
-        
+
         {/* Tabs navigation - styled to match the image */}
-        <Box sx={{ 
-          display: 'flex', 
+        <Box sx={{
+          display: 'flex',
           justifyContent: 'center',
           mb: 3,
           borderBottom: '1px solid',
           borderColor: 'divider',
         }}>
-          <Box sx={{ 
+          <Box sx={{
             display: 'flex',
             maxWidth: '600px',
             width: '100%',
             justifyContent: 'space-evenly'
           }}>
-            <Button 
+            <Button
               onClick={() => handleTabChange('details')}
-              sx={{ 
+              sx={{
                 color: activeTab === 'details' ? theme.palette.primary.main : 'text.secondary',
                 borderBottom: activeTab === 'details' ? `2px solid ${theme.palette.primary.main}` : 'none',
                 borderRadius: 0,
@@ -325,9 +325,9 @@ const RecipeDetail = () => {
             >
               Recipe Details
             </Button>
-            <Button 
+            <Button
               onClick={() => handleTabChange('instructions')}
-              sx={{ 
+              sx={{
                 color: activeTab === 'instructions' ? theme.palette.primary.main : 'text.secondary',
                 borderBottom: activeTab === 'instructions' ? `2px solid ${theme.palette.primary.main}` : 'none',
                 borderRadius: 0,
@@ -338,9 +338,9 @@ const RecipeDetail = () => {
             >
               Instructions
             </Button>
-            <Button 
+            <Button
               onClick={() => handleTabChange('ingredients')}
-              sx={{ 
+              sx={{
                 color: activeTab === 'ingredients' ? theme.palette.primary.main : 'text.secondary',
                 borderBottom: activeTab === 'ingredients' ? `2px solid ${theme.palette.primary.main}` : 'none',
                 borderRadius: 0,
@@ -351,9 +351,9 @@ const RecipeDetail = () => {
             >
               Ingredients
             </Button>
-            <Button 
+            <Button
               onClick={() => handleTabChange('save')}
-              sx={{ 
+              sx={{
                 color: activeTab === 'save' ? theme.palette.primary.main : 'text.secondary',
                 borderBottom: activeTab === 'save' ? `2px solid ${theme.palette.primary.main}` : 'none',
                 borderRadius: 0,
@@ -368,18 +368,18 @@ const RecipeDetail = () => {
         </Box>
 
         {/* Conditionally render content based on active tab */}
-        <Box sx={{ 
+        <Box sx={{
           display: 'flex',
-          justifyContent: 'center', 
+          justifyContent: 'center',
           my: 3
         }}>
           {/* Recipe details tab */}
           {activeTab === 'details' && (
-            <Paper 
-              elevation={1} 
-              sx={{ 
-                p: 3, 
-                maxWidth: '400px',
+            <Paper
+            fullwidth
+              elevation={1}
+              sx={{
+                p: 3,
                 width: '100%',
                 bgcolor: alpha(theme.palette.background.default, 0.7)
               }}
@@ -390,12 +390,13 @@ const RecipeDetail = () => {
               <Grid container spacing={2} sx={{ mt: 1 }}>
                 {recipe["type"] && (
                   <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1,
-              p: 1.5,
-              height: '100%',
-              bgcolor: alpha(theme.palette.background.paper, 0.4),
-              borderRadius: 1,
-              }}>
+                    <Box sx={{
+                      display: 'flex', alignItems: 'center', gap: 1,
+                      p: 1.5,
+                      height: '100%',
+                      bgcolor: alpha(theme.palette.background.paper, 0.4),
+                      borderRadius: 1,
+                    }}>
                       <LocalDiningIcon color="primary" />
                       <Box>
                         <Typography variant="body2" fontWeight="medium">{recipe["type"]}</Typography>
@@ -403,14 +404,16 @@ const RecipeDetail = () => {
                     </Box>
                   </Grid>
                 )}
-                
+
                 {recipe["totalCalorie"] > 0 && (
                   <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1,
-              p: 1.5,
-              height: '100%',
-              bgcolor: alpha(theme.palette.background.paper, 0.4),
-              borderRadius: 1, }}>
+                    <Box sx={{
+                      display: 'flex', alignItems: 'center', gap: 1,
+                      p: 1.5,
+                      height: '100%',
+                      bgcolor: alpha(theme.palette.background.paper, 0.4),
+                      borderRadius: 1,
+                    }}>
                       <LocalDiningIcon color="primary" />
                       <Box>
                         <Typography variant="caption" color="text.secondary">Calories</Typography>
@@ -419,14 +422,16 @@ const RecipeDetail = () => {
                     </Box>
                   </Grid>
                 )}
-                
+
                 {recipe["price"] > 0 && (
                   <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1,
-              p: 1.5,
-              height: '100%',
-              bgcolor: alpha(theme.palette.background.paper, 0.4),
-              borderRadius: 1, }}>
+                    <Box sx={{
+                      display: 'flex', alignItems: 'center', gap: 1,
+                      p: 1.5,
+                      height: '100%',
+                      bgcolor: alpha(theme.palette.background.paper, 0.4),
+                      borderRadius: 1,
+                    }}>
                       <AttachMoneyIcon color="primary" />
                       <Box>
                         <Typography variant="caption" color="text.secondary">Price</Typography>
@@ -438,14 +443,14 @@ const RecipeDetail = () => {
               </Grid>
             </Paper>
           )}
-          
+
           {/* Instructions tab */}
           {activeTab === 'instructions' && (
-            <Paper 
-              elevation={1} 
-              sx={{ 
-                p: 3, 
-                maxWidth: '400px',
+            <Paper
+              fullwidth
+              elevation={1}
+              sx={{
+                p: 3,
                 width: '100%',
                 bgcolor: alpha(theme.palette.background.default, 0.7)
               }}
@@ -455,23 +460,25 @@ const RecipeDetail = () => {
               </Typography>
               <Box>
                 {recipe["instructions"].map((instruction) => (
-                  <Box  sx={{ display: 'flex', mb: 3 }}>
-                    <Box 
-                      sx={{ 
-                        minWidth: 32, 
-                        height: 32, 
-                        borderRadius: '50%', 
-                        bgcolor: theme.palette.primary.main, 
+                  <Box sx={{ display: 'flex', mb: 3 }}>
+                    <Box
+                      sx={{
+                        minWidth: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: theme.palette.primary.main,
                         color: 'white',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         mr: 2,
+                        mt:1,
                         fontWeight: 'bold',
-                        flexShrink: 0
+                        flexShrink: 0,
+                        fontSize: '5.75rem'
                       }}
                     >
-                      
+
                     </Box>
                     <Typography variant="body1">
                       {instruction}
@@ -481,14 +488,14 @@ const RecipeDetail = () => {
               </Box>
             </Paper>
           )}
-          
+
           {/* Ingredients tab */}
           {activeTab === 'ingredients' && (
-            <Paper 
-              elevation={1} 
-              sx={{ 
-                p: 3, 
-                maxWidth: '400px',
+            <Paper
+              fullwidth
+              elevation={1}
+              sx={{
+                p: 3,
                 width: '100%',
                 bgcolor: alpha(theme.palette.background.default, 0.7)
               }}
@@ -503,9 +510,9 @@ const RecipeDetail = () => {
                     const name = parts[0] ? parts[0].trim() : "";
                     const amount = parts[1] ? parts[1].trim() : "";
                     return (
-                      <ListItem 
-                        key={idx} 
-                        disablePadding 
+                      <ListItem
+                        key={idx}
+                        disablePadding
                         divider={idx < recipe["ingredients"].length - 1}
                         sx={{ py: 1 }}
                       >
@@ -524,14 +531,14 @@ const RecipeDetail = () => {
               )}
             </Paper>
           )}
-          
+
           {/* Save & Share tab */}
           {activeTab === 'save' && (
-            <Paper 
-              elevation={1} 
-              sx={{ 
-                p: 3, 
-                maxWidth: '200px',
+            <Paper
+            fullwidth
+              elevation={1}
+              sx={{
+                p: 3,
                 width: '100%',
                 bgcolor: alpha(theme.palette.background.default, 0.7)
               }}
@@ -539,12 +546,12 @@ const RecipeDetail = () => {
               <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
                 Save & Share
               </Typography>
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-around', 
-                mt: 4,
-                mb: 4,
-                height: '30px',
+              <Box sx={{
+                display: 'flex',
+                justifyContent: 'space-around',
+                mt: 5,
+                mb: 2,
+                height: '10px',
                 alignItems: 'center'
               }}>
                 {/* <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -553,13 +560,13 @@ const RecipeDetail = () => {
                   </IconButton>
                   <Typography color="error" variant="body2">Like</Typography>
                 </Box> */}
-                
+
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <IconButton 
+                  <IconButton
                     onClick={handleSaveToggle}
                     disabled={saveLoading}
-                    sx={{ 
-                      mb: 1, 
+                    sx={{
+                      mb: 1,
                       p: 1,
                       color: isSaved ? 'primary.main' : 'text.secondary',
                       transition: 'all 0.2s ease-in-out',
@@ -579,18 +586,19 @@ const RecipeDetail = () => {
                       <BookmarkBorderIcon fontSize="large" />
                     )}
                   </IconButton>
-                  <Typography 
-                    color={isSaved ? "primary" : "text.secondary"} 
+                  <Typography
+                    color={isSaved ? "primary" : "text.secondary"}
                     variant="body2"
                   >
                     {isSaved ? 'Saved' : 'Save'}
                   </Typography>
                 </Box>
-                
+
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <IconButton 
-                    color="info" 
-                    sx={{ mb: 1, p: 1,
+                  <IconButton
+                    color="info"
+                    sx={{
+                      mb: 1, p: 1,
                       color: 'info.main',
                       transition: 'all 0.2s ease-in-out',
                       '&:hover': {
@@ -600,7 +608,8 @@ const RecipeDetail = () => {
                       '&:active': {
                         backgroundColor: 'info.dark',
                         transform: 'scale(0.50)',
-                      } }}
+                      }
+                    }}
                     onClick={handleShareClick}
                   >
                     <ShareIcon fontSize="large" />
