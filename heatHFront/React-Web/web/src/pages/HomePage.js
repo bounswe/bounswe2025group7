@@ -61,12 +61,20 @@ const HomePage = () => {
   const [shareAnchorEl, setShareAnchorEl] = useState(null);
   const [recipeToShare, setRecipeToShare] = useState(null);
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [pageNumber, setPageNumber] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loaderRef = useRef(null);
 
   // Function to fetch recent posts from API
-  const fetchFeeds = async () => {
+  const fetchFeeds = async (page = 0) => {
     try {
-      setLoading(true);
-      const response = await apiClient.get('/feeds/recent');
+      if (page === 0) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+      const response = await apiClient.get('/feeds/recent', { params: { pageNumber: page } });
       
       // Get user's saved recipes to check which recipes are already saved
       const savedResponse = await apiClient.get('/saved-recipes/get');
@@ -83,13 +91,24 @@ const HomePage = () => {
         return feed;
       });
       
-      setFeeds(feedsWithSavedStatus);
+      if (page === 0) {
+        setFeeds(feedsWithSavedStatus);
+      } else {
+        setFeeds(prev => [...prev, ...feedsWithSavedStatus]);
+      }
+      if (feedsWithSavedStatus.length === 0) {
+        setHasMore(false);
+      }
       setError(null);
     } catch (err) {
       console.error('Failed to fetch feeds:', err);
       setError('Failed to load feeds. Please try again later.');
     } finally {
-      setLoading(false);
+      if (page === 0) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
     }
   };
 
@@ -154,13 +173,11 @@ const HomePage = () => {
     try {
       // Optimistically update UI for main feed
       if (currentlySaved) {
-        // If unsaving, mark the recipe as not saved
         setFeeds(prev => prev.map(f => 
           f.type === 'RECIPE' && f.recipe?.id === recipeId
             ? { ...f, savedByCurrentUser: false }
             : f
         ));
-        
         // Also update commentFeed if the same recipe is open in dialog
         if (commentFeed && commentFeed.type === 'RECIPE' && commentFeed.recipe?.id === recipeId) {
           setCommentFeed(prev => ({
@@ -168,40 +185,29 @@ const HomePage = () => {
             savedByCurrentUser: false
           }));
         }
-        
         // Call the API to unsave the recipe
         await unsaveRecipe(recipeId);
       } else {
-        // If saving, mark the recipe as saved
         setFeeds(prev => prev.map(f => 
           f.type === 'RECIPE' && f.recipe?.id === recipeId
             ? { ...f, savedByCurrentUser: true }
             : f
         ));
-        
-        // Also update commentFeed if the same recipe is open in dialog
         if (commentFeed && commentFeed.type === 'RECIPE' && commentFeed.recipe?.id === recipeId) {
           setCommentFeed(prev => ({
             ...prev,
             savedByCurrentUser: true
           }));
         }
-        
-        // Call the API to save the recipe
         await saveRecipe(recipeId);
       }
     } catch (err) {
       console.error('Failed to toggle bookmark:', err);
-      
-      // If there's an error, fetch all feeds again to get the correct saved state
+      // On error, refresh feeds to correct state
       try {
         const response = await apiClient.get('/feeds/recent');
-        
-        // Get user's saved recipes to check which recipes are already saved
         const savedResponse = await apiClient.get('/saved-recipes/get');
         const savedRecipeIds = savedResponse.data.map(recipe => recipe.recipeId);
-        
-        // Mark recipes as saved if they're in the user's saved list
         const feedsWithSavedStatus = response.data.map(feed => {
           if (feed.type === 'RECIPE' && feed.recipe) {
             return {
@@ -211,10 +217,7 @@ const HomePage = () => {
           }
           return feed;
         });
-        
         setFeeds(feedsWithSavedStatus);
-        
-        // Also refresh the comment feed if open
         if (commentFeed) {
           const updatedFeed = feedsWithSavedStatus.find(f => f.id === commentFeed.id);
           if (updatedFeed) {
@@ -227,10 +230,27 @@ const HomePage = () => {
     }
   };
 
-  // Fetch posts on component mount
+  // Trigger next page when sentinel (last post) enters viewport
   useEffect(() => {
-    fetchFeeds();
-  }, []);
+    if (!loaderRef.current) return;
+    const observer = new IntersectionObserver(entries => {
+      const entry = entries[0];
+      if (entry.isIntersecting && !loading && !loadingMore && hasMore) {
+        setPageNumber(prev => prev + 1);
+      }
+    }, { rootMargin: '100px' });
+    observer.observe(loaderRef.current);
+    return () => {
+      if (loaderRef.current) {
+        observer.unobserve(loaderRef.current);
+      }
+    };
+  }, [loading, loadingMore, hasMore]);
+
+  // Fetch posts when pageNumber changes
+  useEffect(() => {
+    fetchFeeds(pageNumber);
+  }, [pageNumber]);
 
   // Navigate to recipe detail page
   const handleRecipeClick = (recipe) => {
@@ -606,7 +626,7 @@ const HomePage = () => {
           </Card>
 
           {/* Feed listing */}
-          {loading ? (
+          {loading && pageNumber === 0 ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}><CircularProgress/></Box>
           ) : error ? (
             <Box sx={{ textAlign: 'center', my: 4 }}>
@@ -670,6 +690,10 @@ const HomePage = () => {
               ))}
             </Box>
           )}
+          {loadingMore && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}><CircularProgress/></Box>
+          )}
+          <div ref={loaderRef} />
         </Container>
         
         {/* Recipe Selection Dialog - for post composer */}
