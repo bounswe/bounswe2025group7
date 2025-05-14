@@ -64,6 +64,7 @@ const HomePage = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [shareAnchorEl, setShareAnchorEl] = useState(null);
   const [recipeToShare, setRecipeToShare] = useState(null);
+  const [commentsLoading, setCommentsLoading] = useState(false);
 
   // Function to fetch recent posts from API
   const fetchFeeds = async () => {
@@ -387,29 +388,60 @@ const HomePage = () => {
     return recipes.find(r => r.getId() === selectedRecipeForPost);
   };
 
-  const handleCommentClick = (feed) => {
+  const handleCommentClick = async (feed) => {
     setCommentFeed(feed);
-    setComments(feed.comments || []);
+    setComments([]);  // Clear comments initially
     setNewComment('');
     setCommentDialogOpen(true);
+    setCommentsLoading(true);
+    
+    // Fetch comments from the backend
+    try {
+      const response = await apiClient.post('/get-feed-comments', { feedId: feed.id });
+      if (response.data) {
+        setComments(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch comments:', err);
+      setSnackbarMessage("Failed to load comments. Please try again.");
+      setSnackbarOpen(true);
+    } finally {
+      setCommentsLoading(false);
+    }
   };
 
   const handleCloseComments = () => {
     setCommentDialogOpen(false);
   };
 
-  const handlePostComment = (e) => {
+  const handlePostComment = async (e) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !commentFeed) return;
     
-    // Get the current user's name or use "You" as fallback
-    const currentUser = localStorage.getItem('userName') || 'You';
+    setCommentsLoading(true);
     
-    setComments(prev => [...prev, { user: currentUser, text: newComment }]);
-    setNewComment('');
-    
-    // In a real implementation, you would also send this to the backend
-    // e.g., apiClient.post('/feeds/comment', { feedId: commentFeed.id, text: newComment });
+    try {
+      // Send the comment to the backend
+      await apiClient.post('/comment', { 
+        feedId: commentFeed.id, 
+        message: newComment.trim() 
+      });
+      
+      // Clear the input
+      setNewComment('');
+      
+      // Refresh comments from the backend
+      const response = await apiClient.post('/get-feed-comments', { feedId: commentFeed.id });
+      if (response.data) {
+        setComments(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to post comment:', err);
+      setSnackbarMessage("Failed to post comment. Please try again.");
+      setSnackbarOpen(true);
+    } finally {
+      setCommentsLoading(false);
+    }
   };
 
   // Handle share functionality for recipes
@@ -907,12 +939,21 @@ const HomePage = () => {
                 gap: 2,
                 minHeight: 0
               }}>
-                {comments.length > 0 ? comments.map((c, i) => (
-                  <Box key={i} sx={{ p: 2, borderRadius: 1, bgcolor: 'background.paper', boxShadow: 1 }}>
+                {commentsLoading ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <CircularProgress />
+                  </Box>
+                ) : comments.length > 0 ? comments.map((comment, i) => (
+                  <Box key={comment.id || i} sx={{ p: 2, borderRadius: 1, bgcolor: 'background.paper', boxShadow: 1 }}>
                     <Typography variant="subtitle2" color="primary.main" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                      {c.user || 'Anonymous User'}
+                      {comment.user?.username || comment.user?.name || 'Anonymous User'}
                     </Typography>
-                    <Typography variant="body2">{c.text}</Typography>
+                    <Typography variant="body2">{comment.message || comment.text}</Typography>
+                    {comment.createdAt && (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                        {new Date(comment.createdAt).toLocaleString()}
+                      </Typography>
+                    )}
                   </Box>
                 )) : (
                   <Typography color="text.secondary" sx={{ p: 2 }}>No comments yet.</Typography>
@@ -933,9 +974,15 @@ const HomePage = () => {
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   sx={{ mb: 1 }}
+                  disabled={commentsLoading}
                 />
-                <Button type="submit" variant="contained" fullWidth>
-                  Post Comment
+                <Button 
+                  type="submit" 
+                  variant="contained" 
+                  fullWidth
+                  disabled={commentsLoading || !newComment.trim()}
+                >
+                  {commentsLoading ? <CircularProgress size={24} color="inherit" /> : 'Post Comment'}
                 </Button>
               </Box>
             </Box>
