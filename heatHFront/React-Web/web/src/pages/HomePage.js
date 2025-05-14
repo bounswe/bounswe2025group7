@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Typography, Grid, Card, Box, CardActions, IconButton, useTheme, Dialog, DialogContent, DialogActions, Button, TextField, FormControl, InputLabel, Select, MenuItem, CircularProgress } from '@mui/material';
+import { Container, Typography, Grid, Card, Box, CardActions, IconButton, useTheme, Dialog, DialogContent, DialogActions, Button, TextField, FormControl, InputLabel, Select, MenuItem, CircularProgress, Snackbar } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -17,6 +17,11 @@ import Drawer from '@mui/material/Drawer';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import CloseIcon from '@mui/icons-material/Close';
 import Backdrop from '@mui/material/Backdrop';
+import Menu from '@mui/material/Menu';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 
 // Static list for initial UI rendering - will be replaced with API data
 const initialRecipes = [
@@ -55,13 +60,33 @@ const HomePage = () => {
   const [newComment, setNewComment] = useState('');
   const [backdropOpen, setBackdropOpen] = useState(false);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [shareAnchorEl, setShareAnchorEl] = useState(null);
+  const [recipeToShare, setRecipeToShare] = useState(null);
 
   // Function to fetch recent posts from API
   const fetchFeeds = async () => {
     try {
       setLoading(true);
       const response = await apiClient.get('/feeds/recent');
-      setFeeds(response.data);
+      
+      // Get user's saved recipes to check which recipes are already saved
+      const savedResponse = await apiClient.get('/saved-recipes/get');
+      const savedRecipeIds = savedResponse.data.map(recipe => recipe.recipeId);
+      
+      // Mark recipes as saved if they're in the user's saved list
+      const feedsWithSavedStatus = response.data.map(feed => {
+        if (feed.type === 'RECIPE' && feed.recipe) {
+          return {
+            ...feed,
+            savedByCurrentUser: savedRecipeIds.includes(feed.recipe.id)
+          };
+        }
+        return feed;
+      });
+      
+      setFeeds(feedsWithSavedStatus);
       setError(null);
     } catch (err) {
       console.error('Failed to fetch feeds:', err);
@@ -120,45 +145,78 @@ const HomePage = () => {
 
   // Toggle bookmark/unbookmark for a recipe
   const handleBookmarkRecipe = async (recipeId, currentlySaved) => {
-    const newSaved = !currentlySaved;
-    
-    // Optimistically update UI for main feed
-    setFeeds(prev => prev.map(f => 
-      f.type === 'RECIPE' && f.recipe?.id === recipeId
-        ? { ...f, savedByCurrentUser: newSaved }
-        : f
-    ));
-    
-    // Also update commentFeed if the same recipe is open in dialog
-    if (commentFeed && commentFeed.type === 'RECIPE' && commentFeed.recipe?.id === recipeId) {
-      setCommentFeed(prev => ({
-        ...prev,
-        savedByCurrentUser: newSaved
-      }));
-    }
-    
     try {
-      if (newSaved) {
-        await saveRecipe(recipeId);
-      } else {
+      // Optimistically update UI for main feed
+      if (currentlySaved) {
+        // If unsaving, mark the recipe as not saved
+        setFeeds(prev => prev.map(f => 
+          f.type === 'RECIPE' && f.recipe?.id === recipeId
+            ? { ...f, savedByCurrentUser: false }
+            : f
+        ));
+        
+        // Also update commentFeed if the same recipe is open in dialog
+        if (commentFeed && commentFeed.type === 'RECIPE' && commentFeed.recipe?.id === recipeId) {
+          setCommentFeed(prev => ({
+            ...prev,
+            savedByCurrentUser: false
+          }));
+        }
+        
+        // Call the API to unsave the recipe
         await unsaveRecipe(recipeId);
+      } else {
+        // If saving, mark the recipe as saved
+        setFeeds(prev => prev.map(f => 
+          f.type === 'RECIPE' && f.recipe?.id === recipeId
+            ? { ...f, savedByCurrentUser: true }
+            : f
+        ));
+        
+        // Also update commentFeed if the same recipe is open in dialog
+        if (commentFeed && commentFeed.type === 'RECIPE' && commentFeed.recipe?.id === recipeId) {
+          setCommentFeed(prev => ({
+            ...prev,
+            savedByCurrentUser: true
+          }));
+        }
+        
+        // Call the API to save the recipe
+        await saveRecipe(recipeId);
       }
     } catch (err) {
       console.error('Failed to toggle bookmark:', err);
       
-      // Revert on error - main feed
-      setFeeds(prev => prev.map(f => 
-        f.type === 'RECIPE' && f.recipe?.id === recipeId
-          ? { ...f, savedByCurrentUser: currentlySaved }
-          : f
-      ));
-      
-      // Revert on error - comment dialog
-      if (commentFeed && commentFeed.type === 'RECIPE' && commentFeed.recipe?.id === recipeId) {
-        setCommentFeed(prev => ({
-          ...prev,
-          savedByCurrentUser: currentlySaved
-        }));
+      // If there's an error, fetch all feeds again to get the correct saved state
+      try {
+        const response = await apiClient.get('/feeds/recent');
+        
+        // Get user's saved recipes to check which recipes are already saved
+        const savedResponse = await apiClient.get('/saved-recipes/get');
+        const savedRecipeIds = savedResponse.data.map(recipe => recipe.recipeId);
+        
+        // Mark recipes as saved if they're in the user's saved list
+        const feedsWithSavedStatus = response.data.map(feed => {
+          if (feed.type === 'RECIPE' && feed.recipe) {
+            return {
+              ...feed,
+              savedByCurrentUser: savedRecipeIds.includes(feed.recipe.id)
+            };
+          }
+          return feed;
+        });
+        
+        setFeeds(feedsWithSavedStatus);
+        
+        // Also refresh the comment feed if open
+        if (commentFeed) {
+          const updatedFeed = feedsWithSavedStatus.find(f => f.id === commentFeed.id);
+          if (updatedFeed) {
+            setCommentFeed(updatedFeed);
+          }
+        }
+      } catch (refreshErr) {
+        console.error('Failed to refresh feeds after bookmark error:', refreshErr);
       }
     }
   };
@@ -354,6 +412,63 @@ const HomePage = () => {
     // e.g., apiClient.post('/feeds/comment', { feedId: commentFeed.id, text: newComment });
   };
 
+  // Handle share functionality for recipes
+  const handleShareClick = (event, recipeId, recipeTitle) => {
+    event.stopPropagation(); // Prevent other click handlers
+    setShareAnchorEl(event.currentTarget);
+    setRecipeToShare({ id: recipeId, title: recipeTitle });
+  };
+
+  const handleShareClose = () => {
+    setShareAnchorEl(null);
+  };
+
+  const copyLinkToClipboard = () => {
+    if (!recipeToShare) return;
+    
+    const recipeUrl = `${window.location.origin}/recipe/${recipeToShare.id}`;
+    navigator.clipboard.writeText(recipeUrl)
+      .then(() => {
+        setSnackbarMessage("Recipe link copied to clipboard!");
+        setSnackbarOpen(true);
+        handleShareClose();
+      })
+      .catch(err => {
+        console.error('Failed to copy link:', err);
+        setSnackbarMessage("Failed to copy link. Please try again.");
+        setSnackbarOpen(true);
+      });
+  };
+
+  const shareToSocial = (platform) => {
+    if (!recipeToShare) return;
+    
+    const recipeUrl = `${window.location.origin}/recipe/${recipeToShare.id}`;
+    const recipeTitle = recipeToShare.title || 'Check out this recipe!';
+    let shareUrl;
+
+    switch (platform) {
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(recipeUrl)}`;
+        break;
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(recipeTitle)}&url=${encodeURIComponent(recipeUrl)}`;
+        break;
+      case 'whatsapp':
+        shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(recipeTitle + ' ' + recipeUrl)}`;
+        break;
+      default:
+        return;
+    }
+    
+    window.open(shareUrl, '_blank', 'noopener,noreferrer');
+    handleShareClose();
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
   return (
     <Template>
       <Box>
@@ -478,6 +593,18 @@ const HomePage = () => {
                         sx={{ ml: 1 }}
                       >
                         {feed.savedByCurrentUser ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+                      </IconButton>
+                    )}
+                    
+                    {/* Add share button only for recipe posts */}
+                    {feed.type === 'RECIPE' && feed.recipe && (
+                      <IconButton 
+                        onClick={(event) => handleShareClick(event, feed.recipe.id, feed.recipe.title)} 
+                        aria-label="share" 
+                        color="info"
+                        sx={{ ml: 1 }}
+                      >
+                        <ShareOutlinedIcon />
                       </IconButton>
                     )}
                     
@@ -728,13 +855,25 @@ const HomePage = () => {
                       </IconButton>
                     )}
                     
+                    {/* Add share button for recipe posts in popup */}
+                    {commentFeed.type === 'RECIPE' && commentFeed.recipe && (
+                      <IconButton 
+                        onClick={(event) => handleShareClick(event, commentFeed.recipe.id, commentFeed.recipe.title)} 
+                        aria-label="share" 
+                        color="info"
+                        sx={{ ml: 1 }}
+                      >
+                        <ShareOutlinedIcon />
+                      </IconButton>
+                    )}
+                    
                     {commentFeed.recipe && (
                       <Button
                         variant="outlined"
                         color="primary"
                         size="small"
                         onClick={() => navigate(`/recipe/${commentFeed.recipe.id}`)}
-                        sx={{ ml: 'auto' }}
+                        sx={{ ml: 'auto', mr: 2, mt: -1 }}
                       >
                         View Recipe
                       </Button>
@@ -802,6 +941,47 @@ const HomePage = () => {
             </Box>
           </Box>
         </Dialog>
+
+        {/* Share Menu */}
+        <Menu
+          anchorEl={shareAnchorEl}
+          open={Boolean(shareAnchorEl)}
+          onClose={handleShareClose}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+          transformOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+          }}
+        >
+          <MenuItem onClick={copyLinkToClipboard} dense>
+            <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} />
+            Copy Link
+          </MenuItem>
+          <MenuItem onClick={() => shareToSocial('facebook')} dense>
+            <FacebookIcon fontSize="small" sx={{ mr: 1 }} />
+            Share to Facebook
+          </MenuItem>
+          <MenuItem onClick={() => shareToSocial('twitter')} dense>
+            <TwitterIcon fontSize="small" sx={{ mr: 1 }} />
+            Share to Twitter
+          </MenuItem>
+          <MenuItem onClick={() => shareToSocial('whatsapp')} dense>
+            <WhatsAppIcon fontSize="small" sx={{ mr: 1 }} />
+            Share via WhatsApp
+          </MenuItem>
+        </Menu>
+
+        {/* Add Snackbar for share feedback */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={handleSnackbarClose}
+          message={snackbarMessage}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        />
       </Box>
     </Template>
   );
