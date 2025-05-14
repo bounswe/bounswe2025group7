@@ -3,16 +3,32 @@ import { ImageBackground, View, Text, TextInput, Button, Image, TouchableOpacity
 
 // picker libs
 import { Picker } from '@react-native-picker/picker';
-
 import { launchImageLibrary } from 'react-native-image-picker'; // Replace expo-image-picker
-
+// js backend api
+import interestFormService from '../../services/interestFormService'
+// Router to move either to profile
+import { useRouter } from 'expo-router';
 // my components
 import Spacer from '../../components/general/Spacer'
 
 // images
 import backgroundImage from '../../assets/images/forms/b2.jpg'
 
-const InterestForm = ({ userId, onSubmit = (arg) => console.log(arg)}) => {
+const InterestForm = ({ userId, onSubmit = async (formData) => { 
+      try {
+      const result = await interestFormService.createInterestForm(formData);
+      console.log('✅ Form submitted successfully:', result);
+
+      // navigate to profile
+      router.replace('profile');
+    } catch (error) {
+      console.error('❌ Error submitting form:', error);
+
+      // Show error to user, if needed
+      // Alert.alert("Submission failed", "Please try again later.");
+    }
+  }
+  }) => {
 const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
