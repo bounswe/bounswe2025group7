@@ -90,6 +90,9 @@ public class FeedService {
             response.setLikeCount(feed.getLikeCount());
             response.setRecipe(recipe);
             response.setCommentCount(feed.getCommentCount());
+            response.setUserName(user.getUsername());
+            response.setUserSurname(user.getSurname());
+            response.setUserProfilePhoto(user.getProfilePhoto());
             if(feed.getImage() != null) {
                 response.setImage(feed.getImage());
             }

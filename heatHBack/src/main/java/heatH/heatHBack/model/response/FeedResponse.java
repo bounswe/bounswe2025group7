@@ -18,4 +18,7 @@ public class FeedResponse {
     private Integer likeCount;
     private Integer commentCount;
     private boolean likedByCurrentUser;
+    private String userName;
+    private String userSurname;
+    private String userProfilePhoto;
 }
