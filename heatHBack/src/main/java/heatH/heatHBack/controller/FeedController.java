@@ -71,4 +71,9 @@ public class FeedController {
     public List<FeedResponse> getFeedsByUser () {
         return feedService.getFeedByUser();
     }
+
+    @GetMapping("/other-user")
+    public List<FeedResponse> getFeedOtherUser(Long userId){
+        return feedService.getFeedOtherUser(userId);
+    }
 }

@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.google.common.base.Optional;
 
 import heatH.heatHBack.model.Feed;
 import heatH.heatHBack.model.FeedType;
@@ -120,6 +121,30 @@ public class FeedService {
                 response.setImage(feed.getImage());
             }
 
+            boolean liked = likeRepository.findByUserAndFeedId(user, feed.getId()).isPresent();
+            response.setLikedByCurrentUser(liked);
+            return response;
+        }).toList();
+    }
+    //parametre id: idden çek
+    public List<FeedResponse> getFeedOtherUser(Long userId){
+        List<Feed> feeds = feedRepository.findByUserId(userId);
+        return feeds.stream().map(feed -> {
+            FeedResponse response = new FeedResponse();
+            Recipe recipe = feed.getRecipe();
+            response.setId(feed.getId());
+            response.setText(feed.getText());
+            response.setUserId(feed.getUserId());
+            response.setType(feed.getType());
+            response.setCreatedAt(feed.getCreatedAt());
+            response.setLikeCount(feed.getLikeCount());
+            response.setRecipe(recipe);
+            if(feed.getImage() != null) {
+                response.setImage(feed.getImage());
+            }
+            
+            java.util.Optional<User> userOptional = userRepository.findById(userId);
+            User user = userOptional.get();
             boolean liked = likeRepository.findByUserAndFeedId(user, feed.getId()).isPresent();
             response.setLikedByCurrentUser(liked);
             return response;
