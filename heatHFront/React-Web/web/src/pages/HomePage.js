@@ -14,12 +14,7 @@ import recipeService from '../services/recipeService';
 import feedService from '../services/feedService';
 import apiClient from '../services/apiClient';
 
-// Static list for initial UI rendering - will be replaced with API data
-const initialRecipes = [
-  { id: 1, title: 'Avocado Quinoa Salad', image: 'https://picsum.photos/seed/avocado-quinoa-salad/300/300', description: 'A refreshing blend of avocado, quinoa, and fresh vegetables', liked: false, saved: false, shared: false },
-  { id: 2, title: 'Mediterranean Chickpea Bowl', image: 'https://picsum.photos/seed/mediterranean-chickpea-bowl/300/300', description: 'Protein-packed chickpeas with olives, tomatoes, and feta', liked: false, saved: false, shared: false },
-  // ...other recipes
-];
+
 
 const HeaderSection = styled(Box)(({ theme }) => ({
   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
@@ -198,7 +193,12 @@ const HomePage = () => {
   
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setPostImage(e.target.files[0]);
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPostImage(reader.result);
+      };
+      reader.readAsDataURL(file);
       setPostType('image');
       setSelectedRecipeForPost('');
     }
@@ -221,20 +221,21 @@ const HomePage = () => {
 
   // Send handler for post composer
   const handleSend = async () => {
-    let type;
-    if (postType === 'recipe') type = 'RECIPE';
-    else if (postType === 'image') type = 'IMAGE_AND_TEXT';
-    else type = 'TEXT';
-    
-    const postPayload = { 
-      type, 
-      text: userInputText, 
-      image: postImage, 
-      recipeId: selectedRecipeForPost 
+    // Build payload dynamically so that only non-empty properties are sent.
+    const payload = {
+      type: postType === 'recipe'
+        ? 'RECIPE'
+        : postType === 'image'
+          ? 'IMAGE_AND_TEXT'
+          : 'TEXT',
+      ...(userInputText.trim() && { text: userInputText.trim() }),
+      ...(postType === 'image' && postImage && { image: postImage }),
+      ...(postType === 'recipe' && selectedRecipeForPost && { recipeId: selectedRecipeForPost })
     };
-    console.log('Posting feed:', postPayload);
+    
+    console.log('Posting feed:', payload);
     try {
-      await feedService.createFeed(postPayload);
+      await feedService.createFeed(payload);
       await fetchFeeds();
     } catch (err) {
       console.error('Failed to create feed:', err);
@@ -297,7 +298,7 @@ const HomePage = () => {
             />
             {/* Image preview */}
             {postType === 'image' && postImage && (
-              <Box component="img" src={URL.createObjectURL(postImage)} alt="preview" sx={{ width: '100%', mt: 2 }} />
+              <Box component="img" src={postImage} alt="preview" sx={{ width: '100%', mt: 2 }} />
             )}
             {/* Recipe preview */}
             {postType === 'recipe' && selectedRecipeForPost && getSelectedRecipeDetails() && (
