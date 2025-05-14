@@ -29,7 +29,7 @@ const InterestForm = ({ userId, onSubmit = async (formData) => {
     }
   }
   }) => {
-const [name, setName] = useState('');
+  const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [height, setHeight] = useState('');

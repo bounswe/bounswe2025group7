@@ -16,35 +16,13 @@ export default function DashboardLayout() {
         backgroundColor: theme.tabBarBackground
     }
     }}>
-        <Tabs.Screen name = "blog" options = {{ 
+        <Tabs.Screen name = "home" options = {{ 
         title: "",
         tabBarIcon: ({ focused }) => (
         <Ionicons
             // some example config.
             size = {24}
-            name = {focused ? 'reader' : 'reader-outline'}
-            color = {focused ? theme.iconColorFocused : theme.iconColor}
-        />
-        )}}/>
-
-        <Tabs.Screen name = "shoppingList" options = {{ 
-        title: "",
-        tabBarIcon: ({ focused }) => (
-        <Ionicons
-            // some example config.
-            size = {24}
-            name = {focused ? 'receipt' : 'receipt-outline'}
-            color = {focused ? theme.iconColorFocused : theme.iconColor}
-        />
-        )}}/>
-
-        <Tabs.Screen name = "planner" options = {{ 
-        title: "",
-        tabBarIcon: ({ focused }) => (
-        <Ionicons
-            // some example config.
-            size = {24}
-            name = {focused ? 'clipboard' : 'clipboard-outline'}
+            name = {focused ? 'home' : 'home-outline'}
             color = {focused ? theme.iconColorFocused : theme.iconColor}
         />
         )}}/>
@@ -56,6 +34,28 @@ export default function DashboardLayout() {
             // some example config.
             size = {24}
             name = {focused ? 'person' : 'person-outline'}
+            color = {focused ? theme.iconColorFocused : theme.iconColor}
+        />
+        )}}/>
+
+        <Tabs.Screen name = "save" options = {{ 
+        title: "",
+        tabBarIcon: ({ focused }) => (
+        <Ionicons
+            // some example config.
+            size = {24}
+            name = {focused ? 'restaurant' : 'restaurant-outline'}
+            color = {focused ? theme.iconColorFocused : theme.iconColor}
+        />
+        )}}/>
+
+        <Tabs.Screen name = "recipes" options = {{ 
+        title: "",
+        tabBarIcon: ({ focused }) => (
+        <Ionicons
+            // some example config.
+            size = {24}
+            name = {focused ? 'bookmark' : 'bookmark-outline'}
             color = {focused ? theme.iconColorFocused : theme.iconColor}
         />
         )}}/>

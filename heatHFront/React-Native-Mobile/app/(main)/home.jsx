@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 
-export default function ShoppingList() {
+export default function HomeScreen() {
   return (
     <View>
       <Text>Planner Page</Text>
