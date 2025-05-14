@@ -29,7 +29,7 @@ const InterestForm = ({ userId, onSubmit = async (formData) => {
     }
   }
   }) => {
-const [name, setName] = useState('');
+  const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [height, setHeight] = useState('');
@@ -114,18 +114,18 @@ const [name, setName] = useState('');
         />
         
       <View style={{overflow: 'hidden', marginBottom: 17 }}>
-      <Picker
-        selectedValue={gender}
-        onValueChange={(itemValue) => setGender(itemValue)}
-        style={{ height: 190 }} // Gives room for scrollable area
-        itemStyle={{color: 'white', fontSize: 20 }} // iOS only
-      >
-        <Picker.Item label="Select Gender" value="" color="#aaa" />
-        <Picker.Item label="Male" value="male" color="white" />
-        <Picker.Item label="Female" value="female" color="white" />
-        <Picker.Item label="Other" value="other" color="white" />
-      </Picker>
-    </View>
+        <Picker
+          selectedValue={gender}
+          onValueChange={(itemValue) => setGender(itemValue)}
+          style={{ height: 190 }} // Gives room for scrollable area
+          itemStyle={{color: 'white', fontSize: 20 }} // iOS only
+        >
+          <Picker.Item label="Select Gender" value="" color="#aaa" />
+          <Picker.Item label="Male" value="male" color="white" />
+          <Picker.Item label="Female" value="female" color="white" />
+          <Picker.Item label="Other" value="other" color="white" />
+        </Picker>
+      </View>
 
 
         
