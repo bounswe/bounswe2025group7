@@ -509,7 +509,7 @@ const RecipeDetail = () => {
                         divider={idx < recipe["ingredients"].length - 1}
                         sx={{ py: 1 }}
                       >
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '50%' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                           <Typography variant="body1" fontWeight="medium">{name}</Typography>
                           <Typography variant="body1" color="text.secondary">{amount}</Typography>
                         </Box>
