@@ -57,8 +57,8 @@ public class CommentService {
         feedRepository.save(feed);
     }
 
-    public List<CommentResponse> getFeedComments(GetCommentRequest getCommentRequest) {
-        List<Comment> comments = commentRepository.findAllByFeedId(getCommentRequest.getFeedId());
+    public List<CommentResponse> getFeedComments(Long feedId) {
+        List<Comment> comments = commentRepository.findAllByFeedId(feedId);
 
         return comments.stream()
                 .map(comment -> {
