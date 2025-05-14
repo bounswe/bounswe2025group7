@@ -656,7 +656,7 @@ const HomePage = () => {
                       </Box>
                     </Box>
                   </>}
-                  {feed.text?.trim() && (feed.type !== 'TEXT') && (
+                  {feed.text?.trim() && (feed.type === 'RECIPE') && (
                       <Box sx={{ px: 2, pt: 1 }}>
                         <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
                           {feed.text}
