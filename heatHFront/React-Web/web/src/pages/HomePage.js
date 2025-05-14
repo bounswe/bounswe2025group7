@@ -23,12 +23,7 @@ import FacebookIcon from '@mui/icons-material/Facebook';
 import TwitterIcon from '@mui/icons-material/Twitter';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 
-// Static list for initial UI rendering - will be replaced with API data
-const initialRecipes = [
-  { id: 1, title: 'Avocado Quinoa Salad', image: 'https://picsum.photos/seed/avocado-quinoa-salad/300/300', description: 'A refreshing blend of avocado, quinoa, and fresh vegetables', liked: false, saved: false, shared: false },
-  { id: 2, title: 'Mediterranean Chickpea Bowl', image: 'https://picsum.photos/seed/mediterranean-chickpea-bowl/300/300', description: 'Protein-packed chickpeas with olives, tomatoes, and feta', liked: false, saved: false, shared: false },
-  // ...other recipes
-];
+
 
 const HeaderSection = styled(Box)(({ theme }) => ({
   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
@@ -36,6 +31,7 @@ const HeaderSection = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2, 0),
   textAlign: 'center',
 }));
+  
 
 const HomePage = () => {
   const theme = useTheme();
@@ -96,6 +92,15 @@ const HomePage = () => {
       setLoading(false);
     }
   };
+
+    
+  const fetchMyRecipes = async () => {
+      const response = await apiClient.get('/recipe/get-all');
+      setRecipes(response.data)
+      setLoading(false);
+    }
+        
+        
 
   // Toggle like/unlike for a feed (optimistic UI update)
   const handleLikeFeed = async (feedId, currentlyLiked) => {
@@ -232,6 +237,9 @@ const HomePage = () => {
     navigate(`/recipe/${recipe.getId()}`);
   };
 
+ 
+  
+
   // Handle like action using recipeService
   const handleLike = async (id) => {
     try {
@@ -335,7 +343,12 @@ const HomePage = () => {
   
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setPostImage(e.target.files[0]);
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPostImage(reader.result);
+      };
+      reader.readAsDataURL(file);
       setPostType('image');
       setSelectedRecipeForPost('');
     }
@@ -343,11 +356,13 @@ const HomePage = () => {
   };
   
   const handleAddRecipeClick = () => {
+    fetchMyRecipes();
     setRecipeSelectionDialogOpen(true);
   };
   
   const handleRecipeSelect = (recipe) => {
-    setSelectedRecipeForPost(recipe.getId());
+    // Handle both plain objects and Recipe instances
+    setSelectedRecipeForPost(recipe.id || recipe.getId?.());
     setPostType('recipe');
     setRecipeSelectionDialogOpen(false);
   };
@@ -358,20 +373,21 @@ const HomePage = () => {
 
   // Send handler for post composer
   const handleSend = async () => {
-    let type;
-    if (postType === 'recipe') type = 'RECIPE';
-    else if (postType === 'image') type = 'IMAGE_AND_TEXT';
-    else type = 'TEXT';
-    
-    const postPayload = { 
-      type, 
-      text: userInputText, 
-      image: postImage, 
-      recipeId: selectedRecipeForPost 
+    // Build payload dynamically so that only non-empty properties are sent.
+    const payload = {
+      type: postType === 'recipe'
+        ? 'RECIPE'
+        : postType === 'image'
+          ? 'IMAGE_AND_TEXT'
+          : 'TEXT',
+      ...(userInputText.trim() && { text: userInputText.trim() }),
+      ...(postType === 'image' && postImage && { image: postImage }),
+      ...(postType === 'recipe' && selectedRecipeForPost && { recipeId: selectedRecipeForPost })
     };
-    console.log('Posting feed:', postPayload);
+    
+    console.log('Posting feed:', payload);
     try {
-      await feedService.createFeed(postPayload);
+      await feedService.createFeed(payload);
       await fetchFeeds();
     } catch (err) {
       console.error('Failed to create feed:', err);
@@ -385,7 +401,7 @@ const HomePage = () => {
 
   // Get selected recipe details
   const getSelectedRecipeDetails = () => {
-    return recipes.find(r => r.getId() === selectedRecipeForPost);
+    return recipes.find(r => (r.id || r.getId?.()) === selectedRecipeForPost);
   };
 
   const handleCommentClick = async (feed) => {
@@ -549,18 +565,20 @@ const HomePage = () => {
             />
             {/* Image preview */}
             {postType === 'image' && postImage && (
-              <Box component="img" src={URL.createObjectURL(postImage)} alt="preview" sx={{ width: '100%', mt: 2 }} />
+              <Box component="img" src={postImage} alt="preview" sx={{ width: '100%', mt: 2 }} />
             )}
             {/* Recipe preview */}
             {postType === 'recipe' && selectedRecipeForPost && getSelectedRecipeDetails() && (
               <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box 
                   component="img" 
-                  src={getSelectedRecipeDetails().getPhoto()} 
-                  alt={getSelectedRecipeDetails().getTitle()} 
+                  src={getSelectedRecipeDetails().photo || getSelectedRecipeDetails().getPhoto?.()} 
+                  alt={getSelectedRecipeDetails().title || getSelectedRecipeDetails().getTitle?.()} 
                   sx={{ width: 100, height: 100, objectFit: 'cover' }} 
                 />
-                <Typography variant="body1">{getSelectedRecipeDetails().getTitle()}</Typography>
+                <Typography variant="body1">
+                  {getSelectedRecipeDetails().title || getSelectedRecipeDetails().getTitle?.()}
+                </Typography>
               </Box>
             )}
             {/* Composer actions */}
@@ -666,7 +684,7 @@ const HomePage = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 2 }}>
               {recipes.map((recipe) => (
                 <Box
-                  key={recipe.getId()}
+                  key={recipe.id || recipe.getId?.()} // Use ID directly if available, otherwise use getId()
                   onClick={() => handleRecipeSelect(recipe)}
                   sx={{
                     position: 'relative',
@@ -684,8 +702,8 @@ const HomePage = () => {
                   }}
                 >
                   <img
-                    src={recipe.getPhoto()}
-                    alt={recipe.getTitle()}
+                    src={recipe.photo || recipe.getPhoto?.()} // Try direct property first, then method
+                    alt={recipe.title || recipe.getTitle?.()} // Try direct property first, then method
                     style={{
                       position: 'absolute',
                       top: 0,
@@ -707,7 +725,7 @@ const HomePage = () => {
                     }}
                   >
                     <Typography variant="subtitle2" noWrap>
-                      {recipe.getTitle()}
+                      {recipe.title || recipe.getTitle?.()}
                     </Typography>
                   </Box>
                 </Box>
