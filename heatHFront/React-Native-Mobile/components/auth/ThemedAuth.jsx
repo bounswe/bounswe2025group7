@@ -9,6 +9,8 @@ import verificationSuccessLogo from '../../assets/images/auth/verif_success.png'
 
 // Import authService methods
 import {exists, login as loginUser, register as registerUser, sendVerificationCode, verifyCode } from '../../services/authService';
+// Interest form method
+import interestFormService from '../../services/interestFormService'
 
 // Decode token
 // import jwtDecode from 'jwt-decode'; TO DO
@@ -155,6 +157,11 @@ export const AuthForm = ({type = 'login'}) =>
                 const { accessToken, refreshToken } = await loginUser(email, password);
                 // move to form if first logins
                 console.log(`login result: ${accessToken}`);
+                
+                const userHasInterestForm = await interestFormService.checkFirstLogin();
+                
+                if(userHasInterestForm)console.log('HAS INT FORM!!');
+                else console.log("Doesn't have !!");
                 
 
             } else {

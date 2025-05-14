@@ -1,11 +1,12 @@
+import axios from 'axios';
 import apiClient from './apiClient';
-import { getItem } from '@react-native-async-storage/async-storage'; // For accessing AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage'; // For accessing AsyncStorage
 
 const interestFormService = {
   // Returns true if the user has not yet submitted the interest form
   checkFirstLogin: async () => {
     // Freshly registered users skip backend check
-    const justRegistered = await getItem('justRegistered');
+    const justRegistered = await AsyncStorage.getItem('justRegistered');
     if (justRegistered === 'true') {
       return true;
     }

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import authService from './authService';
+import {getAccessToken, refreshToken, logout} from './authService';
 
 // Replace with your backend base URL
 const apiClient = axios.create({
@@ -9,7 +9,7 @@ const apiClient = axios.create({
 // Attach access token to every request
 apiClient.interceptors.request.use(
   async (config) => {
-    const token = await authService.getAccessToken(); // Async in RN
+    const token = await getAccessToken(); // Async in RN
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -28,12 +28,12 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await authService.refreshToken(); // Refresh both tokens
-        const newToken = await authService.getAccessToken();
+        await refreshToken(); // Refresh both tokens
+        const newToken = await getAccessToken();
         originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
         return apiClient(originalRequest); // Retry the original request
       } catch (refreshError) {
-        await authService.logout();
+        await logout();
         
         // 🔴 You should redirect to login screen here
         console.log('Redirect to login screen needed.');
