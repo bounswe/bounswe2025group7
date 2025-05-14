@@ -16,15 +16,16 @@
 * **Responsive Web & Mobile App:** The platform is accessible via a web application (for desktop browsers) and a cross-platform mobile app. Both provide a consistent user experience, allowing users to access recipes and meal plans on the go.
 * **Interactive Features:** Users can **create, edit, or delete** their own recipes or posts. They can comment on recipes, see comment counts in the feed, and share recipes via a link. Pagination is implemented on lists (like the home feed) for performance.
 
+*(Note: Some features above were implemented in the scope of the class project, while others were planned or partially implemented for future development.)*
+
 ## Technologies Used
 
 * **Frontend (Web):** React.js (JavaScript) with React Router for navigation and Material-UI (MUI) for consistent, responsive design.
 * **Frontend (Mobile):** React Native for cross-platform (iOS & Android) support, sharing core logic with the web where possible.
-* **Backend:** Node.js with Express framework serving RESTful APIs.
+* **Backend:** Java Spring Boot application using Maven (or Gradle) for build management. The backend exposes RESTful endpoints and handles business logic.
 * **Database:** PostgreSQL relational database, accessed via **Sequelize** ORM. PostgreSQL offers strong ACID guarantees and flexible relational modeling, ideal for user accounts, recipes, and meal plans.
 * **Authentication & Security:** JSON Web Tokens (JWT) for API authentication; passwords hashed with bcrypt. CORS configured to allow frontend–backend communication.
 * **Containerization:** Docker and Docker Compose for easy local setup. Services include the backend server, frontend dev server (optionally), and PostgreSQL database.
-* **Other Libraries:** Axios for API calls; React Context or Redux for state management; Formik/Yup for form validation; Expo (if used) for React Native development.
 
 ## Project Structure
 
@@ -54,7 +55,7 @@
 
 ### Prerequisites
 
-* **Node.js** (v14+)
+* **Java Spring** 
 * **npm** or **yarn**
 * **Docker** & **Docker Compose** (recommended)
 * **PostgreSQL** (local or containerized)
@@ -103,12 +104,7 @@
 
 #### Backend
 
-```bash
-cd heatHBack
-npm install
-# Ensure PostgreSQL is running and env vars in heatHBack/.env are set
-npm start
-```
+* Directly run from IDE
 
 #### Frontend (Web)
 
