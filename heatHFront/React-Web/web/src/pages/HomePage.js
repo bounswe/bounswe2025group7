@@ -663,6 +663,9 @@ const HomePage = () => {
                     <IconButton onClick={() => handleCommentClick(feed)} aria-label="comment" sx={{ ml: 1 }}>
                       <ChatBubbleOutlineIcon />
                     </IconButton>
+                    <Typography variant="body2" sx={{ ml: 1 }}>
+                      {feed.commentCount ?? 0}
+                    </Typography>
                   </CardActions>
                 </Card>
               ))}
