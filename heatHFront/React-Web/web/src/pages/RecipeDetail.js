@@ -488,7 +488,7 @@ const RecipeDetail = () => {
               elevation={1} 
               sx={{ 
                 p: 3, 
-                maxWidth: '200px',
+                maxWidth: '400px',
                 width: '100%',
                 bgcolor: alpha(theme.palette.background.default, 0.7)
               }}
