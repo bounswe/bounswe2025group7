@@ -18,6 +18,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import Recipe from '../models/Recipe';
 import Template from '../components/Template';
 import { useNavigate } from 'react-router-dom';
@@ -259,6 +260,72 @@ const MyRecipes = () => {
     }
   };
 
+  // Handle edit click
+  const handleEditClick = (recipeId) => {
+    // Find the recipe to edit
+    const recipeToEdit = recipes.find(r => r.id === recipeId);
+    if (recipeToEdit) {
+      setIsEditing(true);
+      setEditingRecipeId(recipeId);
+      setNewTitle(recipeToEdit.title);
+      setNewInstructions(recipeToEdit.instructions[0]);
+      setImagePreview(recipeToEdit.photo);
+      setNewTotalCalory(recipeToEdit.totalCalorie || 0);
+      setNewTag(recipeToEdit.tag || '');
+      setNewPrice(recipeToEdit.price || 0);
+      setNewType(recipeToEdit.type || '');
+      
+      // Parse ingredients if they exist
+      if (recipeToEdit.ingredients && recipeToEdit.ingredients.length > 0) {
+        const parsedIngredients = recipeToEdit.ingredients.map(ing => {
+          const [name, amount] = ing.split(': ');
+          return { name, amount: amount || '' };
+        });
+        setNewIngredients(parsedIngredients);
+      }
+      
+      setOpenAddDialog(true);
+    }
+    handleMenuClose();
+  };
+
+  // Handle view click
+  const handleViewClick = (recipeId) => {
+    // Find the recipe to view
+    const recipe = recipes.find(r => r.id === recipeId);
+    if (recipe) {
+      // Navigate to recipe detail page
+      navigate(`/recipe/${recipe.id}`);
+    }
+    handleMenuClose();
+  };
+
+  // Handle delete click from menu
+  const handleDeleteClick = (recipeId) => {
+    setRecipeToDelete(recipeId);
+    setDeleteDialogOpen(true);
+    handleMenuClose();
+  };
+
+  // Handle actual deletion when confirmed
+  const handleDeleteConfirm = async () => {
+    try {
+      const response = await apiClient.delete(`/recipe/delete-recipe`, { data: { id: recipeToDelete }});
+      
+      if (response.status === 200) {
+        // Remove the deleted recipe from state
+        setRecipes(recipes.filter(recipe => recipe.id !== recipeToDelete));
+        setDeleteDialogOpen(false);
+        setRecipeToDelete(null);
+      } else {
+        setError('Failed to delete recipe');
+      }
+    } catch (err) {
+      console.error('Error deleting recipe:', err);
+      setError(`Failed to delete recipe: ${err.message}`);
+    }
+  };
+
   return (
     <Template>
       <Box>
@@ -414,7 +481,14 @@ const MyRecipes = () => {
             open={openMenu}
             onClose={handleMenuClose}
           >
-            
+            <MenuItem onClick={() => handleViewClick(selectedRecipeId)}>
+              <VisibilityIcon fontSize="small" sx={{ mr: 1 }} />
+              View
+            </MenuItem>
+            <MenuItem onClick={() => handleDeleteClick(selectedRecipeId)}>
+              <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+              Delete
+            </MenuItem>
           </Menu>
           
           {/* Delete Confirmation Dialog */}
@@ -431,7 +505,9 @@ const MyRecipes = () => {
               <Button onClick={() => setDeleteDialogOpen(false)}>
                 Cancel
               </Button>
-            
+              <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+                Delete
+              </Button>
             </DialogActions>
           </Dialog>
 
