@@ -9,7 +9,13 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
-import ShareIcon from '@mui/icons-material/Share';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import Snackbar from '@mui/material/Snackbar';
 import Recipe from '../models/Recipe';
 import Template from '../components/Template';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +34,10 @@ const SavedRecipes = () => {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [shareAnchorEl, setShareAnchorEl] = useState(null);
+  const [recipeToShare, setRecipeToShare] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   // Fetch saved recipes on component mount
   useEffect(() => {
@@ -130,30 +140,50 @@ const SavedRecipes = () => {
     }
   };
 
-  // Share functionality
-  const handleShare = (recipe) => {
-    if (navigator.share) {
-      navigator.share({
-        title: recipe.getTitle(),
-        text: `Check out this recipe: ${recipe.getTitle()}`,
-        url: `${window.location.origin}/recipe/${recipe.id}`,
-      })
-      .catch(err => console.error('Error sharing:', err));
-    } else {
-      // Fallback for browsers that don't support navigator.share
-      const recipeUrl = `${window.location.origin}/recipe/${recipe.id}`;
-      navigator.clipboard.writeText(recipeUrl)
-        .then(() => {
-          setError("Link copied to clipboard!");
-          setTimeout(() => setError(null), 3000);
-        })
-        .catch(err => {
-          console.error('Failed to copy link:', err);
-          setError("Failed to copy link. Please try again.");
-          setTimeout(() => setError(null), 3000);
-        });
-    }
+  // Share functionality (menu)
+  const handleShareClick = (event, recipeId, recipeTitle) => {
+    event.stopPropagation();
+    setShareAnchorEl(event.currentTarget);
+    setRecipeToShare({ id: recipeId, title: recipeTitle });
   };
+
+  const handleShareClose = () => {
+    setShareAnchorEl(null);
+  };
+
+  const copyLinkToClipboard = () => {
+    if (!recipeToShare) return;
+    const url = `${window.location.origin}/recipe/${recipeToShare.id}`;
+    navigator.clipboard.writeText(url)
+      .then(() => {
+        setSnackbarMessage('Link copied to clipboard!');
+        setSnackbarOpen(true);
+        handleShareClose();
+      })
+      .catch(err => {
+        console.error('Failed to copy link:', err);
+        setSnackbarMessage('Failed to copy link. Please try again.');
+        setSnackbarOpen(true);
+        handleShareClose();
+      });
+  };
+
+  const shareToSocial = (platform) => {
+    if (!recipeToShare) return;
+    const url = `${window.location.origin}/recipe/${recipeToShare.id}`;
+    const title = recipeToShare.title || 'Check out this recipe!';
+    let shareUrl;
+    switch (platform) {
+      case 'facebook': shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`; break;
+      case 'twitter': shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`; break;
+      case 'whatsapp': shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(title + ' ' + url)}`; break;
+      default: return;
+    }
+    window.open(shareUrl, '_blank', 'noopener,noreferrer');
+    handleShareClose();
+  };
+
+  const handleSnackbarClose = () => setSnackbarOpen(false);
 
   return (
     <Template>
@@ -278,7 +308,7 @@ const SavedRecipes = () => {
                       <Typography variant="caption">Remove</Typography>
                     </IconButton>
                     <IconButton
-                      onClick={() => handleShare(recipe)}
+                      onClick={(e) => handleShareClick(e, recipe.id, recipe.getTitle())}
                       aria-label="share"
                       color="info"
                       sx={{ fontSize: '0.75rem' }}
@@ -291,6 +321,33 @@ const SavedRecipes = () => {
               ))}
             </Box>
           )}
+          <Menu
+            anchorEl={shareAnchorEl}
+            open={Boolean(shareAnchorEl)}
+            onClose={handleShareClose}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <MenuItem onClick={copyLinkToClipboard} dense>
+              <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} /> Copy Link
+            </MenuItem>
+            <MenuItem onClick={() => shareToSocial('facebook')} dense>
+              <FacebookIcon fontSize="small" sx={{ mr: 1 }} /> Facebook
+            </MenuItem>
+            <MenuItem onClick={() => shareToSocial('twitter')} dense>
+              <TwitterIcon fontSize="small" sx={{ mr: 1 }} /> Twitter
+            </MenuItem>
+            <MenuItem onClick={() => shareToSocial('whatsapp')} dense>
+              <WhatsAppIcon fontSize="small" sx={{ mr: 1 }} /> WhatsApp
+            </MenuItem>
+          </Menu>
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000}
+            onClose={handleSnackbarClose}
+            message={snackbarMessage}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          />
         </Container>
       </Box>
     </Template>
