@@ -1,40 +1,49 @@
 import axios from 'axios';
 import authService from './authService';
 
-// Create an axios instance using a relative base URL so CRA's proxy can forward to the backend
+// Replace with your backend base URL
 const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://167.172.162.159:8080/api',
 });
 
 // Attach access token to every request
-apiClient.interceptors.request.use((config) => {
-  const token = authService.getAccessToken();
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+apiClient.interceptors.request.use(
+  async (config) => {
+    const token = await authService.getAccessToken(); // Async in RN
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Handle 401 responses by attempting token refresh
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+
       try {
-        await authService.refreshToken();
-        const newToken = authService.getAccessToken();
+        await authService.refreshToken(); // Refresh both tokens
+        const newToken = await authService.getAccessToken();
         originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
-        return apiClient(originalRequest);
+        return apiClient(originalRequest); // Retry the original request
       } catch (refreshError) {
-        authService.logout();
-        window.location.href = '/signin';
+        await authService.logout();
+        
+        // 🔴 You should redirect to login screen here
+        console.log('Redirect to login screen needed.');
+
         return Promise.reject(refreshError);
       }
     }
+
     return Promise.reject(error);
   }
 );
 
-export default apiClient; 
+export default apiClient;

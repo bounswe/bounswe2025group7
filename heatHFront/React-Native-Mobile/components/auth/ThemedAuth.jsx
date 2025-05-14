@@ -152,7 +152,11 @@ export const AuthForm = ({type = 'login'}) =>
                 // Email Exists!
                 
                 // Logging in
-                // const { accessToken, refreshToken } = await loginUser(email, password);
+                const { accessToken, refreshToken } = await loginUser(email, password);
+                // move to form if first logins
+                console.log(`login result: ${accessToken}`);
+                
+
             } else {
                 // Invalid Email!
                 console.log('❌ Invalid user!');
