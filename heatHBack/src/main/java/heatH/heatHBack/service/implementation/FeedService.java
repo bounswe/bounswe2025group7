@@ -89,6 +89,7 @@ public class FeedService {
             response.setCreatedAt(feed.getCreatedAt());
             response.setLikeCount(feed.getLikeCount());
             response.setRecipe(recipe);
+            response.setCommentCount(feed.getCommentCount());
             if(feed.getImage() != null) {
                 response.setImage(feed.getImage());
             }
