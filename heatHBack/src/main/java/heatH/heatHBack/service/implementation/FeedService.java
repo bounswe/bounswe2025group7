@@ -90,8 +90,9 @@ public class FeedService {
             response.setCreatedAt(feed.getCreatedAt());
             response.setLikeCount(feed.getLikeCount());
             response.setRecipe(recipe);
-            response.setImage(feed.getImage());
-
+            if(feed.getImage() != null) {
+                response.setImage(feed.getImage());
+            }
             // Check if this feed is liked by the user
             boolean liked = likeRepository.findByUserAndFeedId(user, feed.getId()).isPresent();
             response.setLikedByCurrentUser(liked);
