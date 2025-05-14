@@ -16,5 +16,6 @@ public class FeedResponse {
     private Recipe recipe;
     private LocalDateTime createdAt;
     private Integer likeCount;
+    private Integer commentCount;
     private boolean likedByCurrentUser;
 }
