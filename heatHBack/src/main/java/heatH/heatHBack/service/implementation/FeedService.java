@@ -62,9 +62,6 @@ public class FeedService {
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
                 feed.setRecipe(recipe);
                 feed.setText(request.getText());
-                String fileName = "user-profile-" + UUID.randomUUID() + ".jpg";
-                String imageUrl = gcsService.uploadBase64Image(request.getImage(), fileName);
-                feed.setImage(imageUrl);
             }
 
             default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid feed type");
