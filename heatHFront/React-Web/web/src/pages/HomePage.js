@@ -15,6 +15,8 @@ import feedService from '../services/feedService';
 import apiClient from '../services/apiClient';
 import Drawer from '@mui/material/Drawer';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import CloseIcon from '@mui/icons-material/Close';
+import Backdrop from '@mui/material/Backdrop';
 
 // Static list for initial UI rendering - will be replaced with API data
 const initialRecipes = [
@@ -51,6 +53,8 @@ const HomePage = () => {
   const [commentFeed, setCommentFeed] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [backdropOpen, setBackdropOpen] = useState(false);
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
 
   // Function to fetch recent posts from API
   const fetchFeeds = async () => {
@@ -70,11 +74,23 @@ const HomePage = () => {
   // Toggle like/unlike for a feed (optimistic UI update)
   const handleLikeFeed = async (feedId, currentlyLiked) => {
     const newLiked = !currentlyLiked;
-    // Optimistically update UI
-    setFeeds(prev => prev.map(f => f.id === feedId
-      ? { ...f, likedByCurrentUser: newLiked, likeCount: f.likeCount + (newLiked ? 1 : -1) }
-      : f
+    
+    // Optimistically update UI for main feed
+    setFeeds(prev => prev.map(f => 
+      f.id === feedId
+        ? { ...f, likedByCurrentUser: newLiked, likeCount: f.likeCount + (newLiked ? 1 : -1) }
+        : f
     ));
+    
+    // Also update commentFeed if the same post is open in dialog
+    if (commentFeed && commentFeed.id === feedId) {
+      setCommentFeed(prev => ({
+        ...prev,
+        likedByCurrentUser: newLiked,
+        likeCount: (prev.likeCount || 0) + (newLiked ? 1 : -1)
+      }));
+    }
+    
     try {
       if (newLiked) {
         await apiClient.post('/feeds/like', { feedId });
@@ -83,11 +99,22 @@ const HomePage = () => {
       }
     } catch (err) {
       console.error('Failed to toggle like:', err);
-      // Revert on error
-      setFeeds(prev => prev.map(f => f.id === feedId
-        ? { ...f, likedByCurrentUser: currentlyLiked, likeCount: f.likeCount + (currentlyLiked ? 1 : -1) }
-        : f
+      
+      // Revert on error - main feed
+      setFeeds(prev => prev.map(f => 
+        f.id === feedId
+          ? { ...f, likedByCurrentUser: currentlyLiked, likeCount: f.likeCount + (currentlyLiked ? 1 : -1) }
+          : f
       ));
+      
+      // Revert on error - comment dialog
+      if (commentFeed && commentFeed.id === feedId) {
+        setCommentFeed(prev => ({
+          ...prev,
+          likedByCurrentUser: currentlyLiked,
+          likeCount: (prev.likeCount || 0) + (currentlyLiked ? 1 : -1)
+        }));
+      }
     }
   };
 
@@ -261,14 +288,25 @@ const HomePage = () => {
     setCommentFeed(feed);
     setComments(feed.comments || []);
     setNewComment('');
-    setCommentDrawerOpen(true);
+    setCommentDialogOpen(true);
+  };
+
+  const handleCloseComments = () => {
+    setCommentDialogOpen(false);
   };
 
   const handlePostComment = (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    setComments(prev => [...prev, { user: 'You', text: newComment }]);
+    
+    // Get the current user's name or use "You" as fallback
+    const currentUser = localStorage.getItem('userName') || 'You';
+    
+    setComments(prev => [...prev, { user: currentUser, text: newComment }]);
     setNewComment('');
+    
+    // In a real implementation, you would also send this to the backend
+    // e.g., apiClient.post('/feeds/comment', { feedId: commentFeed.id, text: newComment });
   };
 
   return (
@@ -464,40 +502,245 @@ const HomePage = () => {
           </DialogActions>
         </Dialog>
 
-        <Drawer anchor="right" open={commentDrawerOpen} onClose={() => setCommentDrawerOpen(false)}>
-          <Box sx={{ width: 350, display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
-              <Typography variant="h6">Comments</Typography>
+        {/* Comment Dialog */}
+        <Dialog
+          open={commentDialogOpen}
+          onClose={handleCloseComments}
+          maxWidth="xl"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 2,
+              maxHeight: '90vh',
+              height: '90vh',
+              maxWidth: '65%',
+              margin: 'auto',
+              overflowY: 'hidden'
+            }
+          }}
+          sx={{
+            '& .MuiDialog-paper': {
+              overflowY: 'hidden',
+              display: 'flex'
+            }
+          }}
+        >
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'row', 
+            height: '100%',
+            position: 'relative'
+          }}>
+            {/* Close button */}
+            <IconButton 
+              onClick={handleCloseComments} 
+              aria-label="close comments"
+              sx={{ 
+                position: 'absolute', 
+                top: 16, 
+                right: 16, 
+                zIndex: 1,
+                bgcolor: 'background.paper',
+                boxShadow: 1,
+                '&:hover': { bgcolor: 'background.default' }
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+
+            {/* Left side - Post content */}
+            <Box sx={{ 
+              width: '61%', 
+              p: 3, 
+              borderRight: `1px solid ${theme.palette.divider}`,
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              overflow: 'hidden'
+            }}>
+              <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
+                Post
+              </Typography>
+              
               {commentFeed && (
-                <Typography variant="subtitle1" sx={{ mt: 1 }} noWrap>
-                  {commentFeed.text || commentFeed.recipe?.title || 'Post'}
-                </Typography>
-              )}
-            </Box>
-            <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
-              {comments.length > 0 ? comments.map((c, i) => (
-                <Box key={i} sx={{ mb: 2 }}>
-                  <Typography variant="body2"><strong>{c.user}</strong> {c.text}</Typography>
+                <Box sx={{ 
+                  flex: 1, 
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
+                  {/* Post title */}
+                  {commentFeed.recipe && (
+                    <Typography variant="h5" gutterBottom>
+                      {commentFeed.recipe.title}
+                    </Typography>
+                  )}
+                  
+                  {/* Post image */}
+                  {commentFeed.recipe?.photo && (
+                    <Box sx={{ 
+                      position: 'relative', 
+                      mb: 2,
+                      flex: '1 0 auto',
+                      maxHeight: 'calc(100% - 200px)',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}>
+                      <Box 
+                        component="img" 
+                        src={commentFeed.recipe.photo} 
+                        alt={commentFeed.recipe.title || "Recipe"}
+                        sx={{ 
+                          width: '100%', 
+                          borderRadius: 1,
+                          objectFit: 'contain',
+                          maxHeight: '100%'
+                        }} 
+                      />
+                      {commentFeed.recipe?.instructions && commentFeed.recipe.instructions.length > 0 && (
+                        <Box sx={{ 
+                          position: 'relative', 
+                          bgcolor: 'primary.main',
+                          color: 'primary.contrastText',
+                          p: 2,
+                          borderBottomLeftRadius: 1,
+                          borderBottomRightRadius: 1,
+                        }}>
+                          <Typography variant="body2">
+                            {commentFeed.recipe.instructions[0]}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  )}
+                  {commentFeed.image && (
+                    <Box sx={{
+                      mb: 2,
+                      flex: '1 0 auto',
+                      maxHeight: 'calc(100% - 200px)',
+                      overflow: 'hidden',
+                      borderRadius: 1
+                    }}>
+                      <Box 
+                        component="img" 
+                        src={commentFeed.image} 
+                        alt="Post"
+                        sx={{ 
+                          width: '100%', 
+                          objectFit: 'contain',
+                          maxHeight: '100%'
+                        }} 
+                      />
+                    </Box>
+                  )}
+                  
+                  {/* Post text */}
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {commentFeed.text}
+                  </Typography>
+
+                  {/* Like button with no gap */}
+                  <Box sx={{ 
+                    position: 'relative', 
+                    mt: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0
+                  }}>
+                    <IconButton 
+                      onClick={() => handleLikeFeed(commentFeed.id, commentFeed.likedByCurrentUser)} 
+                      aria-label="like" 
+                      color={commentFeed.likedByCurrentUser ? 'error' : 'default'}
+                    >
+                      {commentFeed.likedByCurrentUser ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                    </IconButton>
+                    <Typography variant="body2" sx={{ mr: 2 }}>
+                      {commentFeed.likeCount || 0}
+                    </Typography>
+
+                    <IconButton 
+                      onClick={() => console.log('Bookmark clicked')} 
+                      aria-label="bookmark" 
+                      color={commentFeed.savedByCurrentUser ? 'primary' : 'default'}
+                    >
+                      {commentFeed.savedByCurrentUser ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+                    </IconButton>
+                    
+                    {commentFeed.recipe && (
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        onClick={() => navigate(`/recipe/${commentFeed.recipe.id}`)}
+                        sx={{ ml: 'auto' }}
+                      >
+                        View Recipe
+                      </Button>
+                    )}
+                  </Box>
                 </Box>
-              )) : (
-                <Typography color="text.secondary">No comments yet.</Typography>
               )}
             </Box>
-            <Box component="form" onSubmit={handlePostComment} sx={{ p: 2 }}>
-              <TextField
-                label="Add a comment"
-                fullWidth
-                multiline
-                rows={2}
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-              />
-              <Button type="submit" variant="contained" sx={{ mt: 1 }} fullWidth>
-                Post Comment
-              </Button>
+            
+            {/* Right side - Comments */}
+            <Box sx={{ 
+              width: '39%', 
+              display: 'flex', 
+              flexDirection: 'column',
+              height: '100%'
+            }}>
+              <Box sx={{ 
+                p: 3, 
+                borderBottom: `1px solid ${theme.palette.divider}`, 
+                bgcolor: 'primary.main'
+              }}>
+                <Typography variant="h6" color="primary.contrastText">Comments</Typography>
+              </Box>
+              
+              <Box sx={{ 
+                flex: 1, 
+                overflow: 'hidden',
+                p: 3,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                minHeight: 0
+              }}>
+                {comments.length > 0 ? comments.map((c, i) => (
+                  <Box key={i} sx={{ p: 2, borderRadius: 1, bgcolor: 'background.paper', boxShadow: 1 }}>
+                    <Typography variant="subtitle2" color="primary.main" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                      {c.user || 'Anonymous User'}
+                    </Typography>
+                    <Typography variant="body2">{c.text}</Typography>
+                  </Box>
+                )) : (
+                  <Typography color="text.secondary" sx={{ p: 2 }}>No comments yet.</Typography>
+                )}
+              </Box>
+              
+              <Box component="form" onSubmit={handlePostComment} sx={{ 
+                p: 3, 
+                borderTop: `1px solid ${theme.palette.divider}`,
+                bgcolor: 'background.paper',
+                mt: 'auto'
+              }}>
+                <TextField
+                  label="Add a comment"
+                  fullWidth
+                  multiline
+                  rows={2}
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  sx={{ mb: 1 }}
+                />
+                <Button type="submit" variant="contained" fullWidth>
+                  Post Comment
+                </Button>
+              </Box>
             </Box>
           </Box>
-        </Drawer>
+        </Dialog>
       </Box>
     </Template>
   );
