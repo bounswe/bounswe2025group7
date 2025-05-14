@@ -12,7 +12,7 @@ import Template from '../components/Template';
 import Recipe from '../models/Recipe';
 import recipeService from '../services/recipeService';
 import feedService from '../services/feedService';
-import apiClient from '../services/apiClient';
+import apiClient, { checkIfRecipeSaved, saveRecipe, unsaveRecipe } from '../services/apiClient';
 import Drawer from '@mui/material/Drawer';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import CloseIcon from '@mui/icons-material/Close';
@@ -113,6 +113,51 @@ const HomePage = () => {
           ...prev,
           likedByCurrentUser: currentlyLiked,
           likeCount: (prev.likeCount || 0) + (currentlyLiked ? 1 : -1)
+        }));
+      }
+    }
+  };
+
+  // Toggle bookmark/unbookmark for a recipe
+  const handleBookmarkRecipe = async (recipeId, currentlySaved) => {
+    const newSaved = !currentlySaved;
+    
+    // Optimistically update UI for main feed
+    setFeeds(prev => prev.map(f => 
+      f.type === 'RECIPE' && f.recipe?.id === recipeId
+        ? { ...f, savedByCurrentUser: newSaved }
+        : f
+    ));
+    
+    // Also update commentFeed if the same recipe is open in dialog
+    if (commentFeed && commentFeed.type === 'RECIPE' && commentFeed.recipe?.id === recipeId) {
+      setCommentFeed(prev => ({
+        ...prev,
+        savedByCurrentUser: newSaved
+      }));
+    }
+    
+    try {
+      if (newSaved) {
+        await saveRecipe(recipeId);
+      } else {
+        await unsaveRecipe(recipeId);
+      }
+    } catch (err) {
+      console.error('Failed to toggle bookmark:', err);
+      
+      // Revert on error - main feed
+      setFeeds(prev => prev.map(f => 
+        f.type === 'RECIPE' && f.recipe?.id === recipeId
+          ? { ...f, savedByCurrentUser: currentlySaved }
+          : f
+      ));
+      
+      // Revert on error - comment dialog
+      if (commentFeed && commentFeed.type === 'RECIPE' && commentFeed.recipe?.id === recipeId) {
+        setCommentFeed(prev => ({
+          ...prev,
+          savedByCurrentUser: currentlySaved
         }));
       }
     }
@@ -427,7 +472,7 @@ const HomePage = () => {
                     {/* Add bookmark button only for recipe posts */}
                     {feed.type === 'RECIPE' && feed.recipe && (
                       <IconButton 
-                        onClick={() => console.log('Bookmark recipe:', feed.recipe.id)} 
+                        onClick={() => handleBookmarkRecipe(feed.recipe.id, feed.savedByCurrentUser)} 
                         aria-label="bookmark" 
                         color={feed.savedByCurrentUser ? 'primary' : 'default'}
                         sx={{ ml: 1 }}
@@ -675,7 +720,7 @@ const HomePage = () => {
                     {/* Only show bookmark button for recipe posts */}
                     {commentFeed.type === 'RECIPE' && commentFeed.recipe && (
                       <IconButton 
-                        onClick={() => console.log('Bookmark clicked')} 
+                        onClick={() => handleBookmarkRecipe(commentFeed.recipe.id, commentFeed.savedByCurrentUser)} 
                         aria-label="bookmark" 
                         color={commentFeed.savedByCurrentUser ? 'primary' : 'default'}
                       >
