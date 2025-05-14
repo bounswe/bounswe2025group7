@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Typography, Grid, Card, Box, CardActions, IconButton, useTheme, Dialog, DialogContent, DialogActions, Button, TextField, FormControl, InputLabel, Select, MenuItem, CircularProgress, Snackbar } from '@mui/material';
+import { Container, Typography, Grid, Card, Box, CardActions, IconButton, useTheme, Dialog, DialogContent, DialogActions, Button, TextField, FormControl, InputLabel, Select, MenuItem, CircularProgress, Snackbar, Avatar } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -397,7 +397,7 @@ const HomePage = () => {
     
     // Fetch comments from the backend
     try {
-      const response = await apiClient.post('/get-feed-comments', { feedId: feed.id });
+      const response = await apiClient.get('/feeds/get-feed-comments', { params: { feedId: feed.id }});
       if (response.data) {
         setComments(response.data);
       }
@@ -422,7 +422,7 @@ const HomePage = () => {
     
     try {
       // Send the comment to the backend
-      await apiClient.post('/comment', { 
+      await apiClient.post('/feeds/comment', { 
         feedId: commentFeed.id, 
         message: newComment.trim() 
       });
@@ -431,7 +431,9 @@ const HomePage = () => {
       setNewComment('');
       
       // Refresh comments from the backend
-      const response = await apiClient.post('/get-feed-comments', { feedId: commentFeed.id });
+      const response = await apiClient.get('/feeds/get-feed-comments', { params: { feedId: commentFeed.id }});
+      
+      
       if (response.data) {
         setComments(response.data);
       }
@@ -944,11 +946,14 @@ const HomePage = () => {
                     <CircularProgress />
                   </Box>
                 ) : comments.length > 0 ? comments.map((comment, i) => (
-                  <Box key={comment.id || i} sx={{ p: 2, borderRadius: 1, bgcolor: 'background.paper', boxShadow: 1 }}>
-                    <Typography variant="subtitle2" color="primary.main" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                      {comment.user?.username || comment.user?.name || 'Anonymous User'}
-                    </Typography>
-                    <Typography variant="body2">{comment.message || comment.text}</Typography>
+                  <Box key={i} sx={{ p: 2, borderRadius: 1, bgcolor: 'background.paper', boxShadow: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <Avatar src={comment.profilePhoto} sx={{ width: 32, height: 32, mr: 1 }} />
+                      <Typography variant="subtitle2" color="primary.main" sx={{ fontWeight: 'bold' }}>
+                        {comment.name} {comment.surname}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2">{comment.message}</Typography>
                     {comment.createdAt && (
                       <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                         {new Date(comment.createdAt).toLocaleString()}
