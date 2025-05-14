@@ -1,5 +1,4 @@
 import apiClient from './apiClient';
-import axios from 'axios';
 
 const feedService = {
 

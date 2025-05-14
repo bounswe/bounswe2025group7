@@ -23,6 +23,7 @@ import Template from '../components/Template';
 import { useNavigate } from 'react-router-dom';
 import recipeService from '../services/recipeService';
 import apiClient from '../services/apiClient';
+import { Refresh } from '@mui/icons-material';
 
 // Static list for initial UI rendering - will be replaced with API data
 // For My Recipes, assume these are user-created recipes
@@ -232,9 +233,15 @@ const MyRecipes = () => {
   
           console.log("Recipe created successfully:", response.data);
   
-          // Close the dialog and navigate to /myrecipes
+          // Close the dialog and refresh recipes list instead of navigating
           setOpenAddDialog(false);
-          navigate('/myrecipes');
+          
+          // Fetch updated recipes list
+          setLoading(true);
+          const fetchResponse = await apiClient.get('/recipe/get-all');
+          setRecipes(fetchResponse.data);
+          setLoading(false);
+          
         } catch (error) {
           console.error("Failed to create recipe:", error);
           setError(`Failed to create recipe: ${error.message}`);
@@ -248,6 +255,7 @@ const MyRecipes = () => {
       // Error handling is done in the nested try-catch blocks
     } finally {
       setSubmitting(false);
+      
     }
   };
 

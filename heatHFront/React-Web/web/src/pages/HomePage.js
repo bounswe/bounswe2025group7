@@ -22,6 +22,7 @@ const HeaderSection = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2, 0),
   textAlign: 'center',
 }));
+  
 
 const HomePage = () => {
   const theme = useTheme();
@@ -56,6 +57,15 @@ const HomePage = () => {
     }
   };
 
+    
+  const fetchMyRecipes = async () => {
+      const response = await apiClient.get('/recipe/get-all');
+      setRecipes(response.data)
+      setLoading(false);
+    }
+        
+        
+
   // Toggle like/unlike for a feed (optimistic UI update)
   const handleLikeFeed = async (feedId, currentlyLiked) => {
     const newLiked = !currentlyLiked;
@@ -89,6 +99,9 @@ const HomePage = () => {
   const handleRecipeClick = (recipe) => {
     navigate(`/recipe/${recipe.getId()}`);
   };
+
+ 
+  
 
   // Handle like action using recipeService
   const handleLike = async (id) => {
@@ -206,11 +219,13 @@ const HomePage = () => {
   };
   
   const handleAddRecipeClick = () => {
+    fetchMyRecipes();
     setRecipeSelectionDialogOpen(true);
   };
   
   const handleRecipeSelect = (recipe) => {
-    setSelectedRecipeForPost(recipe.getId());
+    // Handle both plain objects and Recipe instances
+    setSelectedRecipeForPost(recipe.id || recipe.getId?.());
     setPostType('recipe');
     setRecipeSelectionDialogOpen(false);
   };
@@ -249,7 +264,7 @@ const HomePage = () => {
 
   // Get selected recipe details
   const getSelectedRecipeDetails = () => {
-    return recipes.find(r => r.getId() === selectedRecipeForPost);
+    return recipes.find(r => (r.id || r.getId?.()) === selectedRecipeForPost);
   };
 
   return (
@@ -305,11 +320,13 @@ const HomePage = () => {
               <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box 
                   component="img" 
-                  src={getSelectedRecipeDetails().getPhoto()} 
-                  alt={getSelectedRecipeDetails().getTitle()} 
+                  src={getSelectedRecipeDetails().photo || getSelectedRecipeDetails().getPhoto?.()} 
+                  alt={getSelectedRecipeDetails().title || getSelectedRecipeDetails().getTitle?.()} 
                   sx={{ width: 100, height: 100, objectFit: 'cover' }} 
                 />
-                <Typography variant="body1">{getSelectedRecipeDetails().getTitle()}</Typography>
+                <Typography variant="body1">
+                  {getSelectedRecipeDetails().title || getSelectedRecipeDetails().getTitle?.()}
+                </Typography>
               </Box>
             )}
             {/* Composer actions */}
@@ -387,7 +404,7 @@ const HomePage = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 2 }}>
               {recipes.map((recipe) => (
                 <Box
-                  key={recipe.getId()}
+                  key={recipe.id || recipe.getId?.()} // Use ID directly if available, otherwise use getId()
                   onClick={() => handleRecipeSelect(recipe)}
                   sx={{
                     position: 'relative',
@@ -405,8 +422,8 @@ const HomePage = () => {
                   }}
                 >
                   <img
-                    src={recipe.getPhoto()}
-                    alt={recipe.getTitle()}
+                    src={recipe.photo || recipe.getPhoto?.()} // Try direct property first, then method
+                    alt={recipe.title || recipe.getTitle?.()} // Try direct property first, then method
                     style={{
                       position: 'absolute',
                       top: 0,
@@ -428,7 +445,7 @@ const HomePage = () => {
                     }}
                   >
                     <Typography variant="subtitle2" noWrap>
-                      {recipe.getTitle()}
+                      {recipe.title || recipe.getTitle?.()}
                     </Typography>
                   </Box>
                 </Box>
