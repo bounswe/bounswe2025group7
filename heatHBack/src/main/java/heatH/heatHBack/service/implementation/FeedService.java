@@ -18,6 +18,7 @@ import heatH.heatHBack.model.FeedType;
 import heatH.heatHBack.model.Recipe;
 import heatH.heatHBack.model.User;
 import heatH.heatHBack.model.request.FeedRequest;
+import heatH.heatHBack.model.response.FeedProfileResponse;
 import heatH.heatHBack.model.response.FeedResponse;
 import heatH.heatHBack.repository.FeedRepository;
 import heatH.heatHBack.repository.LikeRepository;
@@ -126,11 +127,11 @@ public class FeedService {
             return response;
         }).toList();
     }
-    //parametre id: idden çek
-    public List<FeedResponse> getFeedOtherUser(Long userId){
+    
+    public List<FeedProfileResponse> getFeedOtherUser(Long userId){
         List<Feed> feeds = feedRepository.findByUserId(userId);
         return feeds.stream().map(feed -> {
-            FeedResponse response = new FeedResponse();
+            FeedProfileResponse response = new FeedProfileResponse();
             Recipe recipe = feed.getRecipe();
             response.setId(feed.getId());
             response.setText(feed.getText());
