@@ -732,7 +732,7 @@ const UserProfile = () => {
                 </Box>
               ) : comments.length > 0 ? comments.map((comment, i) => (
                 <Box key={i} sx={{ p: 2, borderRadius: 1, bgcolor: 'background.paper', boxShadow: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, cursor: 'pointer' }} onClick={() => { handleCloseComments(); navigate(`/user/${comment.userId}`); }}>
                     <Avatar src={comment.profilePhoto} sx={{ width: 32, height: 32, mr: 1 }} />
                     <Typography variant="subtitle2" color="primary.main" sx={{ fontWeight: 'bold' }}>
                       {comment.name} {comment.surname}

@@ -637,10 +637,18 @@ const HomePage = () => {
             <Box sx={{ maxWidth: 600, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
               {feeds.map(feed => (
                 <Card key={feed.id} sx={{ width: '100%', boxShadow: 2, '&:hover': { boxShadow: 6 } }}>
+                  {/* Publisher info */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', px: 2, py: 1, cursor: 'pointer' }} onClick={() => navigate(`/user/${feed.userId}`)}>
+                    <Avatar src={feed.profilePhoto} alt={`${feed.name} ${feed.surname}`} />
+                    <Typography variant="subtitle2" sx={{ ml: 1, fontWeight: 'bold' }}>
+                      {feed.name} {feed.surname}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ height: 1.5, bgcolor: 'primary.main', mx: 2, my: 1 }} />
                   {feed.type === 'TEXT' && <Box sx={{ p:2 }}><Typography>{feed.text}</Typography></Box>}
                   {feed.type === 'IMAGE_AND_TEXT' && <Box sx={{ p:2 }}><Box component="img" src={feed.image} alt="feed" sx={{ width:'100%', mb:1 }}/><Typography>{feed.text}</Typography></Box>}
                   {feed.type === 'RECIPE' && feed.recipe && <>
-                    <Typography variant="h6" sx={{ m:2 }}>{feed.recipe.title}</Typography>
+                    <Typography variant="h6" sx={{ mt:1, mx:2, mb:2 }}>{feed.recipe.title}</Typography>
                     <Box onClick={() => navigate(`/recipe/${feed.recipe.id}`)} sx={{ position:'relative', width:'100%', pt:'100%', overflow:'hidden', cursor:'pointer', '&:hover .descOverlay': { opacity:1, transform:'translateY(0)' } }}>
                       <img src={feed.recipe.photo} alt={feed.recipe.title} style={{ position:'absolute', top:0,left:0,width:'100%',height:'100%',objectFit:'cover' }}/>
                       <Box className="descOverlay" sx={{ position:'absolute', bottom:0, width:'100%', bgcolor: alpha(theme.palette.primary.dark,0.7), color: theme.palette.primary.contrastText, px:1, py:0.5, opacity:0, transform:'translateY(100%)', transition:'all 0.3s ease-in-out' }}>
@@ -991,7 +999,7 @@ const HomePage = () => {
                   </Box>
                 ) : comments.length > 0 ? comments.map((comment, i) => (
                   <Box key={i} sx={{ p: 2, borderRadius: 1, bgcolor: 'background.paper', boxShadow: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, cursor: 'pointer' }} onClick={() => { handleCloseComments(); navigate(`/user/${comment.userId}`); }}>
                       <Avatar src={comment.profilePhoto} sx={{ width: 32, height: 32, mr: 1 }} />
                       <Typography variant="subtitle2" color="primary.main" sx={{ fontWeight: 'bold' }}>
                         {comment.name} {comment.surname}
