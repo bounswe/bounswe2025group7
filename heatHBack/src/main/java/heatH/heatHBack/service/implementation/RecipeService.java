@@ -5,8 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import heatH.heatHBack.model.User;
-import heatH.heatHBack.repository.SavedRecipeRepository;
-import heatH.heatHBack.repository.UserRepository;
+import heatH.heatHBack.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,8 +14,6 @@ import org.springframework.stereotype.Service;
 import heatH.heatHBack.model.Feed;
 import heatH.heatHBack.model.Recipe;
 import heatH.heatHBack.model.request.RecipeRequest;
-import heatH.heatHBack.repository.FeedRepository;
-import heatH.heatHBack.repository.RecipeRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -27,6 +24,8 @@ public class RecipeService {
     private final GcsService gcsService;
     private final SavedRecipeRepository savedRecipeRepository;
     private final FeedRepository feedRepository;
+    private final LikeRepository likeRepository;
+    private final CommentRepository commentRepository;
 
     public Recipe saveRecipe(RecipeRequest request) {
         Recipe recipe = new Recipe();
@@ -63,6 +62,8 @@ public class RecipeService {
         List<Feed> feedsToDelete = feedRepository.findByRecipeId(id);
         feedRepository.deleteAll(feedsToDelete);
         recipeRepository.deleteById(id);
+        likeRepository.deleteAllByFeedIn(feedsToDelete);
+        commentRepository.deleteAllByFeedIn(feedsToDelete);
     }
     public Optional<List<Recipe>> getAllRecipes() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
