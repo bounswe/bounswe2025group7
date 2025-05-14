@@ -3,6 +3,7 @@ package heatH.heatHBack.service.implementation;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -11,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.google.common.base.Optional;
 
 import heatH.heatHBack.model.Feed;
 import heatH.heatHBack.model.FeedType;
@@ -128,27 +128,32 @@ public class FeedService {
         }).toList();
     }
     
-    public List<FeedProfileResponse> getFeedOtherUser(Long userId){
+    public FeedProfileResponse getFeedOtherUser(Long userId){
         List<Feed> feeds = feedRepository.findByUserId(userId);
-        return feeds.stream().map(feed -> {
-            FeedProfileResponse response = new FeedProfileResponse();
-            Recipe recipe = feed.getRecipe();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Feed> feedResponses = feeds.stream().map(feed -> {
+            Feed response = new Feed();
             response.setId(feed.getId());
             response.setText(feed.getText());
             response.setUserId(feed.getUserId());
             response.setType(feed.getType());
             response.setCreatedAt(feed.getCreatedAt());
             response.setLikeCount(feed.getLikeCount());
-            response.setRecipe(recipe);
+            response.setRecipe(feed.getRecipe());
             if(feed.getImage() != null) {
                 response.setImage(feed.getImage());
             }
-            
-            java.util.Optional<User> userOptional = userRepository.findById(userId);
-            User user = userOptional.get();
-            boolean liked = likeRepository.findByUserAndFeedId(user, feed.getId()).isPresent();
-            response.setLikedByCurrentUser(liked);
             return response;
         }).toList();
+
+        FeedProfileResponse feedProfileResponse = new FeedProfileResponse();
+        feedProfileResponse.setName(user.getName());
+        feedProfileResponse.setSurname(user.getSurname());
+        feedProfileResponse.setProfilePhoto(user.getProfilePhoto());
+        feedProfileResponse.setFeeds(feedResponses);
+
+        return feedProfileResponse;
     }
 }
