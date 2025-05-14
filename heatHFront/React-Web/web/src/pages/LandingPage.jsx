@@ -325,7 +325,7 @@ const LandingPage = () => {
             gap: 2
           }}>
             <Typography variant="body2">
-              © 2024 HeatH. All rights reserved.
+              © 2025 HeatH. All rights reserved.
             </Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Link to="/privacy" component={RouterLink} style={{ color: 'white', textDecoration: 'none' }}>

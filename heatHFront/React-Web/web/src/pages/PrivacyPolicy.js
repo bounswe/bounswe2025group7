@@ -97,7 +97,7 @@ const PrivacyPolicy = () => {
       <Footer>
         <Container>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-            <Typography variant="body2">© 2024 HeatH. All rights reserved.</Typography>
+            <Typography variant="body2">© 2025 HeatH. All rights reserved.</Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Link component={RouterLink} to="/privacy" underline="none" sx={{ color: 'white', textDecoration: 'none' }}>
                 <Typography variant="body2">Privacy Policy</Typography>
