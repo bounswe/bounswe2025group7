@@ -423,6 +423,19 @@ const HomePage = () => {
                     <Typography variant="body2" sx={{ ml: 1 }}>
                       {feed.likeCount}
                     </Typography>
+                    
+                    {/* Add bookmark button only for recipe posts */}
+                    {feed.type === 'RECIPE' && feed.recipe && (
+                      <IconButton 
+                        onClick={() => console.log('Bookmark recipe:', feed.recipe.id)} 
+                        aria-label="bookmark" 
+                        color={feed.savedByCurrentUser ? 'primary' : 'default'}
+                        sx={{ ml: 1 }}
+                      >
+                        {feed.savedByCurrentUser ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+                      </IconButton>
+                    )}
+                    
                     <IconButton onClick={() => handleCommentClick(feed)} aria-label="comment" sx={{ ml: 1 }}>
                       <ChatBubbleOutlineIcon />
                     </IconButton>
@@ -659,13 +672,16 @@ const HomePage = () => {
                       {commentFeed.likeCount || 0}
                     </Typography>
 
-                    <IconButton 
-                      onClick={() => console.log('Bookmark clicked')} 
-                      aria-label="bookmark" 
-                      color={commentFeed.savedByCurrentUser ? 'primary' : 'default'}
-                    >
-                      {commentFeed.savedByCurrentUser ? <BookmarkIcon /> : <BookmarkBorderIcon />}
-                    </IconButton>
+                    {/* Only show bookmark button for recipe posts */}
+                    {commentFeed.type === 'RECIPE' && commentFeed.recipe && (
+                      <IconButton 
+                        onClick={() => console.log('Bookmark clicked')} 
+                        aria-label="bookmark" 
+                        color={commentFeed.savedByCurrentUser ? 'primary' : 'default'}
+                      >
+                        {commentFeed.savedByCurrentUser ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+                      </IconButton>
+                    )}
                     
                     {commentFeed.recipe && (
                       <Button
