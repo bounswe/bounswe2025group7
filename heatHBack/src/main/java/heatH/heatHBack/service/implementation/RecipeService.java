@@ -12,8 +12,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import heatH.heatHBack.model.Feed;
 import heatH.heatHBack.model.Recipe;
 import heatH.heatHBack.model.request.RecipeRequest;
+import heatH.heatHBack.repository.FeedRepository;
 import heatH.heatHBack.repository.RecipeRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +26,7 @@ public class RecipeService {
     private final UserRepository userRepository;
     private final GcsService gcsService;
     private final SavedRecipeRepository savedRecipeRepository;
+    private final FeedRepository feedRepository;
 
     public Recipe saveRecipe(RecipeRequest request) {
         Recipe recipe = new Recipe();
@@ -57,6 +60,8 @@ public class RecipeService {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Recipe not found"));
         savedRecipeRepository.deleteByRecipe(recipe);
+        List<Feed> feedsToDelete = feedRepository.findByRecipeId(id);
+        feedRepository.deleteAll(feedsToDelete);
         recipeRepository.deleteById(id);
     }
     public Optional<List<Recipe>> getAllRecipes() {
