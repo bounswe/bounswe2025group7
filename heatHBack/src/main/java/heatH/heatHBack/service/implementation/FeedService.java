@@ -3,6 +3,7 @@ package heatH.heatHBack.service.implementation;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -29,6 +30,8 @@ public class FeedService {
     private final RecipeService recipeService;
     private final LikeRepository likeRepository;
     private final UserRepository userRepository;
+    private final GcsService gcsService;
+
 
     public Feed createFeed(FeedRequest request) {
         FeedType type = FeedType.valueOf(request.getType());
@@ -48,7 +51,10 @@ public class FeedService {
 
             case IMAGE_AND_TEXT -> {
                 feed.setText(request.getText());
-                feed.setImage(request.getImage());
+
+                String fileName = "user-profile-" + UUID.randomUUID() + ".jpg";
+                String imageUrl = gcsService.uploadBase64Image(request.getImage(), fileName);
+                feed.setImage(imageUrl);
             }
 
             case RECIPE -> {
@@ -56,7 +62,9 @@ public class FeedService {
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
                 feed.setRecipe(recipe);
                 feed.setText(request.getText());
-                feed.setImage(request.getImage());
+                String fileName = "user-profile-" + UUID.randomUUID() + ".jpg";
+                String imageUrl = gcsService.uploadBase64Image(request.getImage(), fileName);
+                feed.setImage(imageUrl);
             }
 
             default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid feed type");
