@@ -656,6 +656,13 @@ const HomePage = () => {
                       </Box>
                     </Box>
                   </>}
+                  {feed.text?.trim() && (feed.type !== 'TEXT') && (
+                      <Box sx={{ px: 2, pt: 1 }}>
+                        <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
+                          {feed.text}
+                        </Typography>
+                      </Box>
+                    )}
                   <CardActions disableSpacing>
                     <IconButton onClick={() => handleLikeFeed(feed.id, feed.likedByCurrentUser)} aria-label="like" color={feed.likedByCurrentUser ? 'error' : 'default'}>
                       {feed.likedByCurrentUser ? <FavoriteIcon /> : <FavoriteBorderIcon />}
