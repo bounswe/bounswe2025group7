@@ -7,11 +7,7 @@ import heatH.heatHBack.model.request.*;
 import heatH.heatHBack.model.response.CommentResponse;
 import heatH.heatHBack.service.implementation.CommentService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import heatH.heatHBack.model.Feed;
 import heatH.heatHBack.model.response.FeedResponse;
@@ -57,8 +53,8 @@ public class FeedController {
     }
 
     @GetMapping("/get-feed-comments")
-    public ResponseEntity<?> getFeedComments(@RequestBody GetCommentRequest getCommentRequest) {
-        List<CommentResponse> comments = commentService.getFeedComments(getCommentRequest);
+    public ResponseEntity<?> getFeedComments(@RequestParam Long feedId ) {
+        List<CommentResponse> comments = commentService.getFeedComments(feedId);
         return ResponseEntity.ok(comments);
     }
 
