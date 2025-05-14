@@ -108,13 +108,20 @@ public class FeedService {
 
         return feeds.stream().map(feed -> {
             FeedResponse response = new FeedResponse();
+            Recipe recipe = feed.getRecipe();
             response.setId(feed.getId());
             response.setText(feed.getText());
             response.setUserId(feed.getUserId());
             response.setType(feed.getType());
             response.setCreatedAt(feed.getCreatedAt());
             response.setLikeCount(feed.getLikeCount());
+            response.setRecipe(recipe);
+            if(feed.getImage() != null) {
+                response.setImage(feed.getImage());
+            }
 
+            boolean liked = likeRepository.findByUserAndFeedId(user, feed.getId()).isPresent();
+            response.setLikedByCurrentUser(liked);
             return response;
         }).toList();
     }
