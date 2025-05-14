@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Container, Typography, Grid, Card, Box, CardActions, IconButton, useTheme, 
-  Dialog, DialogContent, DialogActions, Button, TextField, Stack, 
+import {
+  Container, Typography, Grid, Card, Box, CardActions, IconButton, useTheme,
+  Dialog, DialogContent, DialogActions, Button, TextField, Stack,
   Chip, MenuItem, Select, InputLabel, FormControl, Divider, Rating, Menu,
   List, ListItem, ListItemText, Paper, Avatar, CircularProgress, Alert,
   Tooltip
@@ -50,7 +50,8 @@ const MyRecipes = () => {
   const [userRating, setUserRating] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editingRecipeId, setEditingRecipeId] = useState(null);
-  
+  const [currentInstruction, setCurrentInstruction] = useState('');
+
   // Action menu state
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState(null);
@@ -68,15 +69,15 @@ const MyRecipes = () => {
   const [newType, setNewType] = useState('');
   const [newHealthinessScore, setNewHealthinessScore] = useState(0);
   const [newEasinessScore, setNewEasinessScore] = useState(0);
-  
+
   // For ingredients
   const [newIngredients, setNewIngredients] = useState([]);
   const [currentIngredient, setCurrentIngredient] = useState('');
   const [currentAmount, setCurrentAmount] = useState('');
-  
+
   const fileInputRef = useRef(null);
   const ingredientInputRef = useRef(null);
-  
+
   // For delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState(null);
@@ -91,7 +92,7 @@ const MyRecipes = () => {
       setRecipes(response.data)
       setLoading(false);
     }
-    
+
     fetchMyRecipes();
   }, []);
 
@@ -106,12 +107,24 @@ const MyRecipes = () => {
     setSelectedRecipeId(recipeId);
     event.stopPropagation(); // Prevent card click
   };
-  
+
   const handleMenuClose = () => {
     setMenuAnchorEl(null);
     setSelectedRecipeId(null);
   };
 
+  const handleAddInstruction = () => {
+    if (currentInstruction.trim()) {
+      setNewInstructions([...newInstructions, currentInstruction.trim()]);
+      setCurrentInstruction('');
+    }
+  };
+  
+  const handleRemoveInstruction = (index) => {
+    const updated = [...newInstructions];
+    updated.splice(index, 1);
+    setNewInstructions(updated);
+  };
   
   // Handle file selection for image upload
   const handleImageUpload = (e) => {
@@ -132,15 +145,15 @@ const MyRecipes = () => {
   const handleUploadClick = () => {
     fileInputRef.current.click();
   };
-  
+
   // Handle adding an ingredient
   const handleAddIngredient = () => {
     if (currentIngredient && currentAmount) {
       setNewIngredients([
-        ...newIngredients, 
-        { 
-          name: currentIngredient, 
-          amount: currentAmount 
+        ...newIngredients,
+        {
+          name: currentIngredient,
+          amount: currentAmount
         }
       ]);
       setCurrentIngredient('');
@@ -150,7 +163,7 @@ const MyRecipes = () => {
       }
     }
   };
-  
+
   // Handle removing an ingredient
   const handleRemoveIngredient = (index) => {
     const updatedIngredients = [...newIngredients];
@@ -180,25 +193,24 @@ const MyRecipes = () => {
   // Handle add/edit recipe submit
   const handleRecipeFormSubmit = async (e) => {
     e.preventDefault();
-  
+
     try {
       setSubmitting(true);
-  
+
       // Prepare ingredient list in the format expected by API
       const ingredientList = newIngredients.map(ing => `${ing.name}: ${ing.amount}`);
-  
+
       // Create recipe data object according to API requirements
       const recipeData = {
         title: newTitle,
-        instructions: [newInstructions], // API expects array of instructions
-        ingredients: ingredientList,
+        instructions: newInstructions,        ingredients: ingredientList,
         tag: newTag,
         type: newType,
         photo: newPhotoBase64 || 'https://picsum.photos/seed/default/300/300',
         totalCalorie: Number(newTotalCalory),
         price: Number(newPrice),
       };
-  
+
       if (isEditing) {
         // Update existing recipe
         try {
@@ -210,13 +222,13 @@ const MyRecipes = () => {
             },
             body: JSON.stringify(recipeData),
           });
-  
+
           if (!response.ok) {
             throw new Error(`Error updating recipe: ${response.statusText}`);
           }
-  
-      
-  
+
+
+
           console.log("Recipe updated successfully");
         } catch (error) {
           console.error("Failed to update recipe:", error);
@@ -227,36 +239,36 @@ const MyRecipes = () => {
         // Create new recipe with POST request
         try {
           const response = await apiClient.post("/recipe/create", recipeData);
-  
+
           if (response.status !== 200) {
             throw new Error(`Error creating recipe: ${response.statusText}`);
           }
-  
+
           console.log("Recipe created successfully:", response.data);
-  
+
           // Close the dialog and refresh recipes list instead of navigating
           setOpenAddDialog(false);
-          
+
           // Fetch updated recipes list
           setLoading(true);
           const fetchResponse = await apiClient.get('/recipe/get-all');
           setRecipes(fetchResponse.data);
           setLoading(false);
-          
+
         } catch (error) {
           console.error("Failed to create recipe:", error);
           setError(`Failed to create recipe: ${error.message}`);
           throw error;
         }
       }
-  
+
       // Clear form fields
       resetForm();
     } catch (error) {
       // Error handling is done in the nested try-catch blocks
     } finally {
       setSubmitting(false);
-      
+
     }
   };
 
@@ -268,13 +280,13 @@ const MyRecipes = () => {
       setIsEditing(true);
       setEditingRecipeId(recipeId);
       setNewTitle(recipeToEdit.title);
-      setNewInstructions(recipeToEdit.instructions[0]);
+      setNewInstructions(recipeToEdit.instructions || []);
       setImagePreview(recipeToEdit.photo);
       setNewTotalCalory(recipeToEdit.totalCalorie || 0);
       setNewTag(recipeToEdit.tag || '');
       setNewPrice(recipeToEdit.price || 0);
       setNewType(recipeToEdit.type || '');
-      
+
       // Parse ingredients if they exist
       if (recipeToEdit.ingredients && recipeToEdit.ingredients.length > 0) {
         const parsedIngredients = recipeToEdit.ingredients.map(ing => {
@@ -283,7 +295,7 @@ const MyRecipes = () => {
         });
         setNewIngredients(parsedIngredients);
       }
-      
+
       setOpenAddDialog(true);
     }
     handleMenuClose();
@@ -310,8 +322,8 @@ const MyRecipes = () => {
   // Handle actual deletion when confirmed
   const handleDeleteConfirm = async () => {
     try {
-      const response = await apiClient.delete(`/recipe/delete-recipe`, { data: { id: recipeToDelete }});
-      
+      const response = await apiClient.delete(`/recipe/delete-recipe`, { data: { id: recipeToDelete } });
+
       if (response.status === 200) {
         // Remove the deleted recipe from state
         setRecipes(recipes.filter(recipe => recipe.id !== recipeToDelete));
@@ -329,7 +341,7 @@ const MyRecipes = () => {
   return (
     <Template>
       <Box>
-        <div style={{ textAlign: 'center' }}> 
+        <div style={{ textAlign: 'center' }}>
           <Typography variant="h3" sx={{ color: 'primary.main', backgroundColor: 'white' }}>
             My Recipes
           </Typography>
@@ -342,17 +354,17 @@ const MyRecipes = () => {
               {error}
             </Alert>
           )}
-          
+
           {/* Button to open Add Recipe Dialog */}
           <Box sx={{ mb: 4, textAlign: 'center' }}>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
               Create your own recipes and share them with others. Visit Saved Recipes to view recipes you've bookmarked.
             </Typography>
-            
+
             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-              <Button 
-                variant="contained" 
-                color="primary" 
+              <Button
+                variant="contained"
+                color="primary"
                 onClick={() => {
                   resetForm();
                   setOpenAddDialog(true);
@@ -361,9 +373,9 @@ const MyRecipes = () => {
               >
                 Create New Recipe
               </Button>
-              
-              <Button 
-                variant="outlined" 
+
+              <Button
+                variant="outlined"
                 color="primary"
                 onClick={() => navigate('/saved')}
               >
@@ -400,8 +412,8 @@ const MyRecipes = () => {
                   position: 'relative', // For more options button
                 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pr: 1 }}>
-                    <Typography variant="h6" sx={{ 
-                      m: 2, 
+                    <Typography variant="h6" sx={{
+                      m: 2,
                       color: 'text.primary',
                       height: '40px',
                       display: 'flex',
@@ -413,7 +425,7 @@ const MyRecipes = () => {
                     }}>
                       {recipe.title}
                     </Typography>
-                    
+
                     <IconButton
                       onClick={(e) => handleMenuClick(e, recipe.id)}
                       size="small"
@@ -422,7 +434,7 @@ const MyRecipes = () => {
                       <MoreVertIcon />
                     </IconButton>
                   </Box>
-                  
+
                   <Box
                     onClick={() => handleRecipeClick(recipe)}
                     sx={{
@@ -469,12 +481,12 @@ const MyRecipes = () => {
                       </Typography>
                     </Box>
                   </Box>
-            
+
                 </Card>
               ))}
             </Box>
           )}
-          
+
           {/* Recipe Options Menu */}
           <Menu
             anchorEl={menuAnchorEl}
@@ -490,7 +502,7 @@ const MyRecipes = () => {
               Delete
             </MenuItem>
           </Menu>
-          
+
           {/* Delete Confirmation Dialog */}
           <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
             <DialogContent>
@@ -524,13 +536,13 @@ const MyRecipes = () => {
                 <Typography variant="h5" align="center" sx={{ mb: 3, fontWeight: 600 }}>
                   {isEditing ? 'Edit Recipe' : 'Create New Recipe'}
                 </Typography>
-                
+
                 {!isFormComplete && !submitting && (
                   <Alert severity="info" sx={{ mb: 2 }}>
                     Please fill in all fields to create a recipe.
                   </Alert>
                 )}
-                
+
                 <Grid container spacing={3}>
                   {/* Left column */}
                   <Grid item xs={12} md={6}>
@@ -543,7 +555,7 @@ const MyRecipes = () => {
                       required
                       disabled={submitting}
                     />
-                    
+
                     <FormControl fullWidth sx={{ mb: 2 }} disabled={submitting} required>
                       <InputLabel>Type</InputLabel>
                       <Select
@@ -559,7 +571,7 @@ const MyRecipes = () => {
                         <MenuItem value="snack">Snack</MenuItem>
                       </Select>
                     </FormControl>
-                    
+
                     <TextField
                       required
                       fullWidth
@@ -570,7 +582,7 @@ const MyRecipes = () => {
                       placeholder="e.g. vegetarian, gluten-free"
                       disabled={submitting}
                     />
-                    
+
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                       <TextField
                         required
@@ -591,7 +603,7 @@ const MyRecipes = () => {
                         disabled={submitting}
                       />
                     </Box>
-                    
+
                     {/* Photo upload section */}
                     <Box sx={{ mb: 3 }}>
                       <Typography variant="subtitle1" sx={{ mb: 1 }}>Recipe Photo</Typography>
@@ -632,23 +644,63 @@ const MyRecipes = () => {
                       </Stack>
                     </Box>
                   </Grid>
-                  
+
                   {/* Right column */}
                   <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Instructions"
-                      value={newInstructions}
-                      onChange={(e) => setNewInstructions(e.target.value)}
-                      sx={{ mb: 3 }}
-                      required
-                      multiline
-                      rows={4}
-                      disabled={submitting}
-                    />
-                    
+                    <Typography variant="subtitle1" gutterBottom>Instructions</Typography>
+                    <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                      <TextField
+                        label="Instruction"
+                        value={currentInstruction}
+                        onChange={(e) => setCurrentInstruction(e.target.value)}
+                        fullWidth
+                        disabled={submitting}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddInstruction();
+                          }
+                        }}
+                      />
+                      <IconButton
+                        color="primary"
+                        onClick={handleAddInstruction}
+                        disabled={!currentInstruction || submitting}
+                      >
+                        <AddIcon />
+                      </IconButton>
+                    </Box>
+
+                    <Box sx={{
+                      border: '1px solid #eee',
+                      borderRadius: 1,
+                      p: 2,
+                      minHeight: '150px',
+                      maxHeight: '200px',
+                      overflow: 'auto'
+                    }}>
+                      {newInstructions.length === 0 ? (
+                        <Typography color="text.secondary" align="center">
+                          No instructions added yet
+                        </Typography>
+                      ) : (
+                        <Stack spacing={1}>
+                          {newInstructions.map((instruction, index) => (
+                            <Chip
+                              key={index}
+                              label={`${index + 1}. ${instruction}`}
+                              onDelete={() => !submitting && handleRemoveInstruction(index)}
+                              variant="outlined"
+                              disabled={submitting}
+                            />
+                          ))}
+                        </Stack>
+                      )}
+                    </Box>
+
+
                     <Typography variant="subtitle1" gutterBottom>Ingredients</Typography>
-                    
+
                     <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                       <TextField
                         label="Ingredient"
@@ -671,21 +723,21 @@ const MyRecipes = () => {
                         fullWidth
                         disabled={submitting}
                       />
-                      <IconButton 
-                        color="primary" 
+                      <IconButton
+                        color="primary"
                         onClick={handleAddIngredient}
                         disabled={!currentIngredient || !currentAmount || submitting}
                       >
                         <AddIcon />
                       </IconButton>
                     </Box>
-                    
-                    <Box sx={{ 
-                      border: '1px solid #eee', 
-                      borderRadius: 1, 
-                      p: 2, 
-                      minHeight: '150px', 
-                      maxHeight: '200px', 
+
+                    <Box sx={{
+                      border: '1px solid #eee',
+                      borderRadius: 1,
+                      p: 2,
+                      minHeight: '150px',
+                      maxHeight: '200px',
                       overflow: 'auto'
                     }}>
                       {newIngredients.length === 0 ? (
@@ -711,7 +763,7 @@ const MyRecipes = () => {
               </Box>
             </DialogContent>
             <DialogActions sx={{ px: 4, py: 2, justifyContent: 'flex-end', gap: 2 }}>
-              <Button 
+              <Button
                 onClick={() => {
                   resetForm();
                   setOpenAddDialog(false);
@@ -720,9 +772,9 @@ const MyRecipes = () => {
               >
                 Cancel
               </Button>
-              <Button 
-                onClick={handleRecipeFormSubmit} 
-                variant="contained" 
+              <Button
+                onClick={handleRecipeFormSubmit}
+                variant="contained"
                 color="primary"
                 disabled={!isFormComplete || submitting}
               >
