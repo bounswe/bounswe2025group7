@@ -11,6 +11,7 @@ const feedService = {
   },
 
   createFeed: async (postPayload) => {
+
     const accessToken = localStorage.getItem('accessToken');
     if (!accessToken) {
       console.error('No access token found.');
@@ -19,6 +20,7 @@ const feedService = {
     const response = await apiClient.post('/feeds/created-feed', postPayload, {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
+
     return response.data;
   },
 
