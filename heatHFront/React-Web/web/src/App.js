@@ -24,6 +24,7 @@ import MyRecipes from './pages/myRecipes';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsofService';
 import ContactUs from './pages/ContactUs';
+import UserProfile from './pages/UserProfile';
 
 function App() {
   return (
@@ -48,7 +49,8 @@ function App() {
             <Route path="/profile/edit" element={<EditProfile />} />   
             <Route path="/saved" element={<SavedRecipes />} />
             <Route path="/myrecipes" element={<MyRecipes />} /> 
-            <Route path="/recipe/:id" element={<RecipeDetail />} />   
+            <Route path="/recipe/:id" element={<RecipeDetail />} />  
+            <Route path="/user/:userId" element={<UserProfile />} /> 
           </Route>  
         </Routes>
       </BrowserRouter>
