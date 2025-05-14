@@ -303,7 +303,7 @@ const MyRecipes = () => {
   // Handle actual deletion when confirmed
   const handleDeleteConfirm = async () => {
     try {
-      const response = await apiClient.delete(`/recipe/delete?recipeId=${recipeToDelete}`);
+      const response = await apiClient.delete(`/recipe/delete-recipe`, { data: { id: recipeToDelete }});
       
       if (response.status === 200) {
         // Remove the deleted recipe from state
