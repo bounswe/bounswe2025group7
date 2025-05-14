@@ -60,8 +60,8 @@ public class FeedController {
     }
 
     @GetMapping("/recent")
-    public List<FeedResponse> getRecentFeedsForUser() {
-        return feedService.getRecentFeedsForUser();
+    public List<FeedResponse> getRecentFeedsForUser(@RequestParam Long pageNumber) {
+        return feedService.getRecentFeedsForUser(pageNumber);
     }
 
     @GetMapping("/feed-by-user")

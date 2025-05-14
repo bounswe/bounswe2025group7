@@ -6,6 +6,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -72,13 +76,18 @@ public class FeedService {
         return feedRepository.save(feed);
     }
 
-    public List<FeedResponse> getRecentFeedsForUser() {
-        // Fetch last 20 feeds sorted by createdAt DESC
-        List<Feed> feeds = feedRepository.findTop20ByOrderByCreatedAtDesc();
+    public List<FeedResponse> getRecentFeedsForUser(Long pageNumber) {
+        int pageSize = 20;
+        Pageable pageable = PageRequest.of(pageNumber.intValue(), pageSize, Sort.by("createdAt").descending());
+
+        Page<Feed> feedPage = feedRepository.findAllByOrderByCreatedAtDesc(pageable);
+        List<Feed> feeds = feedPage.getContent();
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
         User user = userRepository.findByUsername(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
         return feeds.stream().map(feed -> {
             Recipe recipe = feed.getRecipe();
             FeedResponse response = new FeedResponse();
@@ -93,13 +102,17 @@ public class FeedService {
             if(feed.getImage() != null) {
                 response.setImage(feed.getImage());
             }
-            // Check if this feed is liked by the user
+            User user2 = userRepository.findById(feed.getUserId()).orElseThrow(() -> new RuntimeException("User not found"));
+            response.setName(user2.getName());
+            response.setSurname(user2.getSurname());
+            response.setProfilePhoto(user2.getProfilePhoto());
             boolean liked = likeRepository.findByUserAndFeedId(user, feed.getId()).isPresent();
             response.setLikedByCurrentUser(liked);
 
             return response;
         }).toList();
     }
+
 
     public List<FeedResponse> getFeedByUser() {
 
