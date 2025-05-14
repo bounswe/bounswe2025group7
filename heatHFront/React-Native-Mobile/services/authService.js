@@ -1,13 +1,16 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BASE_URL = 'http://167.172.162.159:8080/api/auth';
 
 export const register = async (username, password) => {
-  console.log($`Trying to register: ${username}`);
+  console.log(`Trying to register: ${username}`);
   const response = await axios.post(`${BASE_URL}/register`, {
     username,
     password,
   });
+  const {accessToken, refreshToken} = response.data;
+  await saveTokens(accessToken, refreshToken);
   return response.data; // { accessToken, refreshToken }
 };
 
@@ -17,15 +20,29 @@ export const login = async (username, password) => {
     username,
     password,
   });
+  const {accessToken, refreshToken} = response.data;
+  await saveTokens(accessToken, refreshToken);
   return response.data; // { accessToken, refreshToken }
 };
 
-export const refreshAccessToken = async (refreshToken) => {
+export const refreshToken = async () => {
   console.log(`Requested refreshAccessToken!`);
-  const response = await axios.post(`${BASE_URL}/refresh-token`, {
-    refreshToken,
-  });
-  return response.data; // { accessToken, refreshToken }
+  try {
+    const refresh = await getRefreshToken();
+    if (!refresh) throw new Error('No refresh token found');
+
+    const response = await axios.post(`${BASE_URL}/refresh-token`, {
+      refreshToken: refresh,
+    });
+
+    const { accessToken, refreshToken: newRefresh } = response.data;
+    await saveTokens(accessToken, newRefresh);
+    console.log('Token refreshed successfully!');
+    return response.data; // { accessToken, refreshToken }
+  } catch (error) {
+    console.error('Failed to refresh token:', error);
+    throw error;
+  }
 };
 
 export const sendVerificationCode = async (email) => {
@@ -71,6 +88,32 @@ export const exists = async (email) => {
   return text === 'true';
 };
 
+
+// setting tokens
+export const saveTokens = async (accessToken, refreshToken) => {
+  try {
+    await AsyncStorage.setItem('accessToken', accessToken);
+    await AsyncStorage.setItem('refreshToken', refreshToken);
+    console.log('Tokens saved!');
+  } catch (e) {
+    console.error('Failed to save tokens:', e);
+  }
+};
+
+// retrieving tokens
+export const getAccessToken = async () => {
+  return await AsyncStorage.getItem('accessToken');
+};
+
+export const getRefreshToken = async () => {
+  return await AsyncStorage.getItem('refreshToken');
+};
+
+// logout
+  export const logout = async () => {
+  await AsyncStorage.removeItem('accessToken');
+  await AsyncStorage.removeItem('refreshToken');
+};
 
 
 /*

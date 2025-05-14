@@ -1,6 +1,5 @@
 import {useRef, useEffect, useState} from 'react'
 import {View, StyleSheet, useColorScheme, Image, Text, Animated, TextInput, Pressable} from 'react-native'
-import {Link} from 'expo-router'
 import {AuthColors} from '../../styles/Colors'
 import Spacer from '../general/Spacer'
 
@@ -9,6 +8,11 @@ import verificationSuccessLogo from '../../assets/images/auth/verif_success.png'
 
 // Import authService methods
 import {exists, login as loginUser, register as registerUser, sendVerificationCode, verifyCode } from '../../services/authService';
+// Interest form method
+import interestFormService from '../../services/interestFormService'
+
+// Router to move either to form/interestForm or baner
+import { useRouter } from 'expo-router';
 
 // Decode token
 // import jwtDecode from 'jwt-decode'; TO DO
@@ -117,7 +121,11 @@ export const AuthCodeInput = ({ length = 6, code, setCode, onCodeFilled }) => {
 
 export const AuthForm = ({type = 'login'}) => 
 {
+    // dark/light theme
     const theme = AuthColors[useColorScheme() ?? 'light'];
+
+    // router
+    const router = useRouter();
 
     // rendering cases
     const [authState, setState] = useState(type);
@@ -126,6 +134,8 @@ export const AuthForm = ({type = 'login'}) =>
     useEffect(() => {
     setState(type);
     }, [type]);
+
+    
 
     // controlling auth requests
     const [email, setEmail] = useState(''); // user email
@@ -152,7 +162,24 @@ export const AuthForm = ({type = 'login'}) =>
                 // Email Exists!
                 
                 // Logging in
-                // const { accessToken, refreshToken } = await loginUser(email, password);
+                const { accessToken, refreshToken } = await loginUser(email, password);
+                // move to form if first logins
+                console.log(`login result: ${accessToken}`);
+                
+                const userHasInterestForm = await interestFormService.checkFirstLogin();
+                
+                if(userHasInterestForm)
+                {
+                    console.log('✅ Form found!');
+                    router.replace('profile');
+                }
+                else 
+                {
+                    console.log("❌ Form not found!");
+                    router.replace('/form/banner');
+                }
+                
+
             } else {
                 // Invalid Email!
                 console.log('❌ Invalid user!');
