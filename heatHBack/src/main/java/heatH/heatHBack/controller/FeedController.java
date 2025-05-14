@@ -5,6 +5,7 @@ import java.util.List;
 import heatH.heatHBack.model.Comment;
 import heatH.heatHBack.model.request.*;
 import heatH.heatHBack.model.response.CommentResponse;
+import heatH.heatHBack.model.response.FeedProfileResponse;
 import heatH.heatHBack.service.implementation.CommentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -66,5 +67,10 @@ public class FeedController {
     @GetMapping("/feed-by-user")
     public List<FeedResponse> getFeedsByUser () {
         return feedService.getFeedByUser();
+    }
+
+    @GetMapping("/other-user")
+    public FeedProfileResponse getFeedOtherUser(@RequestParam Long userId){
+        return feedService.getFeedOtherUser(userId);
     }
 }

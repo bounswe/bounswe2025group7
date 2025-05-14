@@ -3,6 +3,7 @@ package heatH.heatHBack.service.implementation;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import heatH.heatHBack.model.FeedType;
 import heatH.heatHBack.model.Recipe;
 import heatH.heatHBack.model.User;
 import heatH.heatHBack.model.request.FeedRequest;
+import heatH.heatHBack.model.response.FeedProfileResponse;
 import heatH.heatHBack.model.response.FeedResponse;
 import heatH.heatHBack.repository.FeedRepository;
 import heatH.heatHBack.repository.LikeRepository;
@@ -124,5 +126,34 @@ public class FeedService {
             response.setLikedByCurrentUser(liked);
             return response;
         }).toList();
+    }
+    
+    public FeedProfileResponse getFeedOtherUser(Long userId){
+        List<Feed> feeds = feedRepository.findByUserId(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Feed> feedResponses = feeds.stream().map(feed -> {
+            Feed response = new Feed();
+            response.setId(feed.getId());
+            response.setText(feed.getText());
+            response.setUserId(feed.getUserId());
+            response.setType(feed.getType());
+            response.setCreatedAt(feed.getCreatedAt());
+            response.setLikeCount(feed.getLikeCount());
+            response.setRecipe(feed.getRecipe());
+            if(feed.getImage() != null) {
+                response.setImage(feed.getImage());
+            }
+            return response;
+        }).toList();
+
+        FeedProfileResponse feedProfileResponse = new FeedProfileResponse();
+        feedProfileResponse.setName(user.getName());
+        feedProfileResponse.setSurname(user.getSurname());
+        feedProfileResponse.setProfilePhoto(user.getProfilePhoto());
+        feedProfileResponse.setFeeds(feedResponses);
+
+        return feedProfileResponse;
     }
 }
