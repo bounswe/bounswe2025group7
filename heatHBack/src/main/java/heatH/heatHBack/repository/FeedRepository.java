@@ -10,4 +10,7 @@ public interface FeedRepository extends JpaRepository<Feed, Long> {
     List<Feed> findByUserId(Long userId);
 
     List<Feed> findTop20ByOrderByCreatedAtDesc();
+
+    List<Feed> findByRecipeId(Long recipeId);
+
 }
