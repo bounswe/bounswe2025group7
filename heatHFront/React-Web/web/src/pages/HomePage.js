@@ -635,34 +635,36 @@ const HomePage = () => {
                     <Typography variant="body2" sx={{ ml: 1 }}>
                       {feed.likeCount}
                     </Typography>
-                    
-                    {/* Add bookmark button only for recipe posts */}
+                    {/* Comment button and count on the left */}
+                    <IconButton onClick={() => handleCommentClick(feed)} aria-label="comment" sx={{ ml: 1 }}>
+                      <ChatBubbleOutlineIcon />
+                    </IconButton>
+                    <Typography variant="body2" sx={{ ml: 1 }}>
+                      {feed.commentCount ?? 0}
+                    </Typography>
+                    {/* Spacer pushes bookmark and share to the right */}
+                    <Box sx={{ flexGrow: 1 }} />
+                    {/* Add bookmark button next to share */}
                     {feed.type === 'RECIPE' && feed.recipe && (
                       <IconButton 
                         onClick={() => handleBookmarkRecipe(feed.recipe.id, feed.savedByCurrentUser)} 
                         aria-label="bookmark" 
                         color={feed.savedByCurrentUser ? 'primary' : 'default'}
-                        sx={{ ml: 1 }}
+                        sx={{ mr: 1 }}
                       >
                         {feed.savedByCurrentUser ? <BookmarkIcon /> : <BookmarkBorderIcon />}
                       </IconButton>
                     )}
-                    
-                    {/* Add share button only for recipe posts */}
+                    {/* Add share button at the right corner */}
                     {feed.type === 'RECIPE' && feed.recipe && (
                       <IconButton 
                         onClick={(event) => handleShareClick(event, feed.recipe.id, feed.recipe.title)} 
                         aria-label="share" 
                         color="info"
-                        sx={{ ml: 1 }}
                       >
                         <ShareOutlinedIcon />
                       </IconButton>
                     )}
-                    
-                    <IconButton onClick={() => handleCommentClick(feed)} aria-label="comment" sx={{ ml: 1 }}>
-                      <ChatBubbleOutlineIcon />
-                    </IconButton>
                   </CardActions>
                 </Card>
               ))}
