@@ -153,47 +153,79 @@ const Profile = () => {
         </Grid>
 
         {/* ---------- MY FEEDS SECTION ---------- */}
+        {/* ---------- MY FEEDS SECTION ---------- */}
         <Divider sx={{ my: 4 }} />
-        <Typography variant="h5" gutterBottom>
-          My Feeds
-        </Typography>
+          <Typography variant="h5" gutterBottom>
+            My Feeds
+          </Typography>
 
-        {userFeed.length === 0 ? (
-          <Typography color="textSecondary">You haven’t posted anything yet.</Typography>
-        ) : (
-          userFeed.map((feed) => (
-            <Box
-              key={feed.id}
-              sx={{
-                mb: 2,
-                p: 2,
-                border: '1px solid',
-                borderColor: 'grey.300',
-                borderRadius: 2,
-              }}
-            >
-              <Typography variant="body1">{feed.text}</Typography>
+          {userFeed.length === 0 ? (
+            <Typography color="textSecondary">You haven't posted anything yet.</Typography>
+          ) : (
+            userFeed.map((feed) => (
+              <Box
+                key={feed.id}
+                sx={{
+                  mb: 2,
+                  p: 2,
+                  border: '1px solid',
+                  borderColor: 'grey.300',
+                  borderRadius: 2,
+                }}
+              >
+                {/* Text Feed */}
+                {feed.type === 'TEXT' && (
+                  <Typography variant="body1">{feed.text}</Typography>
+                )}
 
-              {feed.image && (
-                <Box
-                  component="img"
-                  src={feed.image}
-                  alt="feed media"
-                  sx={{ width: '100%', mt: 1, borderRadius: 1 }}
-                />
-              )}
+                {/* Image Feed */}
+                {feed.type === 'IMAGE_AND_TEXT' && (
+                  <>
+                    {feed.image && (
+                      <Box
+                        component="img"
+                        src={feed.image}
+                        alt="feed media"
+                        sx={{ width: '100%', mb: 1, borderRadius: 1 }}
+                      />
+                    )}
+                    <Typography variant="body1">{feed.text}</Typography>
+                  </>
+                )}
 
-              <Box mt={1} display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="caption" color="textSecondary">
-                  {new Date(feed.createdAt).toLocaleString()}
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  {feed.likeCount} {feed.likeCount === 1 ? 'like' : 'likes'}
-                </Typography>
+                {/* Recipe Feed */}
+                {feed.type === 'RECIPE' && feed.recipe && (
+                  <>
+                    <Typography variant="h6" sx={{ mb: 1 }}>{feed.recipe.title}</Typography>
+                    <Box onClick={() => navigate(`/recipe/${feed.recipe.id}`)} sx={{ position:'relative', width:'100%', pt:'56.25%', overflow:'hidden', borderRadius: 1, mb: 1 }}>
+                      <img 
+                        src={feed.recipe.photo} 
+                        alt={feed.recipe.title} 
+                        style={{ 
+                          position:'absolute', 
+                          top:0, 
+                          left:0, 
+                          width:'100%', 
+                          height:'100%', 
+                          objectFit:'cover' 
+                        }}
+                      />
+                    </Box>
+                    {feed.text && <Typography variant="body1" sx={{ mt: 1 }}>{feed.text}</Typography>}
+                  </>
+                )}
+
+                <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="caption" color="textSecondary">
+                    {new Date(feed.createdAt).toLocaleString()}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {feed.likeCount} {feed.likeCount === 1 ? 'like' : 'likes'}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-          ))
-        )}
+            ))
+          )}
       </Paper>
     </Template>
   );
