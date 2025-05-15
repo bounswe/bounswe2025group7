@@ -7,7 +7,7 @@ import { launchImageLibrary } from 'react-native-image-picker'; // Replace expo-
 // js backend api
 import interestFormService from '../../services/interestFormService'
 // Router to move either to profile
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 // my components
 import Spacer from '../../components/general/Spacer'
 
