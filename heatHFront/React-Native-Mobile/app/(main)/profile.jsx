@@ -1,4 +1,3 @@
-// app/main/planner.jsx
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -78,6 +77,32 @@ const ProfileScreen = () => {
         {/* Info Fields */}
         <View style={styles.infoContainer}>
           <View>
+            <Text style={styles.infoTitle}>Name:</Text>
+            {isEditing ? (
+              <TextInput
+                style={styles.input}
+                value={formData.name}
+                onChangeText={(text) => setFormData({ ...formData, name: text })}
+              />
+            ) : (
+              <Text style={styles.infoValue}>{formData.name}</Text>
+            )}
+          </View>
+
+          <View>
+            <Text style={styles.infoTitle}>Surname:</Text>
+            {isEditing ? (
+              <TextInput
+                style={styles.input}
+                value={formData.surname}
+                onChangeText={(text) => setFormData({ ...formData, surname: text })}
+              />
+            ) : (
+              <Text style={styles.infoValue}>{formData.surname}</Text>
+            )}
+          </View>
+
+          <View>
             <Text style={styles.infoTitle}>Weight:</Text>
             {isEditing ? (
               <TextInput
@@ -90,6 +115,7 @@ const ProfileScreen = () => {
               <Text style={styles.infoValue}>{formData.weight}</Text>
             )}
           </View>
+
           <View>
             <Text style={styles.infoTitle}>Height:</Text>
             {isEditing ? (
@@ -103,6 +129,7 @@ const ProfileScreen = () => {
               <Text style={styles.infoValue}>{formData.height}</Text>
             )}
           </View>
+
           <View>
             <Text style={styles.infoTitle}>Gender:</Text>
             {isEditing ? (
@@ -115,6 +142,7 @@ const ProfileScreen = () => {
               <Text style={styles.infoValue}>{formData.gender}</Text>
             )}
           </View>
+
           <View>
             <Text style={styles.infoTitle}>Date of Birth:</Text>
             {isEditing ? (
