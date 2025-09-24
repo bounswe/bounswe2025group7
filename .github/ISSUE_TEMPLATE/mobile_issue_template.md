@@ -1,8 +1,8 @@
 ---
-name: 'mobile'
+name: 'Mobile'
 about: 'Address any issue in mobile'
-title: '[mobile]'
-labels: ['mobile']
+title: '[Mobile]'
+labels: ['Mobile']
 assignees: []
 ---
 
