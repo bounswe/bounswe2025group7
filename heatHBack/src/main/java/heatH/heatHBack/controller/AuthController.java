@@ -63,9 +63,4 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/food")
-    public ResponseEntity<Map<String, Object>> getFoodInfo(@RequestParam String query) {
-        return ResponseEntity.ok(fatSecretClient.getFoodNutrition(query));
-    }
-
 }
