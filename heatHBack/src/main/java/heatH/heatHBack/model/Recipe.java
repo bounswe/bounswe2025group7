@@ -18,8 +18,7 @@ public class Recipe {
 
     @ElementCollection
     @CollectionTable(name = "recipe_ingredients", joinColumns = @JoinColumn(name = "recipe_id"))
-    @Column(name = "ingredient", nullable = false)
-    private List<String> ingredients;
+    private List<Ingredients> ingredients;
 
     @Column
     private String tag;
