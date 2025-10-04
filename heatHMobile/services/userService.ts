@@ -1,19 +1,16 @@
-import { apiClient } from './apiClient';
+import { httpClient } from './httpClient';
+import { authService } from './authService';
 
 export const userService = {
-  /**
-   * Get user profile
-   * @returns {Promise<any>} - User profile data
-   */
-  getProfile: async (token?: string): Promise<any> => {
-    try {
-      const response = await apiClient.get('/user/profile', token);
-      return response;
-    } catch (error) {
-      console.error('Failed to get user profile:', error);
-      throw error;
-    }
+  me: async () => {
+    const token = await authService.getAccessToken();
+    return httpClient.get<any>('/me', undefined, token);
   },
+  byUsername: async (username: string) => {
+    const token = await authService.getAccessToken();
+    return httpClient.get<any>(`/users/${username}`, undefined, token);
+  },
+};
 
   /**
    * Update user profile
