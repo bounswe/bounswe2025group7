@@ -57,9 +57,6 @@ public class SemanticSearchService {
     // helper to persist embedding after recipe creation/update
     public void saveEmbeddingForRecipe(Long recipeId, double[] embedding) {
         RecipeEmbedding re = new RecipeEmbedding(recipeId, embedding);
-        embeddingRepo.findByRecipeId(recipeId).ifPresent(existing -> {
-            re.setId(existing.getId());
-        });
         embeddingRepo.save(re);
     }
 

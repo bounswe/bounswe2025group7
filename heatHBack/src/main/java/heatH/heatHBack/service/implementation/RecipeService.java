@@ -3,6 +3,7 @@ package heatH.heatHBack.service.implementation;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import heatH.heatHBack.model.User;
 import heatH.heatHBack.repository.*;
@@ -12,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import heatH.heatHBack.model.Feed;
+import heatH.heatHBack.model.Ingredients;
 import heatH.heatHBack.model.Recipe;
 import heatH.heatHBack.model.request.RecipeRequest;
 import lombok.RequiredArgsConstructor;
@@ -50,11 +52,15 @@ public class RecipeService {
 
         recipe.setUser(user);
 
-        String ingredientsText = String.join(", ", recipe.getIngredients());
-        double[] emb = openAIService.createEmbedding(recipe.getTitle() + " " + ingredientsText);
-        semanticSearchService.saveEmbeddingForRecipe(recipe.getId(), emb);
-
-        return recipeRepository.save(recipe);
+        List<Ingredients> ingredients = recipe.getIngredients();
+        String ingredientsText = ingredients.stream()
+                .map(Ingredients::getName)
+                .collect(Collectors.joining(", "));
+        Recipe savedRecipe = recipeRepository.save(recipe);
+        double[] emb = openAIService.createEmbedding(savedRecipe.getTitle() + " " + ingredientsText);
+        semanticSearchService.saveEmbeddingForRecipe(savedRecipe.getId(), emb);
+        return savedRecipe;
+        
     }
 
     public Optional<Recipe> getRecipeById(Long id) {

@@ -4,7 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
-@Document(collection = "recipe_embeddings")
+@Document(collection = "heath-backend")
 public class RecipeEmbedding {
     @Id
     private String id;
