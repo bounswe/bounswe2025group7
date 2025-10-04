@@ -87,7 +87,7 @@ export default function SignupPage() {
       // If code valid, register user
       await authService.register(form);
       authService.logout();
-      navigate('/signin', { state: { success: 'Registration successful! Please sign in.' } });
+      navigate('/signin', { state: { success: 'Registration successful!  Please sign in.' } });
     } catch (err) {
       if (axios.isAxiosError(err) && (err.response?.status === 409 || err.response?.status === 403)) {
         setError(
@@ -102,6 +102,7 @@ export default function SignupPage() {
       }
     }
   };
+ //test
 
   // Handler for Enter key press to send code or register
   const handleKeyDown = (e) => {
