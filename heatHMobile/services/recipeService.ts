@@ -37,6 +37,11 @@ export interface DeleteRecipeRequest {
   id: number;
 }
 
+const RECIPE_API = '/recipe';
+
+/**
+ * Recipe service for interacting with the recipe API endpoints
+ */
 export const recipeService = {
   // Create a new recipe
   createRecipe: async (recipeData: RecipeRequest): Promise<RecipeResponse> => {

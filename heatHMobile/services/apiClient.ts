@@ -105,6 +105,27 @@ export const apiClient = {
     
     return (await res.json()) as T;
   },
+
+  delete: async <T>(url: string, token?: string): Promise<T> => {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
+    const res = await fetch(`${config.apiBaseUrl}/api${url}`, {
+      method: 'DELETE',
+      headers,
+    });
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    
+    return (await res.json()) as T;
+  }
 };
 
 

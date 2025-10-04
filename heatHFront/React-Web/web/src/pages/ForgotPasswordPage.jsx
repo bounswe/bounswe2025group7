@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Box, Typography, TextField, Button } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import authService from '../services/authService';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState(Array(6).fill(''));
@@ -31,11 +34,11 @@ export default function ForgotPasswordPage() {
     try {
       const exists = await authService.exists(email);
       if (!exists) {
-        setError('Email not registered.');
+        setError(t('auth.emailRequired'));
         return;
       }
     } catch {
-      setError('Unable to verify email.');
+      setError(t('errors.genericError'));
       return;
     }
     // Send code if email exists
@@ -43,9 +46,9 @@ export default function ForgotPasswordPage() {
     setCountdown(15);
     try {
       await authService.sendVerificationCode(email);
-      setMessage('Verification code sent to your email.');
+      setMessage(t('auth.checkEmail'));
     } catch {
-      setError('Failed to send verification code.');
+      setError(t('errors.genericError'));
     }
   };
 
@@ -55,8 +58,8 @@ export default function ForgotPasswordPage() {
     setCode(Array(6).fill(''));
     setCountdown(15);
     authService.sendVerificationCode(email)
-      .then(() => setMessage('Verification code resent.'))
-      .catch(() => setError('Failed to resend code.'));
+      .then(() => setMessage(t('auth.checkEmail')))
+      .catch(() => setError(t('errors.genericError')));
   };
 
   // Handler for Enter key press to send verification code
@@ -80,7 +83,7 @@ export default function ForgotPasswordPage() {
     setError('');
     const codeStr = code.join('');
     if (codeStr.length !== 6) {
-      setError('Please enter the 6-digit code.');
+      setError(t('auth.emailRequired'));
       return;
     }
     try {
@@ -88,23 +91,26 @@ export default function ForgotPasswordPage() {
       if (valid) {
         navigate('/reset-password', { state: { email } });
       } else {
-        setError('Invalid or expired code.');
+        setError(t('auth.invalidCredentials'));
       }
     } catch {
-      setError('Verification failed.');
+      setError(t('errors.genericError'));
     }
   };
 
   return (
     <Container maxWidth="sm">
-      <Box sx={{ mt: 8, p: 4, boxShadow: 3, borderRadius: 2 }}>
+      <Box sx={{ mt: 8, p: 4, boxShadow: 3, borderRadius: 2, position: 'relative' }}>
+        <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+          <LanguageSwitcher variant="icon" />
+        </Box>
         <Typography variant="h4" component="h1" gutterBottom>
-          Forgot Password
+          {t('auth.forgotPasswordTitle')}
         </Typography>
         {!codeSent ? (
           <form onKeyDown={handleKeyDownInitial}>
             <TextField
-              label="Email Address"
+              label={t('common.email')}
               variant="outlined"
               type="email"
               fullWidth
@@ -124,13 +130,13 @@ export default function ForgotPasswordPage() {
               fullWidth
               onClick={handleSendCode}
             >
-              Send Verification Code
+              {t('auth.sendResetLink')}
             </Button>
           </form>
         ) : (
           <Box component="form" onSubmit={handleVerify} onKeyDown={handleKeyDownVerify}>
             <Typography variant="body1" gutterBottom>
-              Enter the 6-digit code sent to <strong>{email}</strong>
+              {t('auth.checkEmail')} <strong>{email}</strong>
             </Typography>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, mb: 1 }}>
               {code.map((d, i) => (
@@ -179,7 +185,7 @@ export default function ForgotPasswordPage() {
             )}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
               <Button type="submit" variant="contained" sx={{ flex: 1, mr: 1 }}>
-                Verify Code
+                {t('auth.sendResetLink')}
               </Button>
               <Button
                 variant="text"
@@ -187,13 +193,13 @@ export default function ForgotPasswordPage() {
                 disabled={countdown > 0}
                 sx={{ ml: 1, width: '17ch', whiteSpace: 'nowrap', textAlign: 'center' }}
               >
-                {countdown > 0 ? `Resend Code (${countdown}s)` : 'Resend Code'}
+                {countdown > 0 ? `${t('auth.sendResetLink')} (${countdown}s)` : t('auth.sendResetLink')}
               </Button>
             </Box>
           </Box>
         )}
         <Button component={RouterLink} to="/signin" sx={{ mt: 3 }} fullWidth>
-          Back to Sign In
+          {t('common.back')} {t('common.signIn')}
         </Button>
       </Box>
     </Container>

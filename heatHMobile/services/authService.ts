@@ -118,4 +118,34 @@ export const authService = {
   },
 };
 
+  /**
+   * Verify a received code given email and code
+   * @param {string} email - Email address
+   * @param {string} code - Verification code
+   * @returns {Promise<any>} - Verification response
+   */
+  verifyCode: async (email: string, code: string): Promise<any> => {
+    try {
+      const response = await apiClient.post('/auth/verify-code', { email, code });
+      return response;
+    } catch (error) {
+      console.error('Failed to verify code:', error);
+      throw error;
+    }
+  },
 
+  /**
+   * Check if an email is already registered
+   * @param {string} email - Email address
+   * @returns {Promise<any>} - Exists response
+   */
+  exists: async (email: string): Promise<any> => {
+    try {
+      const response = await apiClient.get('/auth/exists', undefined, { params: { email } });
+      return response;
+    } catch (error) {
+      console.error('Failed to check if email exists:', error);
+      throw error;
+    }
+  }
+};
