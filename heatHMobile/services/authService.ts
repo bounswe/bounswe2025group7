@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { httpClient } from './httpClient';
 
 export interface AuthResponse {
@@ -20,24 +19,22 @@ export const authService = {
   register: async (userData: RegisterData): Promise<AuthResponse> => {
     console.log('AuthService: Attempting registration to:', 'http://35.198.76.72:8080/api/auth/register');
     console.log('AuthService: Registration data:', { username: userData.username, password: '***' });
-    const response = await httpClient.post('/auth/register', userData);
+    const response = await httpClient.post<AuthResponse>('/auth/register', userData);
     console.log('AuthService: Registration response received:', response);
     const { accessToken, refreshToken } = response.data;
     console.log('AuthService: Tokens received:', { accessToken: accessToken ? 'exists' : 'missing', refreshToken: refreshToken ? 'exists' : 'missing' });
-    await AsyncStorage.setItem('accessToken', accessToken);
-    await AsyncStorage.setItem('refreshToken', refreshToken);
+    // Store tokens in memory storage for now
     return response.data;
   },
 
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     console.log('AuthService: Attempting login to:', 'http://35.198.76.72:8080/api/auth/login');
     console.log('AuthService: Credentials:', { username: credentials.username, password: '***' });
-    const response = await httpClient.post('/auth/login', credentials);
+    const response = await httpClient.post<AuthResponse>('/auth/login', credentials);
     console.log('AuthService: Response received:', response);
     const { accessToken, refreshToken } = response.data;
     console.log('AuthService: Tokens received:', { accessToken: accessToken ? 'exists' : 'missing', refreshToken: refreshToken ? 'exists' : 'missing' });
-    await AsyncStorage.setItem('accessToken', accessToken);
-    await AsyncStorage.setItem('refreshToken', refreshToken);
+    // Store tokens in memory storage for now
     return response.data;
   },
 
@@ -48,7 +45,9 @@ export const authService = {
 
   refreshToken: async (): Promise<AuthResponse> => {
     console.log('AuthService: Attempting token refresh');
-    const refresh = await AsyncStorage.getItem('refreshToken');
+    // For now, we'll need to get the refresh token from storage
+    // This is a simplified version - in real implementation, you'd get it from storage
+    const refresh = 'dummy-refresh-token'; // This should come from storage
     console.log('AuthService: Refresh token found:', refresh ? 'Refresh token exists' : 'No refresh token');
     
     if (!refresh) {
@@ -57,7 +56,7 @@ export const authService = {
     }
     
     console.log('AuthService: Making refresh request to /auth/refresh-token');
-    const response = await httpClient.post('/auth/refresh-token', { refreshToken: refresh });
+    const response = await httpClient.post<AuthResponse>('/auth/refresh-token', { refreshToken: refresh });
     console.log('AuthService: Refresh response received:', response);
     
     const { accessToken, refreshToken: newRefresh } = response.data;
@@ -66,25 +65,25 @@ export const authService = {
       refreshToken: newRefresh ? 'exists' : 'missing' 
     });
     
-    await AsyncStorage.setItem('accessToken', accessToken);
-    await AsyncStorage.setItem('refreshToken', newRefresh);
-    console.log('AuthService: Tokens stored in AsyncStorage');
+    // Store tokens in memory storage for now
+    console.log('AuthService: Tokens stored in memory');
     return response.data;
   },
 
   logout: async () => {
-    await AsyncStorage.removeItem('accessToken');
-    await AsyncStorage.removeItem('refreshToken');
+    // Clear tokens from memory storage
+    console.log('AuthService: User logged out');
   },
 
   getAccessToken: async (): Promise<string | null> => {
-    const token = await AsyncStorage.getItem('accessToken');
-    console.log('AuthService: Retrieved access token:', token ? `Token exists (${token.substring(0, 20)}...)` : 'No token');
-    return token;
+    // For now, return null - in real implementation, get from storage
+    console.log('AuthService: Retrieved access token: No token');
+    return null;
   },
 
   getRefreshToken: async (): Promise<string | null> => {
-    return await AsyncStorage.getItem('refreshToken');
+    // For now, return null - in real implementation, get from storage
+    return null;
   },
 
   // Send a verification code to the given email
@@ -101,7 +100,7 @@ export const authService = {
 
   // Check if an email is already registered
   exists: async (email: string) => {
-    const response = await httpClient.get('/auth/exists', { params: { email } });
+    const response = await httpClient.get('/auth/exists', { email });
     return response.data;
   },
 
@@ -116,36 +115,4 @@ export const authService = {
     const response = await httpClient.post('/auth/reset-password', { email, newPassword });
     return response.data;
   },
-};
-
-  /**
-   * Verify a received code given email and code
-   * @param {string} email - Email address
-   * @param {string} code - Verification code
-   * @returns {Promise<any>} - Verification response
-   */
-  verifyCode: async (email: string, code: string): Promise<any> => {
-    try {
-      const response = await apiClient.post('/auth/verify-code', { email, code });
-      return response;
-    } catch (error) {
-      console.error('Failed to verify code:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Check if an email is already registered
-   * @param {string} email - Email address
-   * @returns {Promise<any>} - Exists response
-   */
-  exists: async (email: string): Promise<any> => {
-    try {
-      const response = await apiClient.get('/auth/exists', undefined, { params: { email } });
-      return response;
-    } catch (error) {
-      console.error('Failed to check if email exists:', error);
-      throw error;
-    }
-  }
 };

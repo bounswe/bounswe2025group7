@@ -1,5 +1,4 @@
 import { httpClient } from './httpClient';
-import { authService } from './authService';
 
 // Recipe interfaces matching backend
 export interface Recipe {
@@ -44,27 +43,33 @@ const RECIPE_API = '/recipe';
  */
 export const recipeService = {
   // Create a new recipe
-  createRecipe: async (recipeData: RecipeRequest): Promise<RecipeResponse> => {
-    const response = await apiClient.post<RecipeResponse>('/recipe/create', recipeData);
-    return response;
+  createRecipe: async (recipeData: RecipeRequest): Promise<string> => {
+    const response = await httpClient.post('/recipe/create', {
+      title: recipeData.title,
+      instructions: recipeData.instructions,
+      ingredients: recipeData.ingredients,
+      tag: recipeData.tag,
+      type: recipeData.type,
+      photo: recipeData.photo,
+    });
+    return response.data;
   },
 
   // Get a recipe by ID
   getRecipe: async (recipeId: number): Promise<Recipe> => {
-    const response = await apiClient.get<Recipe>(`/recipe/get?recipeId=${recipeId}`);
-    return response;
+    const response = await httpClient.get(`/recipe/get?recipeId=${recipeId}`);
+    return response.data;
   },
 
-  // Get all recipes
-  getAllRecipes: async (): Promise<Recipe[]> => {
-    const response = await apiClient.get<Recipe[]>('/recipe/get-all');
-    return response;
+  // Update a recipe's action (like, save, share)
+  updateRecipeAction: async (recipeId: number, action: string, value: boolean): Promise<string> => {
+    const response = await httpClient.post(`/recipe/${action}`, { recipeId, value });
+    return response.data;
   },
 
-  // Delete a recipe
-  deleteRecipe: async (recipeId: number): Promise<string> => {
-    const request: DeleteRecipeRequest = { id: recipeId };
-    const response = await apiClient.post<string>('/recipe/delete-recipe', request);
-    return response;
+  // Submit a rating for a recipe
+  submitRating: async (recipeId: number, rating: number, type: string = 'easiness'): Promise<string> => {
+    const response = await httpClient.post('/recipe/rate', { recipeId, rating, type });
+    return response.data;
   },
 };

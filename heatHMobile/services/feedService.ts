@@ -1,6 +1,5 @@
 import { httpClient } from './httpClient';
 import { authService } from './authService';
-import { apiClient } from './apiClient';
 
 // FeedResponse interface matching backend
 export interface FeedResponse {
@@ -51,56 +50,30 @@ export interface CommentResponse {
 
 export const feedService = {
   // Get feeds by current user
-  getFeedByUser: async (): Promise<FeedResponse[]> => {
-    const response = await apiClient.get<FeedResponse[]>('/api/feeds/feed-by-user');
-    return response;
-  },
-
-  // Get recent feeds for user (with pagination)
-  getRecentFeeds: async (pageNumber: number = 0): Promise<FeedResponse[]> => {
-    const response = await apiClient.get<FeedResponse[]>(`/feeds/recent?pageNumber=${pageNumber}`);
-    return response;
-  },
-
-  // Get other user's profile and feeds
-  getOtherUserProfile: async (userId: number): Promise<FeedProfileResponse> => {
-    const response = await apiClient.get<FeedProfileResponse>(`/feeds/other-user?userId=${userId}`);
-    return response;
+  getFeedByUser: async (): Promise<any> => {
+    try {
+      const token = await authService.getAccessToken();
+      const response = await httpClient.get('/feeds/feed-by-user', undefined, token);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get feed by user:', error);
+      throw error;
+    }
   },
 
   // Create a new feed
   createFeed: async (postPayload: any): Promise<any> => {
-    const response = await apiClient.post<any>('/feeds/created-feed', postPayload);
-    return response;
-  },
-
-  // Like a feed
-  likeFeed: async (feedId: number): Promise<void> => {
-    const request: LikeRequest = { feedId };
-    await apiClient.post('/feeds/like', request);
-  },
-
-  // Unlike a feed
-  unlikeFeed: async (feedId: number): Promise<void> => {
-    const request: LikeRequest = { feedId };
-    await apiClient.post('/feeds/unlike', request);
-  },
-
-  // Save a recipe
-  saveRecipe: async (recipeId: number): Promise<void> => {
-    const request: SavedRecipeRequest = { recipeId };
-    await apiClient.post('/saved-recipes/save', request);
-  },
-
-  // Unsave a recipe
-  unsaveRecipe: async (recipeId: number): Promise<void> => {
-    const request: SavedRecipeRequest = { recipeId };
-    await apiClient.post('/saved-recipes/unsave', request);
-  },
-
-  // Get saved recipes
-  getSavedRecipes: async (): Promise<any[]> => {
-    const response = await apiClient.get<any[]>('/saved-recipes/get');
-    return response;
-  },
+    try {
+      const token = await authService.getAccessToken();
+      if (!token) {
+        console.error('No access token found.');
+        throw new Error('Unauthorized');
+      }
+      const response = await httpClient.post('/feeds/created-feed', postPayload, token);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to create feed:', error);
+      throw error;
+    }
+  }
 };

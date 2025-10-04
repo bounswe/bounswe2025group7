@@ -10,31 +10,23 @@ export const userService = {
     const token = await authService.getAccessToken();
     return httpClient.get<any>(`/users/${username}`, undefined, token);
   },
-};
-
-  /**
-   * Update user profile
-   * @param {Object} profileData - Updated profile data
-   * @returns {Promise<any>} - Updated profile data
-   */
+  
+  // Update user profile
   updateProfile: async (profileData: any, token?: string): Promise<any> => {
     try {
-      const response = await apiClient.put('/user/profile', profileData, token);
-      return response;
+      const response = await httpClient.put('/user/profile', profileData, token);
+      return response.data;
     } catch (error) {
       console.error('Failed to update user profile:', error);
       throw error;
     }
   },
 
-  /**
-   * Get user's recipes
-   * @returns {Promise<any>} - User's recipes
-   */
+  // Get user's recipes
   getMyRecipes: async (token?: string): Promise<any> => {
     try {
-      const response = await apiClient.get('/user/recipes', token);
-      return response;
+      const response = await httpClient.get('/user/recipes', undefined, token);
+      return response.data;
     } catch (error) {
       console.error('Failed to get user recipes:', error);
       throw error;
