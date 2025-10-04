@@ -10,6 +10,7 @@ import {
   Divider,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 import Template from '../components/Template';
 import interestFormService from '../services/interestFormService';
 import feedService from '../services/feedService';
@@ -20,6 +21,7 @@ const Input = styled('input')({
 });
 
 const Profile = () => {
+  const { t } = useTranslation();
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
@@ -54,7 +56,7 @@ const Profile = () => {
           profilePhoto: data.profilePhoto || '',
         });
       } catch (err) {
-        if (err.name !== 'AbortError') setError('Failed to load profile data');
+        if (err.name !== 'AbortError') setError(t('errors.genericError'));
       } finally {
         setLoadingProfile(false);
       }
@@ -67,7 +69,7 @@ const Profile = () => {
         setUserFeed(data);
       } catch (err) {
         console.error(err);
-        setError('Failed to load feeds');
+        setError(t('errors.genericError'));
       } finally {
         setLoadingFeed(false);
       }
@@ -122,14 +124,14 @@ const Profile = () => {
         {/* ---------- PROFILE INFO GRID ---------- */}
         <Grid container spacing={3} justifyContent="center">
           {[
-            { label: 'Weight', value: `${profileData.weight} kg` },
-            { label: 'Height', value: `${profileData.height} cm` },
+            { label: t('profile.weight'), value: `${profileData.weight} kg` },
+            { label: t('profile.height'), value: `${profileData.height} cm` },
             {
-              label: 'Gender',
+              label: t('profile.gender'),
               value: profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1),
             },
             {
-              label: 'Date of Birth',
+              label: t('profile.dateOfBirth'),
               value: new Date(profileData.dateOfBirth).toLocaleDateString(),
             },
           ].map(({ label, value }) => (
@@ -146,7 +148,7 @@ const Profile = () => {
           <Grid item xs={12}>
             <Box display="flex" justifyContent="center" mt={3}>
               <Button variant="contained" color="primary" onClick={handleEditProfile}>
-                Edit Profile
+                {t('profile.editProfile')}
               </Button>
             </Box>
           </Grid>
@@ -156,11 +158,11 @@ const Profile = () => {
         {/* ---------- MY FEEDS SECTION ---------- */}
         <Divider sx={{ my: 4 }} />
           <Typography variant="h5" gutterBottom>
-            My Feeds
+            {t('home.recentActivity')}
           </Typography>
 
           {userFeed.length === 0 ? (
-            <Typography color="textSecondary">You haven't posted anything yet.</Typography>
+            <Typography color="textSecondary">{t('home.recentActivity')}</Typography>
           ) : (
             userFeed.map((feed) => (
               <Box
@@ -220,7 +222,7 @@ const Profile = () => {
                     {new Date(feed.createdAt).toLocaleString()}
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
-                    {feed.likeCount} {feed.likeCount === 1 ? 'like' : 'likes'}
+                    {feed.likeCount} {feed.likeCount === 1 ? t('common.like') : t('common.likes')}
                   </Typography>
                 </Box>
               </Box>

@@ -15,11 +15,13 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Link as RouterLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import SavingsIcon from '@mui/icons-material/Savings';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import logo from '../images/logo.png';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const HeroSection = styled(Box)(({ theme }) => ({
   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
@@ -96,6 +98,7 @@ const Footer = styled(Box)(({ theme }) => ({
 const LandingPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { t } = useTranslation();
 
   return (
     <Box>
@@ -118,7 +121,8 @@ const LandingPage = () => {
             <Typography variant="h6" component="div">HeatH</Typography>
           </Link>
           {/* Navigation buttons on the right */}
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <LanguageSwitcher variant="icon" />
             <Link
               component={RouterLink}
               to="/signin"
@@ -130,7 +134,7 @@ const LandingPage = () => {
                 },
               }}
             >
-              Sign In
+              {t('common.signIn')}
             </Link>
             <Link
               component={RouterLink}
@@ -143,7 +147,7 @@ const LandingPage = () => {
                 },
               }}
             >
-              Sign Up
+              {t('common.signUp')}
             </Link>
           </Box>
         </Toolbar>
@@ -173,7 +177,7 @@ const LandingPage = () => {
               mb: 3
             }}
           >
-            Eat Healthy, Save Money
+            {t('landing.title')}
           </Typography>
           <Typography 
             variant="h5" 
@@ -185,7 +189,7 @@ const LandingPage = () => {
               opacity: 0.9
             }}
           >
-            Create personalized meal plans that fit your budget and dietary needs with our smart planning tools
+            {t('landing.subtitle')}
           </Typography>
           <Button
             component={RouterLink}
@@ -195,7 +199,7 @@ const LandingPage = () => {
             size="large"
             endIcon={<KeyboardArrowRightIcon />}
           >
-            Get Started Free
+            {t('landing.getStarted')}
           </Button>
         </Container>
       </HeroSection>
@@ -218,7 +222,7 @@ const LandingPage = () => {
             gutterBottom
             sx={{ mb: 6 }}
           >
-            Why Choose Our Platform?
+            {t('landing.whyChoose')}
           </Typography>
           <Grid 
             container 
@@ -234,10 +238,10 @@ const LandingPage = () => {
                     <SavingsIcon fontSize="inherit" />
                   </FeatureIcon>
                   <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
-                    Budget-Friendly
+                    {t('landing.budgetFriendly')}
                   </Typography>
                   <Typography variant="body1" color="text.secondary">
-                    Create meal plans that fit your budget without compromising on nutrition. Save up to 30% on your grocery bills.
+                    {t('landing.budgetFriendlyDesc')}
                   </Typography>
                 </CardContent>
               </Card>
@@ -249,10 +253,10 @@ const LandingPage = () => {
                     <RestaurantIcon fontSize="inherit" />
                   </FeatureIcon>
                   <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
-                    Healthy Choices
+                    {t('landing.healthyChoices')}
                   </Typography>
                   <Typography variant="body1" color="text.secondary">
-                    Access a wide range of nutritious recipes tailored to your dietary preferences and health goals.
+                    {t('landing.healthyChoicesDesc')}
                   </Typography>
                 </CardContent>
               </Card>
@@ -264,10 +268,10 @@ const LandingPage = () => {
                     <ScheduleIcon fontSize="inherit" />
                   </FeatureIcon>
                   <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
-                    Easy Planning
+                    {t('landing.easyPlanning')}
                   </Typography>
                   <Typography variant="body1" color="text.secondary">
-                    Generate weekly meal plans and shopping lists with just a few clicks. Save time and reduce food waste.
+                    {t('landing.easyPlanningDesc')}
                   </Typography>
                 </CardContent>
               </Card>
@@ -288,7 +292,7 @@ const LandingPage = () => {
             gutterBottom
             sx={{ mb: 3 }}
           >
-            Ready to Start Your Healthy Journey?
+            {t('landing.readyToStart')}
           </Typography>
           <Typography 
             variant="h6" 
@@ -300,7 +304,7 @@ const LandingPage = () => {
               mx: 'auto'
             }}
           >
-            Join thousands of users who are already saving money and eating healthier with our simple planning tools
+            {t('landing.readyToStartDesc')}
           </Typography>
           <Button
             component={RouterLink}
@@ -310,7 +314,7 @@ const LandingPage = () => {
             size="large"
             endIcon={<KeyboardArrowRightIcon />}
           >
-            Sign Up Free
+            {t('landing.signUpFree')}
           </Button>
         </Container>
       </Box>
@@ -325,17 +329,17 @@ const LandingPage = () => {
             gap: 2
           }}>
             <Typography variant="body2">
-              © 2025 HeatH. All rights reserved.
+              {t('landing.copyright')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Link to="/privacy" component={RouterLink} style={{ color: 'white', textDecoration: 'none' }}>
-                <Typography variant="body2">Privacy Policy</Typography>
+                <Typography variant="body2">{t('landing.privacyPolicy')}</Typography>
               </Link>
               <Link to="/terms" component={RouterLink} style={{ color: 'white', textDecoration: 'none' }}>
-                <Typography variant="body2">Terms of Service</Typography>
+                <Typography variant="body2">{t('landing.termsOfService')}</Typography>
               </Link>
               <Link to="/contact" component={RouterLink} style={{ color: 'white', textDecoration: 'none' }}>
-                <Typography variant="body2">Contact Us</Typography>
+                <Typography variant="body2">{t('landing.contactUs')}</Typography>
               </Link>
             </Box>
           </Box>

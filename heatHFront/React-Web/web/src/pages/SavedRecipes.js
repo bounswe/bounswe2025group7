@@ -4,6 +4,7 @@ import {
   CircularProgress, Alert, Button
 } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
@@ -25,6 +26,7 @@ const HeaderSection = styled(Box)(({ theme }) => ({
 const SavedRecipes = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -160,7 +162,7 @@ const SavedRecipes = () => {
       <Box>
         <div style={{ textAlign: 'center' }}> 
           <Typography variant="h3" sx={{ color: 'primary.main', backgroundColor: 'white' }}>
-            Saved Recipes
+            {t('recipes.savedRecipes')}
           </Typography>
         </div>
 
@@ -175,14 +177,14 @@ const SavedRecipes = () => {
           {/* Navigation to My Recipes */}
           <Box sx={{ mb: 4, textAlign: 'center' }}>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-              Here are recipes you've saved. To create your own recipes, go to My Recipes.
+              {t('recipes.savedRecipes')} {t('recipes.myRecipes')}
             </Typography>
             <Button 
               variant="contained" 
               color="primary" 
               onClick={() => navigate('/myrecipes')}
             >
-              Go to My Recipes
+              {t('recipes.myRecipes')}
             </Button>
           </Box>
 
@@ -194,10 +196,10 @@ const SavedRecipes = () => {
           ) : recipes.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                No Saved Recipes
+                {t('recipes.savedRecipes')}
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                You haven't saved any recipes yet. Browse recipes and save ones you like!
+                {t('recipes.savedRecipes')}
               </Typography>
               <Button 
                 variant="outlined" 
@@ -205,7 +207,7 @@ const SavedRecipes = () => {
                 sx={{ mt: 2 }}
                 onClick={() => navigate('/home')}
               >
-                Browse Recipes
+                {t('home.browseRecipes')}
               </Button>
             </Box>
           ) : (
@@ -266,7 +268,7 @@ const SavedRecipes = () => {
                       color="default"
                       sx={{ fontSize: '0.75rem' }}
                     >
-                      <Typography variant="caption">View</Typography>
+                      <Typography variant="caption">{t('common.view')}</Typography>
                     </IconButton>
                     <IconButton
                       onClick={() => toggleSave(recipe.id)}
@@ -275,7 +277,7 @@ const SavedRecipes = () => {
                       sx={{ fontSize: '0.75rem' }}
                     >
                       <BookmarkIcon sx={{ mr: 0.5 }} />
-                      <Typography variant="caption">Remove</Typography>
+                      <Typography variant="caption">{t('common.delete')}</Typography>
                     </IconButton>
                     <IconButton
                       onClick={() => handleShare(recipe)}
@@ -284,7 +286,7 @@ const SavedRecipes = () => {
                       sx={{ fontSize: '0.75rem' }}
                     >
                       <ShareOutlinedIcon sx={{ mr: 0.5 }} />
-                      <Typography variant="caption">Share</Typography>
+                      <Typography variant="caption">{t('common.share')}</Typography>
                     </IconButton>
                   </CardActions>
                 </Card>
