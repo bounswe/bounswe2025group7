@@ -1,161 +1,187 @@
-import React, { useState } from 'react';
-import { StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import { useAuthContext } from '@/context/AuthContext';
+
+import {
+    TextInput,
+    StyleSheet,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Alert,
+    TouchableOpacity
+} from 'react-native';
+import { useState } from "react";
+import { useRouter } from 'expo-router';
+import Spacer from "@/components/ui/Spacer"; // If using expo-router
 
 export default function SignUpScreen() {
-  const { register } = useAuthContext();
-  const [form, setForm] = useState({ username: '', password: '' });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
-  const [emailError, setEmailError] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [name, setName] = useState('');
+    const router = useRouter(); // Remove if not using expo-router
 
-  const handleChange = (field: string, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    setError('');
-    
-    if (field === 'password') {
-      setPasswordError(value.length < 6 ? 'Password must be at least 6 characters' : '');
-    } else if (field === 'username') {
-      setEmailError(value.length < 1 ? 'Email cannot be empty' : '');
-    }
-  };
+    const validateEmail = (email: string) => {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    };
 
-  const handleSubmit = async () => {
-    if (!form.username || !form.password) {
-      setError('Please fill in all fields');
-      return;
-    }
+    const handleSignUp = () => {
+        if (!email || !password || !name) {
+            Alert.alert('Error', 'Please fill in all fields');
+            return;
+        }
 
-    if (passwordError || emailError) {
-      setError('Please fix the errors above');
-      return;
-    }
+        if (!validateEmail(email)) {
+            Alert.alert('Error', 'Please enter a valid email');
+            return;
+        }
 
-    setLoading(true);
-    setError('');
+        if (!name) {
+            Alert.alert('Error', 'Please enter your name');
+            return;
+        }
 
-    try {
-      await register(form.username, form.password);
-      router.replace('/auth/sign-in?success=Registration successful! Please sign in.');
-    } catch (err: any) {
-      console.error('Registration error:', err);
-      if (err.response?.status === 409 || err.response?.status === 403) {
-        setError('An account already exists. Please sign in instead.');
-      } else {
-        setError(err.response?.data?.message || err.message || 'Registration failed');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (password !== confirmPassword) {
+            Alert.alert('Error', 'Passwords do not match');
+            return;
+        }
 
-  const handleSignIn = () => {
-    router.push('/auth/sign-in');
-  };
+        if (password.length < 6) {
+            Alert.alert('Error', 'Password must be at least 6 characters');
+            return;
+        }
 
-  return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ThemedView style={styles.content}>
-        <ThemedText style={styles.title}>Create Account</ThemedText>
-        <ThemedText style={styles.subtitle}>Sign up to get started</ThemedText>
+        // Here you would typically make an API call to your backend
+        Alert.alert('Success', 'Account created successfully!');
 
-        <Input
-          placeholder="Email Address"
-          value={form.username}
-          onChangeText={(value) => handleChange('username', value)}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={styles.input}
-        />
+        // Reset form
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setName('');
+    };
 
-        <Input
-          placeholder="Password"
-          value={form.password}
-          onChangeText={(value) => handleChange('password', value)}
-          secureTextEntry
-          style={styles.input}
-        />
+    const goToSignIn = () => {
+        // router.push('/sign-in'); // If using expo-router
+        // Or use your navigation method
+    };
 
-        {error ? (
-          <ThemedText style={styles.errorText}>{error}</ThemedText>
-        ) : null}
+    return (
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.container}
+        >
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
+            >
+                <ThemedView style={styles.form}>
+                    <ThemedText type={"title"}
+                                style={{textAlign:"center"}}>
+                        {'HeatH'}
+                    </ThemedText>
+                    <ThemedText type={"subtitle"}
+                                style={{textAlign:"center"}}>
+                        {'Sign up to get started'}
+                    </ThemedText>
 
-        {passwordError ? (
-          <ThemedText style={styles.errorText}>{passwordError}</ThemedText>
-        ) : null}
+                    <Spacer/>
+                    <ThemedView>
+                        <ThemedText>Full Name</ThemedText>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="John Doe"
+                            value={name}
+                            onChangeText={setName}
+                            autoCapitalize="words"
+                        />
+                    </ThemedView>
 
-        {emailError ? (
-          <ThemedText style={styles.errorText}>{emailError}</ThemedText>
-        ) : null}
+                    <ThemedView>
+                        <Spacer/>
+                        <ThemedText>Email</ThemedText>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Email Address*"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            autoComplete="email"
+                        />
+                    </ThemedView>
+                    <Spacer/>
+                    <ThemedView>
+                        <ThemedText>Password</ThemedText>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Password*"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                            autoCapitalize="none"
+                        />
+                    </ThemedView>
+                    <Spacer/>
+                    <ThemedView>
+                        <ThemedText>Confirm Password</ThemedText>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Confirm Password*"
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            secureTextEntry
+                            autoCapitalize="none"
+                        />
+                    </ThemedView>
+                    <Spacer/>
 
-        <Button
-          title={loading ? 'Creating Account...' : 'Create Account'}
-          onPress={handleSubmit}
-          disabled={loading || !!passwordError || !!emailError || !form.username || !form.password}
-          style={styles.button}
-        />
+                    <Button title="Sign Up" onPress={handleSignUp} />
+                    <Spacer/>
 
-        <ThemedText style={styles.signInText}>
-          Already have an account?{' '}
-          <ThemedText style={styles.signInLink} onPress={handleSignIn}>
-            Sign In
-          </ThemedText>
-        </ThemedText>
-      </ThemedView>
-    </KeyboardAvoidingView>
-  );
+                    <ThemedView>
+                        <ThemedText>
+                            {'Already have an account? '}
+                        </ThemedText>
+                        <TouchableOpacity onPress={goToSignIn}>
+                            <ThemedText type={"link"}>
+                                {'Sign In'}
+                            </ThemedText>
+                        </TouchableOpacity>
+                    </ThemedView>
+                </ThemedView>
+            </ScrollView>
+        </KeyboardAvoidingView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 32,
-    opacity: 0.7,
-  },
-  input: {
-    marginBottom: 16,
-  },
-  button: {
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  signInText: {
-    textAlign: 'center',
-    opacity: 0.7,
-  },
-  signInLink: {
-    color: '#007AFF',
-    fontWeight: '600',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#f8f9fa',
+    },
+    scrollContent: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        padding: 20,
+    },
+    form: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    input: {
+        backgroundColor: '#f8f9fa',
+        borderRadius: 8,
+        padding: 14,
+        fontSize: 16,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+    },
 });
-
-

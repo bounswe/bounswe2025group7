@@ -1,7 +1,9 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
-import {Platform, TextInput, KeyboardAvoidingView, ScrollView} from "react-native";
+import Spacer from '@/components/ui/Spacer'
+import {Platform, KeyboardAvoidingView, ScrollView} from "react-native";
 import {useState} from "react";
 
 export default function ResetPasswordScreen() {
@@ -12,26 +14,36 @@ export default function ResetPasswordScreen() {
 
     return (
         <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <ScrollView>
-                <ThemedView style={{padding: 20}}>
-                    <ThemedText>Forgot Password</ThemedText>
-                    <TextInput
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{
+                flex: 1
+            }}>
+            <Spacer/>
+            <ScrollView contentContainerStyle={{justifyContent: "center", padding: 20, flexGrow: 1}}>
+                <ThemedView style={{justifyContent: "center", padding: 20, borderRadius:20}}>
+                    <Spacer/>
+                    <ThemedText style={{flex: 1}} type={"title"}>Reset Password</ThemedText>
+                    <Spacer/>
+                    <Input
                         placeholder={"Email address*"}
                         value={email}
                         onChangeText={setEmail}
                     />
-                    <TextInput
+                    <Spacer/>
+                    <Input
                         placeholder={"Password"}
                         value={password}
                         onChangeText={setPassword}
-                        />
-                    <TextInput
+                    />
+                    <Spacer/>
+                    <Input
                         placeholder={"Confirm Password"}
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
-                        />
+                    />
+                    <Spacer/>
                     <Button title={"Reset Password"}/>
+                    <Spacer/>
                     <Button title={"Cancel"}/>
                 </ThemedView>
             </ScrollView>

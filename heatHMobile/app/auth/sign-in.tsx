@@ -1,10 +1,10 @@
+// app/sign-in.tsx (or wherever your auth screens are)
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import Input from '@/components/ui/Input'
+import Button from '@/components/ui/Button';
 
 import {
-    View,
-    Text,
-    TextInput,
     TouchableOpacity,
     StyleSheet,
     KeyboardAvoidingView,
@@ -12,19 +12,21 @@ import {
     ScrollView,
     Alert
 } from 'react-native';
+import { useState } from "react";
+import { useRouter } from 'expo-router';
+import Spacer from "@/components/ui/Spacer";
+import {Space_Separator} from "json5/lib/unicode"; // If using expo-router
 
-export default function AuthScreen() {
-    const [isLogin, setIsLogin] = useState(true);
+export default function SignInScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [name, setName] = useState('');
+    const router = useRouter(); // Remove if not using expo-router
 
-    const validateEmail = (email) => {
+    const validateEmail = (email: string) => {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     };
 
-    const handleAuth = () => {
+    const handleSignIn = () => {
         if (!email || !password) {
             Alert.alert('Error', 'Please fill in all fields');
             return;
@@ -35,40 +37,18 @@ export default function AuthScreen() {
             return;
         }
 
-        if (!isLogin) {
-            if (!name) {
-                Alert.alert('Error', 'Please enter your name');
-                return;
-            }
-            if (password !== confirmPassword) {
-                Alert.alert('Error', 'Passwords do not match');
-                return;
-            }
-            if (password.length < 6) {
-                Alert.alert('Error', 'Password must be at least 6 characters');
-                return;
-            }
-        }
-
         // Here you would typically make an API call to your backend
-        Alert.alert(
-            'Success',
-            isLogin ? 'Logged in successfully!' : 'Account created successfully!'
-        );
+
+        Alert.alert('Success', 'Logged in successfully!');
 
         // Reset form
         setEmail('');
         setPassword('');
-        setConfirmPassword('');
-        setName('');
     };
 
-    const toggleMode = () => {
-        setIsLogin(!isLogin);
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-        setName('');
+    const goToSignUp = () => {
+        // router.push('/sign-up'); // If using expo-router
+        // Or use your navigation method
     };
 
     return (
@@ -80,34 +60,18 @@ export default function AuthScreen() {
                 contentContainerStyle={styles.scrollContent}
                 keyboardShouldPersistTaps="handled"
             >
-                <View style={styles.header}>
-                    <Text style={styles.title}>
+                <ThemedView style={styles.form}>
+                    <ThemedText type={"title"}
+                                style={{textAlign:"center"}}>
                         {'HeatH'}
-                    </Text>
-                    <Text style={styles.subtitle}>
-                        {isLogin
-                            ? 'Sign in to continue'
-                            : 'Sign up to get started'}
-                    </Text>
-                </View>
-
-                <View style={styles.form}>
-                    {!isLogin && (
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Full Name</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="John Doe"
-                                value={name}
-                                onChangeText={setName}
-                                autoCapitalize="words"
-                            />
-                        </View>
-                    )}
-
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Email</Text>
-                        <TextInput
+                    </ThemedText>
+                    <ThemedText type={"subtitle"}
+                                style={{textAlign:"center"}}>
+                        {'Sign in to continue'}
+                    </ThemedText>
+                    <ThemedView>
+                        <ThemedText>Email</ThemedText>
+                        <Input
                             style={styles.input}
                             placeholder="Email Address*"
                             value={email}
@@ -116,11 +80,11 @@ export default function AuthScreen() {
                             autoCapitalize="none"
                             autoComplete="email"
                         />
-                    </View>
+                    </ThemedView>
 
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Password</Text>
-                        <TextInput
+                    <ThemedView>
+                        <ThemedText>Password</ThemedText>
+                        <Input
                             style={styles.input}
                             placeholder="Password*"
                             value={password}
@@ -128,45 +92,30 @@ export default function AuthScreen() {
                             secureTextEntry
                             autoCapitalize="none"
                         />
-                    </View>
-
-                    {!isLogin && (
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Confirm Password</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Confirm Password*"
-                                value={confirmPassword}
-                                onChangeText={setConfirmPassword}
-                                secureTextEntry
-                                autoCapitalize="none"
-                            />
-                        </View>
-                    )}
-
-                    {isLogin && (
-                        <TouchableOpacity style={styles.forgotPassword}>
-                            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                        </TouchableOpacity>
-                    )}
-
-                    <TouchableOpacity style={styles.button} onPress={handleAuth}>
-                        <Text style={styles.buttonText}>
-                            {isLogin ? 'Sign In' : 'Sign Up'}
-                        </Text>
+                    </ThemedView>
+                    <Spacer/>
+                    <TouchableOpacity>
+                        <ThemedText type={"link"}
+                                    style={{textAlign:"right"}}>
+                            Forgot Password?
+                        </ThemedText>
                     </TouchableOpacity>
+                    <Spacer/>
 
-                    <View style={styles.toggleContainer}>
-                        <Text style={styles.toggleText}>
-                            {isLogin ? "Don't have an account? " : 'Already have an account? '}
-                        </Text>
-                        <TouchableOpacity onPress={toggleMode}>
-                            <Text style={styles.toggleLink}>
-                                {isLogin ? 'Sign Up' : 'Sign In'}
-                            </Text>
+                    <Button title="Sign In" onPress={handleSignIn} />
+                    <Spacer/>
+
+                    <ThemedView>
+                        <ThemedText>
+                            {"Don't have an account? "}
+                        </ThemedText>
+                        <TouchableOpacity onPress={goToSignUp}>
+                            <ThemedText type={"link"}>
+                                {'Sign Up'}
+                            </ThemedText>
                         </TouchableOpacity>
-                    </View>
-                </View>
+                    </ThemedView>
+                </ThemedView>
             </ScrollView>
         </KeyboardAvoidingView>
     );
@@ -182,41 +131,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         padding: 20,
     },
-    header: {
-        marginBottom: 40,
-        alignItems: 'center',
-    },
-    title: {
-        fontFamily: 'Sora',
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#1a1a1a',
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontFamily: 'Sora',
-        fontSize: 16,
-        color: '#666',
-    },
     form: {
         backgroundColor: '#fff',
         borderRadius: 16,
         padding: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-    },
-    inputContainer: {
-        marginBottom: 20,
-    },
-    label: {
-        fontFamily: 'Sora',
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#333',
-        marginBottom: 8,
     },
     input: {
         fontFamily: 'Sora',
@@ -231,41 +149,4 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-end',
         marginBottom: 20,
     },
-    forgotPasswordText: {
-        fontFamily: 'Sora',
-        color: '#169873ff',
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    button: {
-        backgroundColor: '#169873ff',
-        borderRadius: 8,
-        padding: 16,
-        alignItems: 'center',
-        marginTop: 10,
-    },
-    buttonText: {
-        fontFamily: 'Sora',
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    toggleContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 24,
-    },
-    toggleText: {
-        fontFamily: 'Sora',
-        color: '#666',
-        fontSize: 14,
-    },
-    toggleLink: {
-        fontFamily: 'Sora',
-        color: '#169873ff',
-        fontSize: 14,
-        fontWeight: '600',
-    },
 });
-
-
