@@ -1,10 +1,15 @@
-import { apiClient } from './apiClient';
-import { User } from '@/models/User';
+import { httpClient } from './httpClient';
+import { authService } from './authService';
 
 export const userService = {
-  me: (): Promise<User> => apiClient.get<User>('/me'),
-  byUsername: (username: string): Promise<User> => apiClient.get<User>(`/users/${username}`),
-  updateProfile: (data: Partial<User>): Promise<User> => apiClient.put<User>('/users/profile', data),
+  me: async () => {
+    const token = await authService.getAccessToken();
+    return httpClient.get<any>('/me', undefined, token);
+  },
+  byUsername: async (username: string) => {
+    const token = await authService.getAccessToken();
+    return httpClient.get<any>(`/users/${username}`, undefined, token);
+  },
 };
 
 

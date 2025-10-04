@@ -1,8 +1,15 @@
-import { apiClient } from './apiClient';
+import { httpClient } from './httpClient';
+import { authService } from './authService';
 
 export const recipeService = {
-  list: () => apiClient.get<any[]>('/recipes'),
-  get: (id: string) => apiClient.get<any>(`/recipes/${id}`),
+  list: async () => {
+    const token = await authService.getAccessToken();
+    return httpClient.get<any[]>('/recipes', undefined, token);
+  },
+  get: async (id: string) => {
+    const token = await authService.getAccessToken();
+    return httpClient.get<any>(`/recipes/${id}`, undefined, token);
+  },
 };
 
 

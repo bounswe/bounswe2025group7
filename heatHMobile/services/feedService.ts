@@ -1,3 +1,5 @@
+import { httpClient } from './httpClient';
+import { authService } from './authService';
 import { apiClient } from './apiClient';
 
 // FeedResponse interface matching backend

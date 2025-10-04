@@ -1,23 +1,23 @@
-import { apiClient } from './apiClient';
-import { InterestForm, ProfileData } from '@/models/User';
+import { httpClient } from './httpClient';
+import { authService } from './authService';
 
-// InterestFormRequest interface matching backend
-interface InterestFormRequest {
-  name?: string;
-  surname?: string;
-  dateOfBirth?: string;
-  height?: number;
-  weight?: number;
-  profilePhoto?: string;
-  gender?: string;
+export interface InterestFormData {
+  name: string;
+  surname: string;
+  dateOfBirth: string;
+  height: number;
+  weight: number;
+  gender: string;
+  profilePhoto?: string | null;
 }
 
-export const interestFormService = {
+const interestFormService = {
   // Returns true if the user has not yet submitted the interest form
   checkFirstLogin: async (): Promise<boolean> => {
     try {
-      const response = await apiClient.get<boolean>('/api/interest-form/check-first-login');
-      return response;
+      const token = await authService.getAccessToken();
+      const response = await httpClient.get('/interest-form/check-first-login', undefined, token);
+      return Boolean(response.data);
     } catch (err: any) {
       // If endpoint not found or form doesn't exist/forbidden, treat as first login
       if (err.message?.includes('404') || err.message?.includes('403')) {
@@ -28,42 +28,68 @@ export const interestFormService = {
   },
 
   // Create a new interest form entry
-  createInterestForm: async (data: InterestFormRequest): Promise<InterestForm> => {
-    const response = await apiClient.post<InterestForm>('/api/interest-form/submit', data);
-    return response;
+  createInterestForm: async (data: InterestFormData) => {
+    console.log('InterestFormService: Creating interest form with data:', data);
+    const token = await authService.getAccessToken();
+    console.log('InterestFormService: Retrieved token:', token ? 'Token exists' : 'No token');
+    
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    
+    console.log('InterestFormService: Making request to /interest-form/submit');
+    console.log('InterestFormService: Token preview:', token.substring(0, 20) + '...');
+    
+    try {
+      const response = await httpClient.post('/interest-form/submit', data, token);
+      console.log('InterestFormService: Response received:', response);
+      return response.data;
+    } catch (error) {
+      console.log('InterestFormService: Submit failed, trying update instead:', error);
+      // If submit fails, try update instead
+      const updateResponse = await httpClient.put('/interest-form/update-form', data, token);
+      console.log('InterestFormService: Update response received:', updateResponse);
+      return updateResponse.data;
+    }
   },
 
   // Fetch the existing interest form data
-  getInterestForm: async (): Promise<InterestForm> => {
-    const response = await apiClient.get<InterestForm>('/api/interest-form/get-form');
-    return response;
+  getInterestForm: async () => {
+    const token = await authService.getAccessToken();
+    const response = await httpClient.get('/interest-form/get-form', undefined, token);
+    return response.data;
   },
 
   // Update existing interest form data
-  updateInterestForm: async (data: InterestFormRequest): Promise<InterestForm> => {
-    const response = await apiClient.put<InterestForm>('/api/interest-form/update-form', data);
-    return response;
+  updateInterestForm: async (data: InterestFormData) => {
+    const token = await authService.getAccessToken();
+    const response = await httpClient.put('/interest-form/update-form', data, token);
+    return response.data;
   },
 
-  // Convert InterestForm to ProfileData format
-  toProfileData: (form: InterestForm): ProfileData => ({
-    firstName: form.name || '',
-    lastName: form.surname || '',
-    weight: form.weight,
-    height: form.height,
-    dateOfBirth: form.dateOfBirth,
-    gender: form.gender,
-    profilePhoto: form.profilePhoto,
-  }),
-
-  // Convert ProfileData to InterestFormRequest format
-  fromProfileData: (profile: ProfileData): InterestFormRequest => ({
-    name: profile.firstName,
-    surname: profile.lastName,
-    weight: profile.weight,
-    height: profile.height,
-    dateOfBirth: profile.dateOfBirth,
-    gender: profile.gender,
-    profilePhoto: profile.profilePhoto,
-  }),
+  // Test authentication by making a simple request
+  testAuthentication: async () => {
+    console.log('InterestFormService: Testing authentication');
+    const token = await authService.getAccessToken();
+    console.log('InterestFormService: Retrieved token for test:', token ? 'Token exists' : 'No token');
+    
+    if (!token) {
+      console.log('InterestFormService: No token available, throwing error');
+      throw new Error('No authentication token available');
+    }
+    
+    console.log('InterestFormService: Token preview:', token.substring(0, 20) + '...');
+    
+    try {
+      console.log('InterestFormService: Making test request to /interest-form/check-first-login');
+      const response = await httpClient.get('/interest-form/check-first-login', undefined, token);
+      console.log('InterestFormService: Authentication test successful:', response);
+      return true;
+    } catch (error) {
+      console.log('InterestFormService: Authentication test failed:', error);
+      throw error;
+    }
+  },
 };
+
+export default interestFormService;
