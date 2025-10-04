@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Container, Typography, Grid, Card, Box, CardActions, IconButton, useTheme, Dialog, DialogContent, DialogActions, Button, TextField, FormControl, InputLabel, Select, MenuItem, CircularProgress, Snackbar, Avatar } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -36,6 +37,7 @@ const HeaderSection = styled(Box)(({ theme }) => ({
 const HomePage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [recipes, setRecipes] = useState([]);
   const [feeds, setFeeds] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -544,7 +546,7 @@ const HomePage = () => {
       <Box>
         <div style={{ textAlign: 'center' }}> 
           <Typography variant="h3" sx={{ color: 'primary.main', backgroundColor: 'white' }}>
-            Home
+            {t('common.home')}
           </Typography>
         </div>
            
@@ -555,7 +557,7 @@ const HomePage = () => {
               multiline
               rows={3}
               fullWidth
-              placeholder="What's on your mind?"
+              placeholder={t('home.welcome')}
               value={userInputText}
               onChange={(e) => setUserInputText(e.target.value)}
             />
@@ -565,14 +567,14 @@ const HomePage = () => {
                 disabled={postType === 'recipe'}
                 onClick={handleAddImageClick}
               >
-                Add Image
+                {t('home.browseRecipes')}
               </Button>
               <Button
                 variant={postType === 'recipe' ? 'contained' : 'outlined'}
                 disabled={postType === 'image'}
                 onClick={handleAddRecipeClick}
               >
-                Add Recipe
+                {t('recipes.createRecipe')}
               </Button>
             </Box>
             {/* hidden file input */}
@@ -605,12 +607,12 @@ const HomePage = () => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
               {postType === 'image' && postImage && (
                 <Button color="secondary" onClick={() => { setPostImage(null); setPostType(null); }}>
-                  Remove Image
+                  {t('common.delete')}
                 </Button>
               )}
               {postType === 'recipe' && selectedRecipeForPost && (
                 <Button color="secondary" onClick={() => { setSelectedRecipeForPost(''); setPostType(null); }}>
-                  Remove Recipe
+                  {t('common.delete')}
                 </Button>
               )}
               <Box sx={{ flexGrow: 1 }} />
@@ -620,7 +622,7 @@ const HomePage = () => {
                 onClick={handleSend}
                 disabled={!userInputText && !postImage && !selectedRecipeForPost}
               >
-                Send
+                {t('common.save')}
               </Button>
             </Box>
           </Card>
@@ -631,7 +633,7 @@ const HomePage = () => {
           ) : error ? (
             <Box sx={{ textAlign: 'center', my: 4 }}>
               <Typography color="error">{error}</Typography>
-              <Button sx={{ mt: 2 }} variant="contained" onClick={() => window.location.reload()}>Retry</Button>
+              <Button sx={{ mt: 2 }} variant="contained" onClick={() => window.location.reload()}>{t('common.retry')}</Button>
             </Box>
           ) : (
             <Box sx={{ maxWidth: 600, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -720,7 +722,7 @@ const HomePage = () => {
         >
           <DialogContent>
             <Typography variant="h5" gutterBottom align="center">
-              Select a Recipe
+              {t('recipes.createRecipe')}
             </Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 2 }}>
               {recipes.map((recipe) => (
@@ -775,7 +777,7 @@ const HomePage = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseRecipeDialog} color="primary">
-              Cancel
+              {t('common.cancel')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -837,7 +839,7 @@ const HomePage = () => {
               overflow: 'hidden'
             }}>
               <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
-                Post
+                {t('home.todaysRecipes')}
               </Typography>
               
               {commentFeed && (
@@ -968,7 +970,7 @@ const HomePage = () => {
                         onClick={() => navigate(`/recipe/${commentFeed.recipe.id}`)}
                         sx={{ ml: 'auto', mr: 2, mt: -1 }}
                       >
-                        View Recipe
+                        {t('recipes.recipeDetail')}
                       </Button>
                     )}
                   </Box>
@@ -988,7 +990,7 @@ const HomePage = () => {
                 borderBottom: `1px solid ${theme.palette.divider}`, 
                 bgcolor: 'primary.main'
               }}>
-                <Typography variant="h6" color="primary.contrastText">Comments</Typography>
+                <Typography variant="h6" color="primary.contrastText">{t('home.recentActivity')}</Typography>
               </Box>
               
               <Box sx={{ 
@@ -1020,7 +1022,7 @@ const HomePage = () => {
                     )}
                   </Box>
                 )) : (
-                  <Typography color="text.secondary" sx={{ p: 2 }}>No comments yet.</Typography>
+                  <Typography color="text.secondary" sx={{ p: 2 }}>{t('home.recentActivity')}</Typography>
                 )}
               </Box>
               
@@ -1031,7 +1033,7 @@ const HomePage = () => {
                 mt: 'auto'
               }}>
                 <TextField
-                  label="Add a comment"
+                  label={t('home.recentActivity')}
                   fullWidth
                   multiline
                   rows={2}
@@ -1046,7 +1048,7 @@ const HomePage = () => {
                   fullWidth
                   disabled={commentsLoading || !newComment.trim()}
                 >
-                  {commentsLoading ? <CircularProgress size={24} color="inherit" /> : 'Post Comment'}
+                  {commentsLoading ? <CircularProgress size={24} color="inherit" /> : t('common.save')}
                 </Button>
               </Box>
             </Box>
@@ -1069,19 +1071,19 @@ const HomePage = () => {
         >
           <MenuItem onClick={copyLinkToClipboard} dense>
             <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} />
-            Copy Link
+            {t('common.save')}
           </MenuItem>
           <MenuItem onClick={() => shareToSocial('facebook')} dense>
             <FacebookIcon fontSize="small" sx={{ mr: 1 }} />
-            Share to Facebook
+            Facebook
           </MenuItem>
           <MenuItem onClick={() => shareToSocial('twitter')} dense>
             <TwitterIcon fontSize="small" sx={{ mr: 1 }} />
-            Share to Twitter
+            Twitter
           </MenuItem>
           <MenuItem onClick={() => shareToSocial('whatsapp')} dense>
             <WhatsAppIcon fontSize="small" sx={{ mr: 1 }} />
-            Share via WhatsApp
+            WhatsApp
           </MenuItem>
         </Menu>
 
