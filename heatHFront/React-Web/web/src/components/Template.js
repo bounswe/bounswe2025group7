@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Button, Container, Box, Divider, IconButton } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 import PersonIcon from '@mui/icons-material/Person';
 import HomeIcon from '@mui/icons-material/Home';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
@@ -10,6 +11,7 @@ import logo from '../images/logo.png';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import authService from '../services/authService';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
@@ -47,6 +49,7 @@ const Footer = styled(Box)(({ theme }) => ({
 const Template = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     authService.logout();
@@ -89,7 +92,7 @@ const Template = ({ children }) => {
               color={location.pathname === '/home' ? 'secondary' : 'inherit'}
               startIcon={<HomeIcon />}
             >
-              Home
+              {t('common.home')}
             </NavButton>
             <NavButton
               component={Link}
@@ -97,7 +100,7 @@ const Template = ({ children }) => {
               color={location.pathname === '/profile' ? 'secondary' : 'inherit'}
               startIcon={<PersonIcon />}
             >
-              Profile
+              {t('common.profile')}
             </NavButton>
 
             <NavButton
@@ -106,7 +109,7 @@ const Template = ({ children }) => {
               color={location.pathname === '/myrecipes' ? 'secondary' : 'inherit'}
               startIcon={<RestaurantMenuIcon />}
             >
-              My Recipes
+              {t('recipes.myRecipes')}
             </NavButton>
 
             <NavButton
@@ -115,14 +118,16 @@ const Template = ({ children }) => {
               color={location.pathname === '/saved' ? 'secondary' : 'inherit'}
               startIcon={<BookmarkIcon />}
             >
-              Saved Recipes
+              {t('recipes.savedRecipes')}
             </NavButton>
+
+            <LanguageSwitcher variant="icon" />
 
             <IconButton
               color="inherit"
               onClick={handleLogout}
               sx={{ ml: 2 }}
-              title="Log Out"
+              title={t('common.logout')}
             >
               <LogoutIcon />
             </IconButton>
@@ -142,17 +147,17 @@ const Template = ({ children }) => {
             gap: 2
           }}>
             <Typography variant="body2">
-              © 2024 HeatH. All rights reserved.
+              {t('landing.copyright')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Link to="/privacy" style={{ color: 'white', textDecoration: 'none' }}>
-                <Typography variant="body2">Privacy Policy</Typography>
+                <Typography variant="body2">{t('landing.privacyPolicy')}</Typography>
               </Link>
               <Link to="/terms" style={{ color: 'white', textDecoration: 'none' }}>
-                <Typography variant="body2">Terms of Service</Typography>
+                <Typography variant="body2">{t('landing.termsOfService')}</Typography>
               </Link>
               <Link to="/contact" style={{ color: 'white', textDecoration: 'none' }}>
-                <Typography variant="body2">Contact Us</Typography>
+                <Typography variant="body2">{t('landing.contactUs')}</Typography>
               </Link>
             </Box>
           </Box>
