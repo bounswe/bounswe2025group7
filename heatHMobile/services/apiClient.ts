@@ -11,6 +11,39 @@ const getAuthHeaders = async () => {
   }
 };
 
+// Helper function to handle token refresh on 401 errors (matches frontend interceptor)
+const handleUnauthorized = async (originalRequest: RequestInit, url: string): Promise<Response> => {
+  try {
+    console.log('🔄 API Client: Handling 401, attempting token refresh...');
+    
+    // Try to refresh token (matches frontend pattern)
+    const { authService } = await import('./authService');
+    await authService.refreshToken();
+    
+    // Get new token and retry original request
+    const authHeaders = await getAuthHeaders();
+    const fullUrl = url.startsWith('http') ? url : `${config.apiBaseUrl}${url}`;
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+      ...(originalRequest.headers as Record<string, string>),
+    };
+    
+    console.log('🔄 API Client: Retrying request with new token');
+    return await fetch(fullUrl, {
+      ...originalRequest,
+      headers,
+    });
+  } catch (refreshError) {
+    console.error('🔄 API Client: Token refresh failed:', refreshError);
+    // Clear tokens and throw error (matches frontend pattern)
+    await storage.removeItem('accessToken');
+    await storage.removeItem('refreshToken');
+    throw new Error('Authentication failed. Please login again.');
+  }
+};
+
 export const apiClient = {
   get: async <T>(url: string, options?: RequestInit): Promise<T> => {
     const fullUrl = url.startsWith('http') ? url : `${config.apiBaseUrl}${url}`;

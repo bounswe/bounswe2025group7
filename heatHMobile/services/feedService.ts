@@ -37,10 +37,22 @@ interface SavedRecipeRequest {
   recipeId: number;
 }
 
+// CommentResponse interface matching backend
+export interface CommentResponse {
+  id: number;
+  feedId: number;
+  userId: number;
+  text: string;
+  createdAt: string;
+  name?: string;
+  surname?: string;
+  profilePhoto?: string;
+}
+
 export const feedService = {
   // Get feeds by current user
   getFeedByUser: async (): Promise<FeedResponse[]> => {
-    const response = await apiClient.get<FeedResponse[]>('/feeds/feed-by-user');
+    const response = await apiClient.get<FeedResponse[]>('/api/feeds/feed-by-user');
     return response;
   },
 

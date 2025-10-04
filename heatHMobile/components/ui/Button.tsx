@@ -4,59 +4,52 @@ interface ButtonProps {
   title: string;
   onPress?: () => void;
   disabled?: boolean;
-  variant?: 'default' | 'outline' | 'text';
   style?: ViewStyle;
+  textStyle?: TextStyle;
 }
 
-export default function Button({ title, onPress, disabled = false, variant = 'default', style }: ButtonProps) {
-  const getButtonStyle = (): ViewStyle => {
-    const baseStyle: ViewStyle = {
-      padding: 12,
-      borderRadius: 8,
-      opacity: disabled ? 0.6 : 1,
-    };
-
-    switch (variant) {
-      case 'outline':
-        return {
-          ...baseStyle,
-          backgroundColor: 'transparent',
-          borderWidth: 1,
-          borderColor: '#0a7ea4',
-        };
-      case 'text':
-        return {
-          ...baseStyle,
-          backgroundColor: 'transparent',
-          padding: 8,
-        };
-      default:
-        return {
-          ...baseStyle,
-          backgroundColor: '#0a7ea4',
-        };
-    }
-  };
-
-  const getTextStyle = (): TextStyle => {
-    switch (variant) {
-      case 'outline':
-        return { color: '#0a7ea4', textAlign: 'center' };
-      case 'text':
-        return { color: '#0a7ea4', textAlign: 'center' };
-      default:
-        return { color: '#fff', textAlign: 'center' };
-    }
-  };
-
+export default function Button({ 
+  title, 
+  onPress, 
+  disabled = false, 
+  style, 
+  textStyle 
+}: ButtonProps) {
   return (
     <Pressable 
       onPress={disabled ? undefined : onPress} 
-      style={[getButtonStyle(), style]}
+      style={[
+        styles.button, 
+        disabled && styles.disabled,
+        style
+      ]}
     >
-      <Text style={getTextStyle()}>{title}</Text>
+      <Text style={[styles.text, disabled && styles.disabledText, textStyle]}>
+        {title}
+      </Text>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  button: {
+    padding: 12,
+    backgroundColor: '#0a7ea4',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  disabled: {
+    backgroundColor: '#ccc',
+  },
+  text: {
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  disabledText: {
+    color: '#666',
+  },
+});
 
 
