@@ -82,6 +82,27 @@ export default function SignupPage() {
     e.preventDefault();
     setError(null);
 
+    try {
+      // Directly register and go to Sign In (same as old flow after verification)
+      await authService.register(form);
+      authService.logout();
+      navigate('/signin', { state: { success: 'Registration successful!  Please sign in.' } });
+    } catch (err) {
+      if (axios.isAxiosError(err) && (err.response?.status === 409 || err.response?.status === 403)) {
+        setError(
+          <>An account already exists.{' '}
+            <Link component={RouterLink} to="/signin" underline="hover">
+              Sign in
+            </Link>
+          </>
+        );
+      } else {
+        setError(err.response?.data?.message || 'Registration failed');
+      }
+    }
+  };
+
+
 /* Verification step (disabled)
     const codeStr = code.join('');
     if (codeStr.length !== 6) {
@@ -95,7 +116,7 @@ export default function SignupPage() {
     }
     */
 
-    try {
+   /* try {
       // Verify entered code first
       const valid = await authService.verifyCode(form.username, parseInt(codeStr, 10));
       if (!valid) {
@@ -119,7 +140,7 @@ export default function SignupPage() {
         setError(err.response?.data?.message || t('errors.genericError'));
       }
     }
-  };
+  };*/
 
   // NEW: centralize disabled logic
   const isRegisterDisabled = !!passwordError || !form.password || !form.username;
