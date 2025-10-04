@@ -12,5 +12,4 @@ RUN mvn package -DskipTests
 FROM eclipse-temurin:17-jdk
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
-COPY .env .env
 ENTRYPOINT ["java", "-jar", "app.jar"]
