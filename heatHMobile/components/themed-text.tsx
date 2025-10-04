@@ -1,5 +1,4 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
-import { useFonts, Sora_400Regular, Sora_700Bold, Sora_600SemiBold } from '@expo-google-fonts/sora';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
 
@@ -17,13 +16,6 @@ export function ThemedText({
   ...rest
 }: ThemedTextProps) {
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
-  const [fontsLoaded] = useFonts({
-      Sora_600SemiBold,
-      Sora_700Bold,
-      Sora_400Regular
-  });
-
-  if (!fontsLoaded) {}
 
   return (
     <Text
@@ -45,18 +37,16 @@ const styles = StyleSheet.create({
   default: {
     fontSize: 16,
     lineHeight: 24,
-      fontFamily: 'Sora_400Regular',
   },
   defaultSemiBold: {
     fontSize: 16,
     lineHeight: 24,
-    fontWeight: '600', fontFamily: 'Sora_600SemiBold'
+    fontWeight: '600',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    lineHeight: 40,
-      fontFamily: 'Sora_700Bold',
+    lineHeight: 32,
   },
   subtitle: {
     fontSize: 20,
@@ -66,6 +56,5 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     fontSize: 16,
     color: '#169873ff',
-      fontFamily: 'Sora_400Regular',
   },
 });

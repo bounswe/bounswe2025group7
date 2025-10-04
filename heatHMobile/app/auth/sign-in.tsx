@@ -1,184 +1,271 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
-import { useAuthContext } from '@/context/AuthContext';
-import { authService } from '@/services/authService';
-import interestFormService from '@/services/interestFormService';
 
-export default function SignInScreen() {
-  const { login, isAuthenticated } = useAuthContext();
-  const [form, setForm] = useState({ username: '', password: '' });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const params = useLocalSearchParams();
-  const successMsg = params.success as string || '';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    StyleSheet,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Alert
+} from 'react-native';
 
-  // Check authentication on mount
-  useEffect(() => {
-    if (isAuthenticated) {
-      checkFirstLogin();
-    }
-  }, [isAuthenticated]);
+export default function AuthScreen() {
+    const [isLogin, setIsLogin] = useState(true);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [name, setName] = useState('');
 
-  const checkFirstLogin = async () => {
-    try {
-      const firstLogin = await interestFormService.checkFirstLogin();
-      if (!firstLogin) {
-        router.replace('/forms/interest');
-      } else {
-        router.replace('/(tabs)');
-      }
-    } catch (error) {
-      console.error('First login check failed:', error);
-      router.replace('/(tabs)');
-    }
-  };
+    const validateEmail = (email) => {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    };
 
-  const handleChange = (field: string, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    setError('');
-  };
+    const handleAuth = () => {
+        if (!email || !password) {
+            Alert.alert('Error', 'Please fill in all fields');
+            return;
+        }
 
-  const handleSubmit = async () => {
-    if (!form.username || !form.password) {
-      setError('Please fill in all fields');
-      return;
-    }
+        if (!validateEmail(email)) {
+            Alert.alert('Error', 'Please enter a valid email');
+            return;
+        }
 
-    setLoading(true);
-    setError('');
+        if (!isLogin) {
+            if (!name) {
+                Alert.alert('Error', 'Please enter your name');
+                return;
+            }
+            if (password !== confirmPassword) {
+                Alert.alert('Error', 'Passwords do not match');
+                return;
+            }
+            if (password.length < 6) {
+                Alert.alert('Error', 'Password must be at least 6 characters');
+                return;
+            }
+        }
 
-    try {
-      await login(form.username, form.password);
-      // Navigation will be handled by useEffect
-    } catch (err: any) {
-      console.error('Login error:', err);
-      setError(err.response?.data?.message || err.message || 'Login failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+        // Here you would typically make an API call to your backend
+        Alert.alert(
+            'Success',
+            isLogin ? 'Logged in successfully!' : 'Account created successfully!'
+        );
 
-  const handleForgotPassword = () => {
-    router.push('/auth/forgot-password');
-  };
+        // Reset form
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setName('');
+    };
 
-  const handleSignUp = () => {
-    router.push('/auth/sign-up');
-  };
+    const toggleMode = () => {
+        setIsLogin(!isLogin);
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setName('');
+    };
 
-  return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ThemedView style={styles.content}>
-        <ThemedText style={styles.title}>Welcome Back</ThemedText>
-        <ThemedText style={styles.subtitle}>Sign in to your account</ThemedText>
+    return (
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.container}
+        >
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
+            >
+                <View style={styles.header}>
+                    <Text style={styles.title}>
+                        {'HeatH'}
+                    </Text>
+                    <Text style={styles.subtitle}>
+                        {isLogin
+                            ? 'Sign in to continue'
+                            : 'Sign up to get started'}
+                    </Text>
+                </View>
 
-        {successMsg ? (
-          <ThemedText style={styles.successText}>{successMsg}</ThemedText>
-        ) : null}
+                <View style={styles.form}>
+                    {!isLogin && (
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Full Name</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="John Doe"
+                                value={name}
+                                onChangeText={setName}
+                                autoCapitalize="words"
+                            />
+                        </View>
+                    )}
 
-        <Input
-          placeholder="Email"
-          value={form.username}
-          onChangeText={(value) => handleChange('username', value)}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={styles.input}
-        />
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.label}>Email</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Email Address*"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            autoComplete="email"
+                        />
+                    </View>
 
-        <Input
-          placeholder="Password"
-          value={form.password}
-          onChangeText={(value) => handleChange('password', value)}
-          secureTextEntry
-          style={styles.input}
-        />
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.label}>Password</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Password*"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                            autoCapitalize="none"
+                        />
+                    </View>
 
-        {error ? (
-          <ThemedText style={styles.errorText}>{error}</ThemedText>
-        ) : null}
+                    {!isLogin && (
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Confirm Password</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Confirm Password*"
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                                secureTextEntry
+                                autoCapitalize="none"
+                            />
+                        </View>
+                    )}
 
-        <Button
-          title={loading ? 'Signing In...' : 'Sign In'}
-          onPress={handleSubmit}
-          disabled={loading}
-          style={styles.button}
-        />
+                    {isLogin && (
+                        <TouchableOpacity style={styles.forgotPassword}>
+                            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                        </TouchableOpacity>
+                    )}
 
-        <Button
-          title="Forgot Password?"
-          onPress={handleForgotPassword}
-          variant="text"
-          style={styles.linkButton}
-        />
+                    <TouchableOpacity style={styles.button} onPress={handleAuth}>
+                        <Text style={styles.buttonText}>
+                            {isLogin ? 'Sign In' : 'Sign Up'}
+                        </Text>
+                    </TouchableOpacity>
 
-        <ThemedText style={styles.signUpText}>
-          Don't have an account?{' '}
-          <ThemedText style={styles.signUpLink} onPress={handleSignUp}>
-            Sign Up
-          </ThemedText>
-        </ThemedText>
-      </ThemedView>
-    </KeyboardAvoidingView>
-  );
+                    <View style={styles.toggleContainer}>
+                        <Text style={styles.toggleText}>
+                            {isLogin ? "Don't have an account? " : 'Already have an account? '}
+                        </Text>
+                        <TouchableOpacity onPress={toggleMode}>
+                            <Text style={styles.toggleLink}>
+                                {isLogin ? 'Sign Up' : 'Sign In'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 32,
-    opacity: 0.7,
-  },
-  input: {
-    marginBottom: 16,
-  },
-  button: {
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  linkButton: {
-    marginBottom: 16,
-  },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  successText: {
-    color: 'green',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  signUpText: {
-    textAlign: 'center',
-    opacity: 0.7,
-  },
-  signUpLink: {
-    color: '#007AFF',
-    fontWeight: '600',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#f8f9fa',
+    },
+    scrollContent: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        padding: 20,
+    },
+    header: {
+        marginBottom: 40,
+        alignItems: 'center',
+    },
+    title: {
+        fontFamily: 'Sora',
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: '#1a1a1a',
+        marginBottom: 8,
+    },
+    subtitle: {
+        fontFamily: 'Sora',
+        fontSize: 16,
+        color: '#666',
+    },
+    form: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    inputContainer: {
+        marginBottom: 20,
+    },
+    label: {
+        fontFamily: 'Sora',
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: 8,
+    },
+    input: {
+        fontFamily: 'Sora',
+        backgroundColor: '#f8f9fa',
+        borderRadius: 8,
+        padding: 14,
+        fontSize: 16,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+    },
+    forgotPassword: {
+        alignSelf: 'flex-end',
+        marginBottom: 20,
+    },
+    forgotPasswordText: {
+        fontFamily: 'Sora',
+        color: '#169873ff',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    button: {
+        backgroundColor: '#169873ff',
+        borderRadius: 8,
+        padding: 16,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    buttonText: {
+        fontFamily: 'Sora',
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    toggleContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 24,
+    },
+    toggleText: {
+        fontFamily: 'Sora',
+        color: '#666',
+        fontSize: 14,
+    },
+    toggleLink: {
+        fontFamily: 'Sora',
+        color: '#169873ff',
+        fontSize: 14,
+        fontWeight: '600',
+    },
 });
 
 
