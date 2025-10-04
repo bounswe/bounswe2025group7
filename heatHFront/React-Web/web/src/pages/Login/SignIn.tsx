@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Box, Typography, TextField, Button, Link } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import authService from '../../services/authService';
 import { Link as RouterLink } from 'react-router-dom';
 import axios from 'axios';
@@ -13,6 +14,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 export default function SigninPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const successMsg = location.state?.success || '';
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
@@ -79,9 +81,9 @@ export default function SigninPage() {
 
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Your email or password is wrong. Please try again.');
+        setError(err.response?.data?.message || t('auth.invalidCredentials'));
       } else {
-        setError('Your email or password is wrong. Please try again.');
+        setError(t('auth.invalidCredentials'));
       }
     }
   };
@@ -99,7 +101,7 @@ export default function SigninPage() {
     <Container maxWidth="sm">
       <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
-        <Typography variant="h5">Sign In</Typography>
+        <Typography variant="h5">{t('auth.signInTitle')}</Typography>
 
         {successMsg && (
           <Typography color="primary" variant="body2" sx={{ mt: 1 }}>
@@ -109,7 +111,7 @@ export default function SigninPage() {
 
         <Box component="form" onSubmit={handleSubmit} onKeyDown={handleKeyDown} sx={{ mt: 2, width: '100%' }}>
           <TextField
-            label="Email Address"
+            label={t('common.email')}
             name="username"
             type="email"
             value={form.username}
@@ -120,7 +122,7 @@ export default function SigninPage() {
           />
 
           <TextField
-            label="Password"
+            label={t('common.password')}
             name="password"
             type="password"
             value={form.password}
@@ -137,24 +139,24 @@ export default function SigninPage() {
           )}
 
           <Button type="submit" variant="contained" fullWidth sx={{ mt: 3 }}>
-            Sign In
+            {t('common.signIn')}
           </Button>
 
           <Box sx={{ mt: 2, textAlign: 'center' }}>
             <Link component={RouterLink} to="/forgot-password" underline="hover">
-              Forgot Password?
+              {t('common.forgotPassword')}
             </Link>
           </Box>
 
           <Box sx={{ mt: 2, textAlign: 'center' }}>
             <Typography variant="body2">
-              Don&apos;t have an account?&nbsp;
-              <Link href="/signup">Sign Up</Link>
+              {t('auth.dontHaveAccount')}&nbsp;
+              <Link href="/signup">{t('auth.signUpHere')}</Link>
             </Typography>
           </Box>
           <Box textAlign="center" mt={3}>
             <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ alignSelf: 'flex-start', mb: 5 }}>
-              Back
+              {t('common.back')}
             </Button>
           </Box>
 

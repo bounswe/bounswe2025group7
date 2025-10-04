@@ -29,6 +29,8 @@ public class RecipeService {
     private final CommentRepository commentRepository;
     private final OpenAIService openAIService;
     private final SemanticSearchService semanticSearchService;
+    private final CalorieService calorieService;
+
 
     public Recipe saveRecipe(RecipeRequest request) {
         Recipe recipe = new Recipe();
@@ -37,7 +39,8 @@ public class RecipeService {
         recipe.setIngredients(request.getIngredients());
         recipe.setTag(request.getTag());
         recipe.setType(request.getType());
-        recipe.setTotalCalorie(request.getTotalCalorie());
+        //recipe.setTotalCalorie(request.getTotalCalorie());
+        recipe.setTotalCalorie(calorieService.calculateCalorie(request.getIngredients()));
         recipe.setPrice(request.getPrice());
 
         if (request.getPhoto() != null) {
