@@ -8,6 +8,11 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://admin:pass@localhost:27017/heathdb?authSource=admin}
+
   jpa:
     hibernate:
       ddl-auto: update

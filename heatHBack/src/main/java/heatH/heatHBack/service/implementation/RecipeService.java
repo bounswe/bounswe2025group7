@@ -15,7 +15,6 @@ import heatH.heatHBack.model.Feed;
 import heatH.heatHBack.model.Recipe;
 import heatH.heatHBack.model.request.RecipeRequest;
 import lombok.RequiredArgsConstructor;
-
 @Service
 @RequiredArgsConstructor
 public class RecipeService {
@@ -26,6 +25,8 @@ public class RecipeService {
     private final FeedRepository feedRepository;
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
+    private final OpenAIService openAIService;
+    private final SemanticSearchService semanticSearchService;
 
     public Recipe saveRecipe(RecipeRequest request) {
         Recipe recipe = new Recipe();
@@ -48,6 +49,11 @@ public class RecipeService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         recipe.setUser(user);
+
+        String ingredientsText = String.join(", ", recipe.getIngredients());
+        double[] emb = openAIService.createEmbedding(recipe.getTitle() + " " + ingredientsText);
+        semanticSearchService.saveEmbeddingForRecipe(recipe.getId(), emb);
+
         return recipeRepository.save(recipe);
     }
 
@@ -64,6 +70,7 @@ public class RecipeService {
         recipeRepository.deleteById(id);
         likeRepository.deleteAllByFeedIn(feedsToDelete);
         commentRepository.deleteAllByFeedIn(feedsToDelete);
+        semanticSearchService.deleteEmbeddingForRecipe(id);
     }
     public Optional<List<Recipe>> getAllRecipes() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
