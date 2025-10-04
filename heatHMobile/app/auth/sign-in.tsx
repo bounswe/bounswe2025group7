@@ -36,6 +36,7 @@ export default function SignInScreen() {
         }
 
         // Here you would typically make an API call to your backend
+
         Alert.alert('Success', 'Logged in successfully!');
 
         // Reset form
