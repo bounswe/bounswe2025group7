@@ -20,7 +20,7 @@ export default function ResetPasswordScreen() {
             }}>
             <Spacer/>
             <ScrollView contentContainerStyle={{justifyContent: "center", padding: 20, flexGrow: 1}}>
-                <ThemedView style={{justifyContent: "center", padding: 20}}>
+                <ThemedView style={{justifyContent: "center", padding: 20, borderRadius:20}}>
                     <Spacer/>
                     <ThemedText style={{flex: 1}} type={"title"}>Reset Password</ThemedText>
                     <Spacer/>

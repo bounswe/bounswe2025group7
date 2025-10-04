@@ -12,7 +12,8 @@ import {
     TouchableOpacity
 } from 'react-native';
 import { useState } from "react";
-import { useRouter } from 'expo-router'; // If using expo-router
+import { useRouter } from 'expo-router';
+import Spacer from "@/components/ui/Spacer"; // If using expo-router
 
 export default function SignUpScreen() {
     const [email, setEmail] = useState('');
@@ -75,16 +76,17 @@ export default function SignUpScreen() {
                 contentContainerStyle={styles.scrollContent}
                 keyboardShouldPersistTaps="handled"
             >
-                <ThemedView>
-                    <ThemedText type={"title"}>
+                <ThemedView style={styles.form}>
+                    <ThemedText type={"title"}
+                                style={{textAlign:"center"}}>
                         {'HeatH'}
                     </ThemedText>
-                    <ThemedText type={"subtitle"}>
+                    <ThemedText type={"subtitle"}
+                                style={{textAlign:"center"}}>
                         {'Sign up to get started'}
                     </ThemedText>
-                </ThemedView>
 
-                <ThemedView style={styles.form}>
+                    <Spacer/>
                     <ThemedView>
                         <ThemedText>Full Name</ThemedText>
                         <TextInput
@@ -97,6 +99,7 @@ export default function SignUpScreen() {
                     </ThemedView>
 
                     <ThemedView>
+                        <Spacer/>
                         <ThemedText>Email</ThemedText>
                         <TextInput
                             style={styles.input}
@@ -108,7 +111,7 @@ export default function SignUpScreen() {
                             autoComplete="email"
                         />
                     </ThemedView>
-
+                    <Spacer/>
                     <ThemedView>
                         <ThemedText>Password</ThemedText>
                         <TextInput
@@ -120,7 +123,7 @@ export default function SignUpScreen() {
                             autoCapitalize="none"
                         />
                     </ThemedView>
-
+                    <Spacer/>
                     <ThemedView>
                         <ThemedText>Confirm Password</ThemedText>
                         <TextInput
@@ -132,15 +135,17 @@ export default function SignUpScreen() {
                             autoCapitalize="none"
                         />
                     </ThemedView>
+                    <Spacer/>
 
                     <Button title="Sign Up" onPress={handleSignUp} />
+                    <Spacer/>
 
                     <ThemedView>
                         <ThemedText>
                             {'Already have an account? '}
                         </ThemedText>
                         <TouchableOpacity onPress={goToSignIn}>
-                            <ThemedText>
+                            <ThemedText type={"link"}>
                                 {'Sign In'}
                             </ThemedText>
                         </TouchableOpacity>

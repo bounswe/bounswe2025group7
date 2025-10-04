@@ -13,7 +13,9 @@ import {
     Alert
 } from 'react-native';
 import { useState } from "react";
-import { useRouter } from 'expo-router'; // If using expo-router
+import { useRouter } from 'expo-router';
+import Spacer from "@/components/ui/Spacer";
+import {Space_Separator} from "json5/lib/unicode"; // If using expo-router
 
 export default function SignInScreen() {
     const [email, setEmail] = useState('');
@@ -58,7 +60,7 @@ export default function SignInScreen() {
                 contentContainerStyle={styles.scrollContent}
                 keyboardShouldPersistTaps="handled"
             >
-                <ThemedView>
+                <ThemedView style={styles.form}>
                     <ThemedText type={"title"}
                                 style={{textAlign:"center"}}>
                         {'HeatH'}
@@ -67,9 +69,6 @@ export default function SignInScreen() {
                                 style={{textAlign:"center"}}>
                         {'Sign in to continue'}
                     </ThemedText>
-                </ThemedView>
-
-                <ThemedView style={styles.form}>
                     <ThemedView>
                         <ThemedText>Email</ThemedText>
                         <Input
@@ -94,15 +93,17 @@ export default function SignInScreen() {
                             autoCapitalize="none"
                         />
                     </ThemedView>
-
+                    <Spacer/>
                     <TouchableOpacity>
                         <ThemedText type={"link"}
                                     style={{textAlign:"right"}}>
                             Forgot Password?
                         </ThemedText>
                     </TouchableOpacity>
+                    <Spacer/>
 
                     <Button title="Sign In" onPress={handleSignIn} />
+                    <Spacer/>
 
                     <ThemedView>
                         <ThemedText>
@@ -134,11 +135,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 16,
         padding: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
     },
     input: {
         fontFamily: 'Sora',
