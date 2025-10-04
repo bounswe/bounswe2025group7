@@ -1,8 +1,15 @@
-import { apiClient } from './apiClient';
+import { httpClient } from './httpClient';
+import { authService } from './authService';
 
 export const userService = {
-  me: () => apiClient.get<any>('/me'),
-  byUsername: (username: string) => apiClient.get<any>(`/users/${username}`),
+  me: async () => {
+    const token = await authService.getAccessToken();
+    return httpClient.get<any>('/me', undefined, token);
+  },
+  byUsername: async (username: string) => {
+    const token = await authService.getAccessToken();
+    return httpClient.get<any>(`/users/${username}`, undefined, token);
+  },
 };
 
 

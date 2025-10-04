@@ -1,7 +1,11 @@
-import { apiClient } from './apiClient';
+import { httpClient } from './httpClient';
+import { authService } from './authService';
 
 export const feedService = {
-  list: () => apiClient.get<any[]>('/feed'),
+  list: async () => {
+    const token = await authService.getAccessToken();
+    return httpClient.get<any[]>('/feed', undefined, token);
+  },
 };
 
 
