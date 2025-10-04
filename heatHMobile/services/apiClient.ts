@@ -1,8 +1,7 @@
 import { config } from '@/constants/config';
 import { storage } from '@/utils/storage';
 
-// Helper function to get auth headers (matches frontend pattern)
-const getAuthHeaders = async (): Promise<Record<string, string>> => {
+const getAuthHeaders = async () => {
   try {
     const token = await storage.getItem('accessToken');
     return token ? { Authorization: `Bearer ${token}` } : {};
@@ -49,22 +48,14 @@ export const apiClient = {
   get: async <T>(url: string, options?: RequestInit): Promise<T> => {
     const fullUrl = url.startsWith('http') ? url : `${config.apiBaseUrl}${url}`;
     const authHeaders = await getAuthHeaders();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...authHeaders,
-      ...(options?.headers as Record<string, string>),
-    };
-    
-    let res = await fetch(fullUrl, {
+    const res = await fetch(fullUrl, {
       ...options,
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+        ...options?.headers,
+      },
     });
-    
-    // Handle 401 Unauthorized
-    if (res.status === 401) {
-      res = await handleUnauthorized(options || {}, url);
-    }
     
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
@@ -76,67 +67,37 @@ export const apiClient = {
   post: async <T>(url: string, data?: any, options?: RequestInit): Promise<T> => {
     const fullUrl = url.startsWith('http') ? url : `${config.apiBaseUrl}${url}`;
     const authHeaders = await getAuthHeaders();
-    
-    console.log('🌐 API Client: POST request to:', fullUrl);
-    console.log('🌐 API Client: Data:', data);
-    console.log('🌐 API Client: Auth headers:', authHeaders);
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...authHeaders,
-      ...(options?.headers as Record<string, string>),
-    };
-    
-    const requestOptions: RequestInit = {
+    const res = await fetch(fullUrl, {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+        ...options?.headers,
+      },
       body: data ? JSON.stringify(data) : undefined,
       ...options,
-    };
-    
-    let res = await fetch(fullUrl, requestOptions);
-    console.log('🌐 API Client: Response status:', res.status);
-    console.log('🌐 API Client: Response ok:', res.ok);
-    
-    // Handle 401 Unauthorized
-    if (res.status === 401) {
-      res = await handleUnauthorized(requestOptions, url);
-    }
+    });
     
     if (!res.ok) {
-      const errorText = await res.text();
-      console.error('🌐 API Client: Error response:', errorText);
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     
-    const responseData = await res.json();
-    console.log('🌐 API Client: Response data:', responseData);
-    return responseData as T;
+    return (await res.json()) as T;
   },
 
   put: async <T>(url: string, data?: any, options?: RequestInit): Promise<T> => {
     const fullUrl = url.startsWith('http') ? url : `${config.apiBaseUrl}${url}`;
     const authHeaders = await getAuthHeaders();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...authHeaders,
-      ...(options?.headers as Record<string, string>),
-    };
-    
-    const requestOptions: RequestInit = {
+    const res = await fetch(fullUrl, {
       method: 'PUT',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+        ...options?.headers,
+      },
       body: data ? JSON.stringify(data) : undefined,
       ...options,
-    };
-    
-    let res = await fetch(fullUrl, requestOptions);
-    
-    // Handle 401 Unauthorized
-    if (res.status === 401) {
-      res = await handleUnauthorized(requestOptions, url);
-    }
+    });
     
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);

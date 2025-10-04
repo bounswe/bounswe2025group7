@@ -1,3 +1,5 @@
+import { httpClient } from './httpClient';
+import { authService } from './authService';
 import { apiClient } from './apiClient';
 
 // FeedResponse interface matching backend
@@ -30,17 +32,6 @@ interface LikeRequest {
   feedId: number;
 }
 
-// CommentRequest interface matching backend
-interface CommentRequest {
-  feedId: number;
-  text: string;
-}
-
-// CommentDeleteRequest interface matching backend
-interface CommentDeleteRequest {
-  commentId: number;
-}
-
 // SavedRecipeRequest interface matching backend
 interface SavedRecipeRequest {
   recipeId: number;
@@ -67,67 +58,49 @@ export const feedService = {
 
   // Get recent feeds for user (with pagination)
   getRecentFeeds: async (pageNumber: number = 0): Promise<FeedResponse[]> => {
-    const response = await apiClient.get<FeedResponse[]>(`/api/feeds/recent?pageNumber=${pageNumber}`);
+    const response = await apiClient.get<FeedResponse[]>(`/feeds/recent?pageNumber=${pageNumber}`);
     return response;
   },
 
   // Get other user's profile and feeds
   getOtherUserProfile: async (userId: number): Promise<FeedProfileResponse> => {
-    const response = await apiClient.get<FeedProfileResponse>(`/api/feeds/other-user?userId=${userId}`);
+    const response = await apiClient.get<FeedProfileResponse>(`/feeds/other-user?userId=${userId}`);
     return response;
   },
 
   // Create a new feed
   createFeed: async (postPayload: any): Promise<any> => {
-    const response = await apiClient.post<any>('/api/feeds/created-feed', postPayload);
+    const response = await apiClient.post<any>('/feeds/created-feed', postPayload);
     return response;
   },
 
   // Like a feed
   likeFeed: async (feedId: number): Promise<void> => {
     const request: LikeRequest = { feedId };
-    await apiClient.post('/api/feeds/like', request);
+    await apiClient.post('/feeds/like', request);
   },
 
   // Unlike a feed
   unlikeFeed: async (feedId: number): Promise<void> => {
     const request: LikeRequest = { feedId };
-    await apiClient.post('/api/feeds/unlike', request);
-  },
-
-  // Comment on a feed
-  commentFeed: async (feedId: number, text: string): Promise<void> => {
-    const request: CommentRequest = { feedId, text };
-    await apiClient.post('/api/feeds/comment', request);
-  },
-
-  // Delete a comment
-  deleteComment: async (commentId: number): Promise<void> => {
-    const request: CommentDeleteRequest = { commentId };
-    await apiClient.post('/api/feeds/delete-comment', request);
-  },
-
-  // Get comments for a feed
-  getFeedComments: async (feedId: number): Promise<CommentResponse[]> => {
-    const response = await apiClient.get<CommentResponse[]>(`/api/feeds/get-feed-comments?feedId=${feedId}`);
-    return response;
+    await apiClient.post('/feeds/unlike', request);
   },
 
   // Save a recipe
   saveRecipe: async (recipeId: number): Promise<void> => {
     const request: SavedRecipeRequest = { recipeId };
-    await apiClient.post('/api/saved-recipes/save', request);
+    await apiClient.post('/saved-recipes/save', request);
   },
 
   // Unsave a recipe
   unsaveRecipe: async (recipeId: number): Promise<void> => {
     const request: SavedRecipeRequest = { recipeId };
-    await apiClient.post('/api/saved-recipes/unsave', request);
+    await apiClient.post('/saved-recipes/unsave', request);
   },
 
   // Get saved recipes
   getSavedRecipes: async (): Promise<any[]> => {
-    const response = await apiClient.get<any[]>('/api/saved-recipes/get');
+    const response = await apiClient.get<any[]>('/saved-recipes/get');
     return response;
   },
 };

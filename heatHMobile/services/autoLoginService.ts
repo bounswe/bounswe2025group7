@@ -1,4 +1,5 @@
-import { authService } from './authService';
+import { storage } from '@/utils/storage';
+import { config } from '@/constants/config';
 
 const TEST_CREDENTIALS = {
   username: 'test@test.com',
@@ -6,24 +7,35 @@ const TEST_CREDENTIALS = {
 };
 
 export const autoLoginService = {
-  // Auto login with test credentials (matches frontend pattern)
+  // Auto login with test credentials
   autoLogin: async (): Promise<{ success: boolean; token?: string; error?: string }> => {
     try {
-      console.log('🚀 Auto-login: Starting with test credentials...');
-      console.log('🚀 Auto-login: Credentials:', TEST_CREDENTIALS);
+      console.log('Attempting auto-login with test credentials...');
       
-      const response = await authService.login(TEST_CREDENTIALS);
-      console.log('🚀 Auto-login: Response received:', response);
+      const response = await fetch(`${config.apiBaseUrl}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(TEST_CREDENTIALS)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
       
-      if (response && response.accessToken) {
-        console.log('🚀 Auto-login: SUCCESS! Token:', response.accessToken);
-        return { success: true, token: response.accessToken };
+      if (data.accessToken) {
+        // Store the token
+        await storage.setItem('accessToken', data.accessToken);
+        console.log('Auto-login successful! Token stored.');
+        return { success: true, token: data.accessToken };
       } else {
-        console.error('🚀 Auto-login: No access token in response:', response);
         throw new Error('No access token received');
       }
     } catch (error: any) {
-      console.error('🚀 Auto-login: FAILED:', error);
+      console.error('Auto-login failed:', error);
       return { 
         success: false, 
         error: error.message || 'Auto-login failed' 
@@ -34,7 +46,7 @@ export const autoLoginService = {
   // Check if user is already logged in
   isLoggedIn: async (): Promise<boolean> => {
     try {
-      const token = await authService.getAccessToken();
+      const token = await storage.getItem('accessToken');
       return !!token;
     } catch (error) {
       console.error('Error checking login status:', error);
@@ -45,7 +57,7 @@ export const autoLoginService = {
   // Logout (clear token)
   logout: async (): Promise<void> => {
     try {
-      await authService.logout();
+      await storage.removeItem('accessToken');
       console.log('Logged out successfully');
     } catch (error) {
       console.error('Error during logout:', error);

@@ -1,148 +1,120 @@
-import { apiClient } from './apiClient';
-import { storage } from '@/utils/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { httpClient } from './httpClient';
 
-// Types matching backend exactly
-interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-interface AuthResponse {
+export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
 }
 
-interface RefreshTokenRequest {
-  refreshToken: string;
+export interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
+export interface RegisterData {
+  username: string;
+  password: string;
 }
 
 export const authService = {
-  // Login method matching backend API exactly
-  login: async (credentials: LoginRequest): Promise<AuthResponse> => {
-    console.log('🔑 AuthService: Starting login with credentials:', credentials);
-    
-    // Make direct API call (no auth headers needed for login)
-    const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://35.198.76.72:8080'}/api/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('🔑 AuthService: Login failed:', response.status, errorText);
-      throw new Error(`Login failed: ${response.status}`);
-    }
-
-    const data: AuthResponse = await response.json();
-    console.log('🔑 AuthService: Login response:', data);
-    
-    // Store tokens (matches frontend pattern)
-    await storage.setItem('accessToken', data.accessToken);
-    await storage.setItem('refreshToken', data.refreshToken);
-    console.log('🔑 AuthService: Tokens stored in storage');
-    
-    return data;
+  register: async (userData: RegisterData): Promise<AuthResponse> => {
+    console.log('AuthService: Attempting registration to:', 'http://35.198.76.72:8080/api/auth/register');
+    console.log('AuthService: Registration data:', { username: userData.username, password: '***' });
+    const response = await httpClient.post('/auth/register', userData);
+    console.log('AuthService: Registration response received:', response);
+    const { accessToken, refreshToken } = response.data;
+    console.log('AuthService: Tokens received:', { accessToken: accessToken ? 'exists' : 'missing', refreshToken: refreshToken ? 'exists' : 'missing' });
+    await AsyncStorage.setItem('accessToken', accessToken);
+    await AsyncStorage.setItem('refreshToken', refreshToken);
+    return response.data;
   },
 
-  // Register method matching backend API exactly
-  register: async (userData: any): Promise<AuthResponse> => {
-    const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://35.198.76.72:8080'}/api/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Registration failed: ${response.status} - ${errorText}`);
-    }
-
-    const data: AuthResponse = await response.json();
-    
-    // Store tokens (matches frontend pattern)
-    await storage.setItem('accessToken', data.accessToken);
-    await storage.setItem('refreshToken', data.refreshToken);
-    
-    return data;
+  login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
+    console.log('AuthService: Attempting login to:', 'http://35.198.76.72:8080/api/auth/login');
+    console.log('AuthService: Credentials:', { username: credentials.username, password: '***' });
+    const response = await httpClient.post('/auth/login', credentials);
+    console.log('AuthService: Response received:', response);
+    const { accessToken, refreshToken } = response.data;
+    console.log('AuthService: Tokens received:', { accessToken: accessToken ? 'exists' : 'missing', refreshToken: refreshToken ? 'exists' : 'missing' });
+    await AsyncStorage.setItem('accessToken', accessToken);
+    await AsyncStorage.setItem('refreshToken', refreshToken);
+    return response.data;
   },
 
-  // Refresh token method matching backend API exactly
+  sendVerification: async (userData: { email: string }) => {
+    const response = await httpClient.post('/auth/send-verification-code', userData);
+    return response.data;
+  },
+
   refreshToken: async (): Promise<AuthResponse> => {
-    const refreshToken = await storage.getItem('refreshToken');
-    if (!refreshToken) {
+    console.log('AuthService: Attempting token refresh');
+    const refresh = await AsyncStorage.getItem('refreshToken');
+    console.log('AuthService: Refresh token found:', refresh ? 'Refresh token exists' : 'No refresh token');
+    
+    if (!refresh) {
+      console.log('AuthService: No refresh token available, throwing error');
       throw new Error('No refresh token available');
     }
-
-    const request: RefreshTokenRequest = { refreshToken };
     
-    const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://35.198.76.72:8080'}/api/auth/refresh-token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
+    console.log('AuthService: Making refresh request to /auth/refresh-token');
+    const response = await httpClient.post('/auth/refresh-token', { refreshToken: refresh });
+    console.log('AuthService: Refresh response received:', response);
+    
+    const { accessToken, refreshToken: newRefresh } = response.data;
+    console.log('AuthService: New tokens received:', { 
+      accessToken: accessToken ? 'exists' : 'missing', 
+      refreshToken: newRefresh ? 'exists' : 'missing' 
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('🔑 AuthService: Token refresh failed:', response.status, errorText);
-      throw new Error(`Token refresh failed: ${response.status}`);
-    }
-
-    const data: AuthResponse = await response.json();
     
-    // Store new tokens (matches frontend pattern)
-    await storage.setItem('accessToken', data.accessToken);
-    await storage.setItem('refreshToken', data.refreshToken);
-    
-    return data;
-  },
-
-  sendVerificationCode: async (email: string) => {
-    const response = await apiClient.post('/auth/send-verification-code', { email });
-    return response;
-  },
-
-  verifyCode: async (email: string, code: string) => {
-    const response = await apiClient.post('/auth/verify-code', { email, code });
-    return response;
-  },
-
-  checkEmailExists: async (email: string) => {
-    const response = await apiClient.get(`/auth/exists?email=${email}`);
-    return response;
-  },
-
-  resetPassword: async (request: any) => {
-    const response = await apiClient.post('/auth/reset-password', request);
-    return response;
+    await AsyncStorage.setItem('accessToken', accessToken);
+    await AsyncStorage.setItem('refreshToken', newRefresh);
+    console.log('AuthService: Tokens stored in AsyncStorage');
+    return response.data;
   },
 
   logout: async () => {
-    await storage.removeItem('accessToken');
-    await storage.removeItem('refreshToken');
+    await AsyncStorage.removeItem('accessToken');
+    await AsyncStorage.removeItem('refreshToken');
   },
 
-  getAccessToken: async () => {
-    return await storage.getItem('accessToken');
+  getAccessToken: async (): Promise<string | null> => {
+    const token = await AsyncStorage.getItem('accessToken');
+    console.log('AuthService: Retrieved access token:', token ? `Token exists (${token.substring(0, 20)}...)` : 'No token');
+    return token;
   },
 
-  getRefreshToken: async () => {
-    return await storage.getItem('refreshToken');
+  getRefreshToken: async (): Promise<string | null> => {
+    return await AsyncStorage.getItem('refreshToken');
   },
 
-  // Legacy methods for compatibility
-  signIn: async (email: string, password: string) => {
-    return await authService.login({ username: email, password });
+  // Send a verification code to the given email
+  sendVerificationCode: async (email: string) => {
+    const response = await httpClient.post('/auth/send-verification-code', { email });
+    return response.data;
   },
-  
-  signUp: async (email: string, password: string) => {
-    return await authService.register({ username: email, password });
+
+  // Verify a received code given email and code
+  verifyCode: async (email: string, code: number) => {
+    const response = await httpClient.post('/auth/verify-code', { email, code });
+    return response.data;
+  },
+
+  // Check if an email is already registered
+  exists: async (email: string) => {
+    const response = await httpClient.get('/auth/exists', { params: { email } });
+    return response.data;
+  },
+
+  // Forgot password - send reset code
+  forgotPassword: async (email: string) => {
+    const response = await httpClient.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  // Reset password with new password
+  resetPassword: async (email: string, newPassword: string) => {
+    const response = await httpClient.post('/auth/reset-password', { email, newPassword });
+    return response.data;
   },
 };
 

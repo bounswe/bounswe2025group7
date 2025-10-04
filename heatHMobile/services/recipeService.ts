@@ -1,4 +1,5 @@
-import { apiClient } from './apiClient';
+import { httpClient } from './httpClient';
+import { authService } from './authService';
 
 // Recipe interfaces matching backend
 export interface Recipe {

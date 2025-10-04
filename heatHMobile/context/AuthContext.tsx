@@ -1,15 +1,19 @@
 import { createContext, ReactNode, useContext, useState, useEffect } from 'react';
-import { autoLoginService } from '@/services/autoLoginService';
-import { authService } from '@/services/authService';
-import { storage } from '@/utils/storage';
+import { authService } from '../services/authService';
+import interestFormService from '../services/interestFormService';
 
 type AuthContextValue = {
   token: string | null;
-  setToken: (t: string | null) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials?: { username: string; password: string }) => Promise<void>;
+  isProfileSetup: boolean;
+  isInitialized: boolean;
+  setToken: (t: string | null) => void;
+  login: (username: string, password: string) => Promise<void>;
+  register: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshToken: () => Promise<void>;
+  checkProfileSetup: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -17,133 +21,163 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProfileSetup, setIsProfileSetup] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Debug token changes
-  useEffect(() => {
-    console.log('🔐 AuthContext - Token state changed:', token ? 'Present' : 'Null');
-    console.log('🔐 AuthContext - Is authenticated:', !!token);
-    console.log('🔐 AuthContext - Is loading:', isLoading);
-  }, [token, isLoading]);
+  const isAuthenticated = !!token;
 
-  // Auto-login on app start
+  // Check for existing token on app start
   useEffect(() => {
-    let isMounted = true;
-    
-    const initializeAuth = async () => {
+    const checkAuth = async () => {
       try {
-        setIsLoading(true);
-        console.log('🔐 AuthContext: Initializing authentication...');
-        console.log('🔐 AuthContext: Component mounted, starting auth flow...');
+        console.log('AuthContext: Checking for existing token on app start');
+        const storedToken = await authService.getAccessToken();
+        console.log('AuthContext: Existing token found:', storedToken ? 'Token exists' : 'No token');
         
-        // First check if we already have a token (matches frontend pattern)
-        const existingToken = await storage.getItem('accessToken');
-        console.log('🔐 AuthContext: Checking for existing token:', !!existingToken);
-        console.log('🔐 AuthContext: Token value:', existingToken ? existingToken.substring(0, 20) + '...' : 'null');
-        
-        if (existingToken) {
-          console.log('🔐 AuthContext: Found existing token, validating it...');
-          
-          // Validate token by attempting to refresh (matches frontend pattern)
+        if (storedToken) {
+          // Try to refresh the token to ensure it's still valid
           try {
+            console.log('AuthContext: Attempting to refresh token');
             await authService.refreshToken();
-            console.log('🔐 AuthContext: Token validation successful');
-            if (isMounted) {
-              setToken(existingToken);
-              setIsLoading(false);
-            }
-            return;
+            const refreshedToken = await authService.getAccessToken();
+            setToken(refreshedToken);
+            console.log('AuthContext: Token refreshed and set in context');
           } catch (refreshError) {
-            console.log('🔐 AuthContext: Token validation failed, clearing tokens');
-            await storage.removeItem('accessToken');
-            await storage.removeItem('refreshToken');
-            // Continue to auto-login below
+            console.log('AuthContext: Token refresh failed, clearing stored tokens');
+            await authService.logout();
+            setToken(null);
           }
-        }
-        
-        // If no existing token, attempt auto-login
-        console.log('🔐 AuthContext: No existing token, attempting auto-login...');
-        try {
-          const result = await autoLoginService.autoLogin();
-          console.log('🔐 AuthContext: Auto-login result:', result);
-          
-          if (result.success && result.token && isMounted) {
-            console.log('🔐 AuthContext: Auto-login successful, setting token');
-            setToken(result.token);
-            console.log('🔐 AuthContext: Token set in state, user authenticated');
-          } else {
-            console.log('🔐 AuthContext: Auto-login failed:', result.error);
-          }
-        } catch (autoLoginError) {
-          console.error('🔐 AuthContext: Auto-login threw error:', autoLoginError);
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error('AuthContext: Error checking existing token:', error);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-          console.log('🔐 AuthContext: Auth initialization complete, isLoading set to false');
-        }
+        setIsLoading(false);
+        setIsInitialized(true);
+        console.log('AuthContext: Initial auth check completed');
       }
     };
 
-    initializeAuth();
-    
-    return () => {
-      isMounted = false;
-    };
+    checkAuth();
   }, []);
 
-  const login = async (credentials?: { username: string; password: string }) => {
+  const login = async (username: string, password: string) => {
     try {
-      setIsLoading(true);
-      console.log('🔐 AuthContext: Manual login attempt...');
+      console.log('Attempting login with:', { username, password: '***' });
+      const result = await authService.login({ username, password });
+      console.log('Login result:', result);
+      const newToken = await authService.getAccessToken();
+      console.log('Retrieved token:', newToken ? 'Token exists' : 'No token');
+      setToken(newToken);
       
-      let result;
-      if (credentials) {
-        // Use provided credentials
-        console.log('🔐 AuthContext: Using provided credentials');
-        const response = await authService.login(credentials) as any;
-        result = { success: true, token: response.accessToken };
-      } else {
-        // Use auto-login service
-        console.log('🔐 AuthContext: Using auto-login service');
-        result = await autoLoginService.autoLogin();
-      }
-      
-      if (result.success && result.token) {
-        console.log('🔐 AuthContext: Login successful, setting token:', result.token);
-        setToken(result.token);
-        console.log('🔐 AuthContext: Token set, authentication should be true');
-      } else {
-        throw new Error(result.error || 'Login failed');
-      }
+      // Check profile setup after successful login
+      await checkProfileSetup();
     } catch (error) {
-      console.error('🔐 AuthContext: Login error:', error);
+      console.error('Login error in context:', error);
       throw error;
-    } finally {
-      setIsLoading(false);
+    }
+  };
+
+  const register = async (username: string, password: string) => {
+    try {
+      console.log('Attempting registration with:', { username, password: '***' });
+      const result = await authService.register({ username, password });
+      console.log('Registration result:', result);
+      const newToken = await authService.getAccessToken();
+      console.log('Retrieved token after registration:', newToken ? 'Token exists' : 'No token');
+      setToken(newToken);
+      
+      // New users need to complete profile setup
+      setIsProfileSetup(false);
+    } catch (error) {
+      console.error('Registration error in context:', error);
+      throw error;
     }
   };
 
   const logout = async () => {
     try {
-      await autoLoginService.logout();
+      await authService.logout();
       setToken(null);
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Logout failed:', error);
     }
   };
 
-  const value: AuthContextValue = {
-    token,
-    setToken,
-    isAuthenticated: !!token,
-    isLoading,
-    login,
-    logout,
+  const refreshToken = async () => {
+    try {
+      await authService.refreshToken();
+      const newToken = await authService.getAccessToken();
+      setToken(newToken);
+    } catch (error) {
+      await logout();
+      throw error;
+    }
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const checkProfileSetup = async () => {
+    console.log('AuthContext: Checking profile setup, isAuthenticated:', isAuthenticated);
+    if (!isAuthenticated) {
+      console.log('AuthContext: User not authenticated, setting profile setup to false');
+      setIsProfileSetup(false);
+      return;
+    }
+
+    try {
+      console.log('AuthContext: Getting form data to check if profile is complete');
+      const formData = await interestFormService.getInterestForm();
+      console.log('AuthContext: Form data retrieved:', formData);
+      
+      // Check if the form has meaningful data (not just null values or empty strings)
+      const hasCompleteProfile = formData && 
+        (formData as any).name && 
+        (formData as any).name.trim() !== '' &&
+        (formData as any).surname && 
+        (formData as any).surname.trim() !== '' &&
+        (formData as any).height && 
+        (formData as any).height > 0 &&
+        (formData as any).weight && 
+        (formData as any).weight > 0 &&
+        (formData as any).dateOfBirth && 
+        (formData as any).gender && 
+        (formData as any).gender.trim() !== '';
+      
+      console.log('AuthContext: Profile is complete:', hasCompleteProfile);
+      console.log('AuthContext: Field details:', {
+        name: (formData as any)?.name,
+        surname: (formData as any)?.surname,
+        height: (formData as any)?.height,
+        weight: (formData as any)?.weight,
+        dateOfBirth: (formData as any)?.dateOfBirth,
+        gender: (formData as any)?.gender
+      });
+      
+      setIsProfileSetup(hasCompleteProfile);
+    } catch (error) {
+      console.error('AuthContext: Profile setup check failed:', error);
+      // If we can't get the form data, assume profile is not complete
+      setIsProfileSetup(false);
+    }
+  };
+
+  return (
+    <AuthContext.Provider 
+      value={{ 
+        token, 
+        isAuthenticated, 
+        isLoading, 
+        isProfileSetup,
+        isInitialized,
+        setToken, 
+        login, 
+        register, 
+        logout, 
+        refreshToken,
+        checkProfileSetup
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuthContext() {

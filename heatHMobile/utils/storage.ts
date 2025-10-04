@@ -1,45 +1,40 @@
-// Storage utility for React Native using AsyncStorage
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// Temporary in-memory storage solution
+// TODO: Replace with AsyncStorage for persistent storage
+const inMemoryStorage: Record<string, string> = {};
 
-class PersistentStorage {
-  async getItem(key: string): Promise<string | null> {
+export const storage = {
+  getItem: async (key: string): Promise<string | null> => {
     try {
-      const value = await AsyncStorage.getItem(key);
-      console.log('💾 Storage: Getting key', key, 'value:', value ? 'Present' : 'Null');
-      return value;
+      return inMemoryStorage[key] || null;
     } catch (error) {
-      console.error('💾 Storage: Error getting item:', error);
+      console.error(`Error getting item ${key}:`, error);
       return null;
     }
-  }
+  },
 
-  async setItem(key: string, value: string): Promise<void> {
+  setItem: async (key: string, value: string): Promise<void> => {
     try {
-      console.log('💾 Storage: Setting key', key, 'value:', value ? 'Present' : 'Null');
-      await AsyncStorage.setItem(key, value);
-      console.log('💾 Storage: Set complete');
+      inMemoryStorage[key] = value;
+      console.log(`Stored ${key}:`, value.substring(0, 20) + '...');
     } catch (error) {
-      console.error('💾 Storage: Error setting item:', error);
+      console.error(`Error setting item ${key}:`, error);
     }
-  }
+  },
 
-  async removeItem(key: string): Promise<void> {
+  removeItem: async (key: string): Promise<void> => {
     try {
-      await AsyncStorage.removeItem(key);
-      console.log('💾 Storage: Removed key', key);
+      delete inMemoryStorage[key];
     } catch (error) {
-      console.error('💾 Storage: Error removing item:', error);
+      console.error(`Error removing item ${key}:`, error);
     }
-  }
+  },
 
-  async clear(): Promise<void> {
+  clear: async (): Promise<void> => {
     try {
-      await AsyncStorage.clear();
-      console.log('💾 Storage: Cleared all items');
+      Object.keys(inMemoryStorage).forEach(key => delete inMemoryStorage[key]);
     } catch (error) {
-      console.error('💾 Storage: Error clearing storage:', error);
+      console.error('Error clearing storage:', error);
     }
-  }
-}
+  },
+};
 
-export const storage = new PersistentStorage();
