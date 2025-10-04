@@ -44,6 +44,20 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="api-test"
+        options={{
+          title: 'API Test',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="wrench.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="auth/sign-in"
+        options={{
+          title: 'Sign In',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.circle.fill" color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
