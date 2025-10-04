@@ -3,6 +3,7 @@ package heatH.heatHBack.service.implementation;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import heatH.heatHBack.model.User;
 import heatH.heatHBack.repository.*;
@@ -12,10 +13,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import heatH.heatHBack.model.Feed;
+import heatH.heatHBack.model.Ingredients;
 import heatH.heatHBack.model.Recipe;
 import heatH.heatHBack.model.request.RecipeRequest;
 import lombok.RequiredArgsConstructor;
-
 @Service
 @RequiredArgsConstructor
 public class RecipeService {
@@ -26,7 +27,10 @@ public class RecipeService {
     private final FeedRepository feedRepository;
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
+    private final OpenAIService openAIService;
+    private final SemanticSearchService semanticSearchService;
     private final CalorieService calorieService;
+
 
     public Recipe saveRecipe(RecipeRequest request) {
         Recipe recipe = new Recipe();
@@ -50,7 +54,16 @@ public class RecipeService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         recipe.setUser(user);
-        return recipeRepository.save(recipe);
+
+        List<Ingredients> ingredients = recipe.getIngredients();
+        String ingredientsText = ingredients.stream()
+                .map(Ingredients::getName)
+                .collect(Collectors.joining(", "));
+        Recipe savedRecipe = recipeRepository.save(recipe);
+        double[] emb = openAIService.createEmbedding(savedRecipe.getTitle() + " " + ingredientsText);
+        semanticSearchService.saveEmbeddingForRecipe(savedRecipe.getId(), emb);
+        return savedRecipe;
+        
     }
 
     public Optional<Recipe> getRecipeById(Long id) {
@@ -66,6 +79,7 @@ public class RecipeService {
         recipeRepository.deleteById(id);
         likeRepository.deleteAllByFeedIn(feedsToDelete);
         commentRepository.deleteAllByFeedIn(feedsToDelete);
+        semanticSearchService.deleteEmbeddingForRecipe(id);
     }
     public Optional<List<Recipe>> getAllRecipes() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
