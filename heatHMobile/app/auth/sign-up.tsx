@@ -1,4 +1,3 @@
-// app/sign-up.tsx (or wherever your auth screens are)
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import Button from '@/components/ui/Button';
@@ -173,7 +172,6 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     input: {
-        fontFamily: 'Sora',
         backgroundColor: '#f8f9fa',
         borderRadius: 8,
         padding: 14,
