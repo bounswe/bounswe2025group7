@@ -12,12 +12,13 @@ export default function ForgotPasswordScreen() {
 
     return (
         <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{flex: 1}}>
             <Spacer/>
-            <ScrollView>
+            <ScrollView contentContainerStyle={{justifyContent: "center", padding: 20, flexGrow: 1}}>
                 <ThemedView style={{padding: 20}}>
                     <Spacer/>
-                    <ThemedText>Forgot Password</ThemedText>
+                    <ThemedText type={"title"} style={{flex: 1, justifyContent: "center"}}>Forgot Password</ThemedText>
                     <Spacer/>
                     <Input
                         placeholder={"Email address*"}
@@ -32,7 +33,7 @@ export default function ForgotPasswordScreen() {
             </ScrollView>
         </KeyboardAvoidingView>
 
-  );
+    );
 }
 
 

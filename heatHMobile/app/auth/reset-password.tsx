@@ -14,12 +14,15 @@ export default function ResetPasswordScreen() {
 
     return (
         <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{
+                flex: 1
+            }}>
             <Spacer/>
-            <ScrollView>
-                <ThemedView style={{padding: 20}}>
+            <ScrollView contentContainerStyle={{justifyContent: "center", padding: 20, flexGrow: 1}}>
+                <ThemedView style={{justifyContent: "center", padding: 20}}>
                     <Spacer/>
-                    <ThemedText>Forgot Password</ThemedText>
+                    <ThemedText style={{flex: 1}} type={"title"}>Reset Password</ThemedText>
                     <Spacer/>
                     <Input
                         placeholder={"Email address*"}
@@ -31,13 +34,13 @@ export default function ResetPasswordScreen() {
                         placeholder={"Password"}
                         value={password}
                         onChangeText={setPassword}
-                        />
+                    />
                     <Spacer/>
                     <Input
                         placeholder={"Confirm Password"}
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
-                        />
+                    />
                     <Spacer/>
                     <Button title={"Reset Password"}/>
                     <Spacer/>
