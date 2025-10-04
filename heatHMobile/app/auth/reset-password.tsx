@@ -22,7 +22,7 @@ export default function ResetPasswordScreen() {
             <ScrollView contentContainerStyle={{justifyContent: "center", padding: 20, flexGrow: 1}}>
                 <ThemedView style={{justifyContent: "center", padding: 20, borderRadius:20}}>
                     <Spacer/>
-                    <ThemedText style={{flex: 1}} type={"title"}>Reset Password</ThemedText>
+                    <ThemedText style={{flex: 1, textAlign:"center"}} type={"title"}>Reset Password</ThemedText>
                     <Spacer/>
                     <Input
                         placeholder={"Email address*"}

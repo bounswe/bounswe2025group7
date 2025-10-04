@@ -18,7 +18,7 @@ export default function ForgotPasswordScreen() {
             <ScrollView contentContainerStyle={{justifyContent: "center", padding: 20, flexGrow: 1}}>
                 <ThemedView style={{padding: 20, borderRadius:20}}>
                     <Spacer/>
-                    <ThemedText type={"title"} style={{flex: 1, justifyContent: "center"}}>Forgot Password</ThemedText>
+                    <ThemedText type={"title"} style={{flex: 1, textAlign: "center"}}>Forgot Password</ThemedText>
                     <Spacer/>
                     <Input
                         placeholder={"Email address*"}
