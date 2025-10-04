@@ -1,7 +1,8 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
-import {Platform, TextInput, KeyboardAvoidingView, ScrollView} from "react-native";
+import {Platform, KeyboardAvoidingView, ScrollView} from "react-native";
 import {useState} from "react";
 
 export default function ResetPasswordScreen() {
@@ -16,17 +17,17 @@ export default function ResetPasswordScreen() {
             <ScrollView>
                 <ThemedView style={{padding: 20}}>
                     <ThemedText>Forgot Password</ThemedText>
-                    <TextInput
+                    <Input
                         placeholder={"Email address*"}
                         value={email}
                         onChangeText={setEmail}
                     />
-                    <TextInput
+                    <Input
                         placeholder={"Password"}
                         value={password}
                         onChangeText={setPassword}
                         />
-                    <TextInput
+                    <Input
                         placeholder={"Confirm Password"}
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
