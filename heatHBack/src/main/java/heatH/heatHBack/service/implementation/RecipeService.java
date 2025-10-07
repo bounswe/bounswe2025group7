@@ -1,20 +1,18 @@
 package heatH.heatHBack.service.implementation;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import heatH.heatHBack.model.User;
+import heatH.heatHBack.model.*;
 import heatH.heatHBack.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import heatH.heatHBack.model.Feed;
-import heatH.heatHBack.model.Ingredients;
-import heatH.heatHBack.model.Recipe;
 import heatH.heatHBack.model.request.RecipeRequest;
 import lombok.RequiredArgsConstructor;
 @Service
@@ -41,6 +39,12 @@ public class RecipeService {
         recipe.setType(request.getType());
         //recipe.setTotalCalorie(request.getTotalCalorie());
         recipe.setTotalCalorie(calorieService.calculateCalorie(request.getIngredients()));
+        Map<String, Double> macros = calorieService.calculateMacronutrients(request.getIngredients());
+        NutritionData nutritionData = new NutritionData();
+        nutritionData.setCarbs(macros.getOrDefault("carbs", 0.0));
+        nutritionData.setFat(macros.getOrDefault("fat", 0.0));
+        nutritionData.setProtein(macros.getOrDefault("protein", 0.0));
+        recipe.setNutritionData(nutritionData);
         recipe.setPrice(request.getPrice());
 
         if (request.getPhoto() != null) {

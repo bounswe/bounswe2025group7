@@ -45,6 +45,9 @@ public class Recipe {
     @Column
     private double easinessScore;
 
+    @Embedded
+    private NutritionData nutritionData;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
@@ -54,6 +57,4 @@ public class Recipe {
     public List<String> getInstructions(){return instructions;}
     public int getTotalCalorie(){return totalCalorie;}
     public double getPrice() {return price;}
-
-
 }
