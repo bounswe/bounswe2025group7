@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import {
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  View,
+  TouchableOpacity,
+  Dimensions,
+  Animated,
+  Modal
+} from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -9,6 +21,7 @@ import Loader from '@/components/ui/Loader';
 import interestFormService from '@/services/interestFormService';
 import { authService } from '@/services/authService';
 import { useAuthContext } from '@/context/AuthContext';
+import { Colors } from '@/constants/theme';
 
 interface ProfileFormData {
   firstName: string;
@@ -20,11 +33,12 @@ interface ProfileFormData {
 }
 
 const GENDER_OPTIONS = [
-  { value: '', label: 'Select Gender' },
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-  { value: 'other', label: 'Other' },
+  { value: 'male', label: 'Male', icon: '👨' },
+  { value: 'female', label: 'Female', icon: '👩' },
+  { value: 'other', label: 'Other', icon: '👤' },
 ];
+
+const { width } = Dimensions.get('window');
 
 export default function ProfileSetupScreen() {
   const { checkProfileSetup, isAuthenticated, token, isInitialized, isLoading } = useAuthContext();
@@ -38,6 +52,35 @@ export default function ProfileSetupScreen() {
   });
   const [errors, setErrors] = useState<Partial<ProfileFormData>>({});
   const [loading, setLoading] = useState(false);
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(50));
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const getFormProgress = () => {
+    const fields = ['firstName', 'lastName', 'height', 'weight', 'dateOfBirth', 'gender'];
+    const completedFields = fields.filter(field => {
+      const value = formData[field as keyof ProfileFormData];
+      return value && value.trim() !== '';
+    });
+    return (completedFields.length / fields.length) * 100;
+  };
+
+  useEffect(() => {
+    // Fade in animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   // Wait for initialization before proceeding
   if (!isInitialized || isLoading) {
@@ -128,6 +171,19 @@ export default function ProfileSetupScreen() {
   const handleChange = (field: keyof ProfileFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setErrors(prev => ({ ...prev, [field]: validateField(field, value) }));
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setSelectedDate(selectedDate);
+      const dateString = selectedDate.toISOString().split('T')[0];
+      handleChange('dateOfBirth', dateString);
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-CA'); // Returns YYYY-MM-DD format
   };
 
   const handleSubmit = async () => {
@@ -269,95 +325,243 @@ export default function ProfileSetupScreen() {
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ThemedView style={styles.content}>
-          <ThemedText style={styles.title}>Complete Your Profile</ThemedText>
-          <ThemedText style={styles.subtitle}>
-            Please provide your information to get started
-          </ThemedText>
-
-          <ThemedView style={styles.warningBox}>
-            <ThemedText style={styles.warningText}>
-              You must complete this profile setup before accessing the app.
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View 
+          style={[
+            styles.content,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
+          {/* Header Section */}
+          <View style={styles.header}>
+            <View style={styles.iconContainer}>
+              <ThemedText style={styles.icon}>👤</ThemedText>
+            </View>
+            <ThemedText style={styles.title}>Complete Your Profile</ThemedText>
+            <ThemedText style={styles.subtitle}>
+              Help us personalize your cooking experience
             </ThemedText>
-          </ThemedView>
+            
+            {/* Progress Bar */}
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBar}>
+                <View 
+                  style={[
+                    styles.progressFill, 
+                    { width: `${getFormProgress()}%` }
+                  ]} 
+                />
+              </View>
+              <ThemedText style={styles.progressText}>
+                {Math.round(getFormProgress())}% Complete
+              </ThemedText>
+            </View>
+          </View>
 
-          <Input
-            placeholder="First Name"
-            value={formData.firstName}
-            onChangeText={(value) => handleChange('firstName', value)}
-            style={styles.input}
-          />
-          {errors.firstName ? (
-            <ThemedText style={styles.errorText}>{errors.firstName}</ThemedText>
-          ) : null}
+          {/* Form Section */}
+          <View style={styles.formSection}>
+            {/* Personal Information */}
+            <View style={styles.section}>
+              <ThemedText style={styles.sectionTitle}>Personal Information</ThemedText>
+              
+              <View style={styles.inputRow}>
+                <View style={styles.inputContainer}>
+                  <ThemedText style={styles.inputLabel}>First Name</ThemedText>
+                  <Input
+                    placeholder="Enter your first name"
+                    value={formData.firstName}
+                    onChangeText={(value) => handleChange('firstName', value)}
+                    style={[
+                      styles.input,
+                      errors.firstName && styles.inputError
+                    ]}
+                  />
+                  {errors.firstName && (
+                    <ThemedText style={styles.errorText}>{errors.firstName}</ThemedText>
+                  )}
+                </View>
+                
+                <View style={styles.inputContainer}>
+                  <ThemedText style={styles.inputLabel}>Last Name</ThemedText>
+                  <Input
+                    placeholder="Enter your last name"
+                    value={formData.lastName}
+                    onChangeText={(value) => handleChange('lastName', value)}
+                    style={[
+                      styles.input,
+                      errors.lastName && styles.inputError
+                    ]}
+                  />
+                  {errors.lastName && (
+                    <ThemedText style={styles.errorText}>{errors.lastName}</ThemedText>
+                  )}
+                </View>
+              </View>
+            </View>
 
-          <Input
-            placeholder="Last Name"
-            value={formData.lastName}
-            onChangeText={(value) => handleChange('lastName', value)}
-            style={styles.input}
-          />
-          {errors.lastName ? (
-            <ThemedText style={styles.errorText}>{errors.lastName}</ThemedText>
-          ) : null}
+            {/* Physical Information */}
+            <View style={styles.section}>
+              <ThemedText style={styles.sectionTitle}>Physical Information</ThemedText>
+              
+              <View style={styles.inputRow}>
+                <View style={styles.inputContainer}>
+                  <ThemedText style={styles.inputLabel}>Height (cm)</ThemedText>
+                  <Input
+                    placeholder="e.g., 175"
+                    value={formData.height}
+                    onChangeText={(value) => handleChange('height', value)}
+                    keyboardType="numeric"
+                    style={[
+                      styles.input,
+                      errors.height && styles.inputError
+                    ]}
+                  />
+                  {errors.height && (
+                    <ThemedText style={styles.errorText}>{errors.height}</ThemedText>
+                  )}
+                </View>
+                
+                <View style={styles.inputContainer}>
+                  <ThemedText style={styles.inputLabel}>Weight (kg)</ThemedText>
+                  <Input
+                    placeholder="e.g., 70"
+                    value={formData.weight}
+                    onChangeText={(value) => handleChange('weight', value)}
+                    keyboardType="numeric"
+                    style={[
+                      styles.input,
+                      errors.weight && styles.inputError
+                    ]}
+                  />
+                  {errors.weight && (
+                    <ThemedText style={styles.errorText}>{errors.weight}</ThemedText>
+                  )}
+                </View>
+              </View>
+            </View>
 
-          <Input
-            placeholder="Height (cm)"
-            value={formData.height}
-            onChangeText={(value) => handleChange('height', value)}
-            keyboardType="numeric"
-            style={styles.input}
-          />
-          {errors.height ? (
-            <ThemedText style={styles.errorText}>{errors.height}</ThemedText>
-          ) : null}
+            {/* Additional Information */}
+            <View style={styles.section}>
+              <ThemedText style={styles.sectionTitle}>Additional Information</ThemedText>
+              
+              <View style={styles.inputContainer}>
+                <ThemedText style={styles.inputLabel}>Date of Birth</ThemedText>
+                <TouchableOpacity
+                  style={[
+                    styles.dateInput,
+                    errors.dateOfBirth && styles.inputError
+                  ]}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <ThemedText style={[
+                    styles.dateInputText,
+                    !formData.dateOfBirth && styles.dateInputPlaceholder
+                  ]}>
+                    {formData.dateOfBirth ? formatDate(new Date(formData.dateOfBirth)) : 'Select your date of birth'}
+                  </ThemedText>
+                  <ThemedText style={styles.calendarIcon}>📅</ThemedText>
+                </TouchableOpacity>
+                {errors.dateOfBirth && (
+                  <ThemedText style={styles.errorText}>{errors.dateOfBirth}</ThemedText>
+                )}
+              </View>
 
-          <Input
-            placeholder="Weight (kg)"
-            value={formData.weight}
-            onChangeText={(value) => handleChange('weight', value)}
-            keyboardType="numeric"
-            style={styles.input}
-          />
-          {errors.weight ? (
-            <ThemedText style={styles.errorText}>{errors.weight}</ThemedText>
-          ) : null}
+              <View style={styles.inputContainer}>
+                <ThemedText style={styles.inputLabel}>Gender</ThemedText>
+                <View style={styles.genderContainer}>
+                  {GENDER_OPTIONS.map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        styles.genderOption,
+                        formData.gender === option.value && styles.genderOptionSelected
+                      ]}
+                      onPress={() => handleChange('gender', option.value)}
+                    >
+                      <ThemedText style={styles.genderIcon}>{option.icon}</ThemedText>
+                      <ThemedText style={[
+                        styles.genderText,
+                        formData.gender === option.value && styles.genderTextSelected
+                      ]}>
+                        {option.label}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                {errors.gender && (
+                  <ThemedText style={styles.errorText}>{errors.gender}</ThemedText>
+                )}
+              </View>
+            </View>
+          </View>
 
-          <Input
-            placeholder="Date of Birth (YYYY-MM-DD)"
-            value={formData.dateOfBirth}
-            onChangeText={(value) => handleChange('dateOfBirth', value)}
-            style={styles.input}
-          />
-          {errors.dateOfBirth ? (
-            <ThemedText style={styles.errorText}>{errors.dateOfBirth}</ThemedText>
-          ) : null}
-
-          <ThemedView style={styles.genderContainer}>
-            <ThemedText style={styles.genderLabel}>Gender</ThemedText>
-            {GENDER_OPTIONS.map((option) => (
-              <Button
-                key={option.value}
-                title={option.label}
-                onPress={() => handleChange('gender', option.value)}
-                variant={formData.gender === option.value ? 'default' : 'outline'}
-                style={styles.genderButton}
-              />
-            ))}
-          </ThemedView>
-          {errors.gender ? (
-            <ThemedText style={styles.errorText}>{errors.gender}</ThemedText>
-          ) : null}
-
-          <Button
-            title={loading ? 'Saving Profile...' : 'Save Profile'}
-            onPress={handleSubmit}
-            disabled={loading}
-            style={styles.submitButton}
-          />
-        </ThemedView>
+          {/* Submit Button */}
+          <View style={styles.submitSection}>
+            <Button
+              title={loading ? 'Creating Profile...' : 'Complete Profile'}
+              onPress={handleSubmit}
+              disabled={loading || getFormProgress() < 100}
+              style={getFormProgress() < 100 ? styles.submitButtonDisabled : styles.submitButton}
+            />
+            <ThemedText style={styles.helpText}>
+              All fields are required to personalize your experience
+            </ThemedText>
+          </View>
+        </Animated.View>
       </ScrollView>
+
+      {/* Date Picker Modal */}
+      {showDatePicker && (
+        <Modal
+          transparent={true}
+          animationType="slide"
+          visible={showDatePicker}
+          onRequestClose={() => setShowDatePicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <ThemedText style={styles.modalTitle}>Select Date of Birth</ThemedText>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setShowDatePicker(false)}
+                >
+                  <ThemedText style={styles.closeButtonText}>✕</ThemedText>
+                </TouchableOpacity>
+              </View>
+              
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleDateChange}
+                maximumDate={new Date()}
+                minimumDate={new Date(1900, 0, 1)}
+                style={styles.datePicker}
+              />
+              
+              <View style={styles.modalActions}>
+                <Button
+                  title="Cancel"
+                  onPress={() => setShowDatePicker(false)}
+                  style={styles.modalButton}
+                />
+                <Button
+                  title="Done"
+                  onPress={() => setShowDatePicker(false)}
+                  style={styles.modalButton}
+                />
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -365,60 +569,272 @@ export default function ProfileSetupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f8fafc',
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 40,
   },
   content: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+  },
+  
+  // Header Styles
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.light.tint,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  icon: {
+    fontSize: 32,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
+    color: '#1e293b',
   },
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 20,
-    opacity: 0.7,
+    marginBottom: 24,
+    color: '#64748b',
+    lineHeight: 22,
   },
-  warningBox: {
-    backgroundColor: '#fff3cd',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#ffeaa7',
+  
+  // Progress Bar Styles
+  progressContainer: {
+    width: '100%',
+    alignItems: 'center',
   },
-  warningText: {
-    color: '#856404',
-    textAlign: 'center',
-    fontSize: 14,
-  },
-  input: {
+  progressBar: {
+    width: '100%',
+    height: 8,
+    backgroundColor: '#e2e8f0',
+    borderRadius: 4,
+    overflow: 'hidden',
     marginBottom: 8,
   },
-  genderContainer: {
+  progressFill: {
+    height: '100%',
+    backgroundColor: Colors.light.tint,
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  
+  // Form Section Styles
+  formSection: {
+    marginBottom: 32,
+  },
+  section: {
+    marginBottom: 32,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1e293b',
     marginBottom: 16,
   },
-  genderLabel: {
-    fontSize: 16,
-    marginBottom: 8,
-    fontWeight: '600',
+  
+  // Input Styles
+  inputRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
   },
-  genderButton: {
+  inputContainer: {
+    flex: 1,
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
     marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: '#1e293b',
+  },
+  inputError: {
+    borderColor: '#ef4444',
+    backgroundColor: '#fef2f2',
   },
   errorText: {
-    color: 'red',
+    color: '#ef4444',
     fontSize: 12,
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  
+  // Gender Selection Styles
+  genderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  genderOption: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 80,
+  },
+  genderOptionSelected: {
+    backgroundColor: '#eff6ff',
+    borderColor: Colors.light.tint,
+  },
+  genderIcon: {
+    fontSize: 24,
     marginBottom: 8,
   },
-  submitButton: {
+  genderText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#64748b',
+    textAlign: 'center',
+  },
+  genderTextSelected: {
+    color: Colors.light.tint,
+    fontWeight: '600',
+  },
+  
+  // Submit Section Styles
+  submitSection: {
+    alignItems: 'center',
     marginTop: 20,
+  },
+  submitButton: {
+    width: '100%',
+    backgroundColor: Colors.light.tint,
+    borderRadius: 16,
+    paddingVertical: 18,
+    marginBottom: 16,
+    shadowColor: Colors.light.tint,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#cbd5e1',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  helpText: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  
+  // Date Picker Styles
+  dateInput: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dateInputText: {
+    fontSize: 16,
+    color: '#1e293b',
+    flex: 1,
+  },
+  dateInputPlaceholder: {
+    color: '#94a3b8',
+  },
+  calendarIcon: {
+    fontSize: 20,
+    color: Colors.light.tint,
+  },
+  
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '50%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1e293b',
+  },
+  closeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: 16,
+    color: '#64748b',
+    fontWeight: '600',
+  },
+  datePicker: {
+    marginBottom: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
   },
 });
