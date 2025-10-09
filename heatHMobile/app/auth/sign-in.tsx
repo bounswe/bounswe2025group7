@@ -7,7 +7,6 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { useAuthContext } from '@/context/AuthContext';
 import { authService } from '@/services/authService';
-import interestFormService from '@/services/interestFormService';
 
 export default function SignInScreen() {
   const { login, isAuthenticated } = useAuthContext();
@@ -20,23 +19,9 @@ export default function SignInScreen() {
   // Check authentication on mount
   useEffect(() => {
     if (isAuthenticated) {
-      checkFirstLogin();
-    }
-  }, [isAuthenticated]);
-
-  const checkFirstLogin = async () => {
-    try {
-      const firstLogin = await interestFormService.checkFirstLogin();
-      if (!firstLogin) {
-        router.replace('/forms/interest');
-      } else {
-        router.replace('/(tabs)');
-      }
-    } catch (error) {
-      console.error('First login check failed:', error);
       router.replace('/(tabs)');
     }
-  };
+  }, [isAuthenticated]);
 
   const handleChange = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -115,7 +100,6 @@ export default function SignInScreen() {
         <Button
           title="Forgot Password?"
           onPress={handleForgotPassword}
-          variant="text"
           style={styles.linkButton}
         />
 
