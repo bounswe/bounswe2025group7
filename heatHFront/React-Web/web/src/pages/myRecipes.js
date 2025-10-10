@@ -197,13 +197,16 @@ const MyRecipes = () => {
     try {
       setSubmitting(true);
 
-      // Prepare ingredient list in the format expected by API
-      const ingredientList = newIngredients.map(ing => `${ing.name}: ${ing.amount}`);
+      // ✅ Updated ingredient mapping for new API schema
+      const ingredientList = newIngredients.map(ing => ({
+        name: ing.name,
+        quantity: Number(ing.quantity) || 0, // ensure it's an integer
+      }));
 
-      // Create recipe data object according to API requirements
       const recipeData = {
         title: newTitle,
-        instructions: newInstructions,        ingredients: ingredientList,
+        instructions: newInstructions,
+        ingredients: ingredientList, // now an array of objects
         tag: newTag,
         type: newType,
         photo: newPhotoBase64 || 'https://picsum.photos/seed/default/300/300',
@@ -214,20 +217,21 @@ const MyRecipes = () => {
       if (isEditing) {
         // Update existing recipe
         try {
-          const response = await fetch(`http://167.172.162.159:8080/api/recipe/update?recipeId=${editingRecipeId}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-            },
-            body: JSON.stringify(recipeData),
-          });
+          const response = await fetch(
+              `http://167.172.162.159:8080/api/recipe/update?recipeId=${editingRecipeId}`,
+              {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+                },
+                body: JSON.stringify(recipeData),
+              }
+          );
 
           if (!response.ok) {
             throw new Error(`Error updating recipe: ${response.statusText}`);
           }
-
-
 
           console.log("Recipe updated successfully");
         } catch (error) {
@@ -236,7 +240,7 @@ const MyRecipes = () => {
           throw error;
         }
       } else {
-        // Create new recipe with POST request
+        // Create new recipe
         try {
           const response = await apiClient.post("/recipe/create", recipeData);
 
@@ -245,16 +249,13 @@ const MyRecipes = () => {
           }
 
           console.log("Recipe created successfully:", response.data);
-
-          // Close the dialog and refresh recipes list instead of navigating
           setOpenAddDialog(false);
 
-          // Fetch updated recipes list
+          // Refresh list
           setLoading(true);
           const fetchResponse = await apiClient.get('/recipe/get-all');
           setRecipes(fetchResponse.data);
           setLoading(false);
-
         } catch (error) {
           console.error("Failed to create recipe:", error);
           setError(`Failed to create recipe: ${error.message}`);
@@ -265,12 +266,12 @@ const MyRecipes = () => {
       // Clear form fields
       resetForm();
     } catch (error) {
-      // Error handling is done in the nested try-catch blocks
+      // already handled
     } finally {
       setSubmitting(false);
-
     }
   };
+
 
   // Handle edit click
   const handleEditClick = (recipeId) => {
@@ -584,15 +585,6 @@ const MyRecipes = () => {
                     />
 
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                      <TextField
-                        required
-                        label="Total Calorie"
-                        type="number"
-                        value={newTotalCalory}
-                        onChange={(e) => setNewTotalCalory(e.target.value)}
-                        fullWidth
-                        disabled={submitting}
-                      />
                       <TextField
                         required
                         label="Price"
