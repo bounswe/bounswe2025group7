@@ -1,3 +1,4 @@
+import { storage } from '@/utils/storage';
 import { httpClient } from './httpClient';
 
 export interface AuthResponse {
@@ -23,7 +24,12 @@ export const authService = {
     console.log('AuthService: Registration response received:', response);
     const { accessToken, refreshToken } = response.data;
     console.log('AuthService: Tokens received:', { accessToken: accessToken ? 'exists' : 'missing', refreshToken: refreshToken ? 'exists' : 'missing' });
-    // Store tokens in memory storage for now
+    
+    // Store tokens in storage
+    await storage.setItem('accessToken', accessToken);
+    await storage.setItem('refreshToken', refreshToken);
+    console.log('AuthService: Tokens stored in storage');
+    
     return response.data;
   },
 
@@ -34,7 +40,12 @@ export const authService = {
     console.log('AuthService: Response received:', response);
     const { accessToken, refreshToken } = response.data;
     console.log('AuthService: Tokens received:', { accessToken: accessToken ? 'exists' : 'missing', refreshToken: refreshToken ? 'exists' : 'missing' });
-    // Store tokens in memory storage for now
+    
+    // Store tokens in storage
+    await storage.setItem('accessToken', accessToken);
+    await storage.setItem('refreshToken', refreshToken);
+    console.log('AuthService: Tokens stored in storage');
+    
     return response.data;
   },
 
@@ -47,7 +58,7 @@ export const authService = {
     console.log('AuthService: Attempting token refresh');
     // For now, we'll need to get the refresh token from storage
     // This is a simplified version - in real implementation, you'd get it from storage
-    const refresh = 'dummy-refresh-token'; // This should come from storage
+    const refresh = await storage.getItem('refreshToken');
     console.log('AuthService: Refresh token found:', refresh ? 'Refresh token exists' : 'No refresh token');
     
     if (!refresh) {
@@ -65,25 +76,26 @@ export const authService = {
       refreshToken: newRefresh ? 'exists' : 'missing' 
     });
     
-    // Store tokens in memory storage for now
-    console.log('AuthService: Tokens stored in memory');
+    await storage.setItem('accessToken', accessToken);
+    await storage.setItem('refreshToken', newRefresh);
+    console.log('AuthService: Tokens stored in storage');
     return response.data;
   },
 
   logout: async () => {
-    // Clear tokens from memory storage
-    console.log('AuthService: User logged out');
+    await storage.removeItem('accessToken');
+    await storage.removeItem('refreshToken');
+    console.log('AuthService: User logged out, tokens cleared');
   },
 
   getAccessToken: async (): Promise<string | null> => {
-    // For now, return null - in real implementation, get from storage
-    console.log('AuthService: Retrieved access token: No token');
-    return null;
+    const token = await storage.getItem('accessToken');
+    console.log('AuthService: Retrieved access token:', token ? `Token exists (${token.substring(0, 20)}...)` : 'No token');
+    return token;
   },
 
   getRefreshToken: async (): Promise<string | null> => {
-    // For now, return null - in real implementation, get from storage
-    return null;
+    return await storage.getItem('refreshToken');
   },
 
   // Send a verification code to the given email
