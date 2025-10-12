@@ -25,6 +25,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
 
   const isAuthenticated = !!token;
+  
+  // Debug: Log authentication state changes
+  useEffect(() => {
+    console.log('AuthContext: Authentication state changed - token:', token ? `Token exists (${token.substring(0, 20)}...)` : 'No token', 'isAuthenticated:', isAuthenticated);
+    
+    // Debug: Decode token to see which user it belongs to
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('AuthContext: Token belongs to user:', payload.sub);
+        console.log('AuthContext: Token issued at:', new Date(payload.iat * 1000));
+        console.log('AuthContext: Token expires at:', new Date(payload.exp * 1000));
+      } catch (e) {
+        console.log('AuthContext: Could not decode token:', e);
+      }
+    }
+    
+    // Check if there's a mismatch between token state and actual stored token
+    if (isAuthenticated && !token) {
+      console.log('AuthContext: WARNING - isAuthenticated is true but token is null!');
+    }
+    if (!isAuthenticated && token) {
+      console.log('AuthContext: WARNING - isAuthenticated is false but token exists!');
+    }
+  }, [token, isAuthenticated]);
 
   // Check for existing token on app start
   useEffect(() => {
@@ -35,15 +60,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('AuthContext: Existing token found:', storedToken ? 'Token exists' : 'No token');
         
         if (storedToken) {
-          // Try to refresh the token to ensure it's still valid
+          // Debug: Decode the existing token
           try {
-            console.log('AuthContext: Attempting to refresh token');
-            await authService.refreshToken();
-            const refreshedToken = await authService.getAccessToken();
-            setToken(refreshedToken);
-            console.log('AuthContext: Token refreshed and set in context');
-          } catch (refreshError) {
-            console.log('AuthContext: Token refresh failed, clearing stored tokens');
+            const payload = JSON.parse(atob(storedToken.split('.')[1]));
+            console.log('AuthContext: Existing token is for user:', payload.sub);
+            console.log('AuthContext: Existing token issued at:', new Date(payload.iat * 1000));
+            console.log('AuthContext: Existing token expires at:', new Date(payload.exp * 1000));
+            
+            // Check if token is expired
+            const now = new Date();
+            const expDate = new Date(payload.exp * 1000);
+            const isExpired = now > expDate;
+            console.log('AuthContext: Token is expired:', isExpired);
+            
+            if (isExpired) {
+              console.log('AuthContext: Token is expired, clearing stored tokens');
+              await authService.logout();
+              setToken(null);
+            } else {
+              console.log('AuthContext: Token is valid, setting in context');
+              setToken(storedToken);
+              await checkProfileSetup();
+            }
+          } catch (e) {
+            console.log('AuthContext: Could not decode existing token:', e);
+            console.log('AuthContext: Clearing invalid token');
             await authService.logout();
             setToken(null);
           }
@@ -62,11 +103,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, password: string) => {
     try {
-      console.log('Attempting login with:', { username, password: '***' });
+      console.log('AuthContext: Attempting login with:', { username, password: '***' });
+      
+      // Debug: Check current token before login
+      const currentToken = await authService.getAccessToken();
+      console.log('AuthContext: Current token before login:', currentToken ? `Token exists (${currentToken.substring(0, 20)}...)` : 'No token');
+      
       const result = await authService.login({ username, password });
-      console.log('Login result:', result);
+      console.log('AuthContext: Login result:', result);
+      
       const newToken = await authService.getAccessToken();
-      console.log('Retrieved token:', newToken ? 'Token exists' : 'No token');
+      console.log('AuthContext: Retrieved token after login:', newToken ? `Token exists (${newToken.substring(0, 20)}...)` : 'No token');
+      
+      // Debug: Decode new token to see username
+      if (newToken) {
+        try {
+          const payload = JSON.parse(atob(newToken.split('.')[1]));
+          console.log('AuthContext: New JWT payload:', payload);
+          console.log('AuthContext: New username from JWT:', payload.sub);
+        } catch (e) {
+          console.log('AuthContext: Could not decode new JWT:', e);
+        }
+      }
+      
+      console.log('AuthContext: Setting token after login to:', newToken ? `Token exists (${newToken.substring(0, 20)}...)` : 'No token');
+      
+      // Debug: Decode the token being set
+      if (newToken) {
+        try {
+          const payload = JSON.parse(atob(newToken.split('.')[1]));
+          console.log('AuthContext: Token being set for user:', payload.sub);
+          console.log('AuthContext: Token issued at:', new Date(payload.iat * 1000));
+        } catch (e) {
+          console.log('AuthContext: Could not decode token being set:', e);
+        }
+      }
+      
       setToken(newToken);
       
       // Check profile setup after successful login
@@ -96,7 +168,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      console.log('AuthContext: Logging out user');
       await authService.logout();
+      console.log('AuthContext: Setting token to null after logout');
       setToken(null);
     } catch (error) {
       console.error('Logout failed:', error);

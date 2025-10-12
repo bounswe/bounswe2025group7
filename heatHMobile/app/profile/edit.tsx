@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, StyleSheet, Alert, Image } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -8,14 +8,16 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Loader from '@/components/ui/Loader';
 import ErrorMessage from '@/components/ui/ErrorMessage';
-import { interestFormService } from '@/services/interestFormService';
+import interestFormService from '@/services/interestFormService';
+import { authService } from '@/services/authService';
 import { ProfileData } from '@/models/User';
 import { useRouter } from 'expo-router';
+import { useAuthContext } from '@/context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const effectRan = useRef(false);
+  const { isAuthenticated, isLoading: authLoading } = useAuthContext();
   
   const [formData, setFormData] = useState<ProfileData>({
     firstName: '',
@@ -35,14 +37,75 @@ export default function EditProfileScreen() {
 
   // Load existing profile data
   useEffect(() => {
-    if (effectRan.current) return;
-    effectRan.current = true;
+    console.log('EditProfile: useEffect triggered - authLoading:', authLoading, 'isAuthenticated:', isAuthenticated);
+    
+    // Clear previous data when authentication state changes
+    console.log('EditProfile: Clearing form data due to auth state change');
+    setFormData({
+      firstName: '',
+      lastName: '',
+      weight: undefined,
+      height: undefined,
+      dateOfBirth: '',
+      gender: '',
+      profilePhoto: '',
+    });
+    setPreviewUrl('');
+    setError(null);
+    
+    // Wait for authentication to complete
+    if (authLoading) {
+      console.log('EditProfile: Waiting for auth to complete...');
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      console.log('EditProfile: User not authenticated, redirecting');
+      router.replace('/auth/sign-in');
+      return;
+    }
+
+    console.log('EditProfile: User authenticated, loading profile data...');
 
     const loadProfileData = async () => {
       try {
         setLoading(true);
+        
+        // Debug: Check what user is currently authenticated
+        const token = await authService.getAccessToken();
+        console.log('EditProfile: Current token:', token ? `Token exists (${token.substring(0, 20)}...)` : 'No token');
+        
+        // Debug: Decode JWT to see username
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            console.log('EditProfile: JWT payload:', payload);
+            console.log('EditProfile: Current username from JWT:', payload.sub);
+          } catch (e) {
+            console.log('EditProfile: Could not decode JWT:', e);
+          }
+        }
+        
         const data = await interestFormService.getInterestForm();
+        console.log('EditProfile: Profile data received:', data);
+        console.log('EditProfile: User in profile data:', data?.user);
+        console.log('EditProfile: Username in profile data:', data?.user?.username);
+        console.log('EditProfile: Profile ID:', data?.id);
+        
+        // Check if the profile data belongs to the current user
+        const currentUsername = token ? JSON.parse(atob(token.split('.')[1])).sub : null;
+        console.log('EditProfile: Current username from JWT:', currentUsername);
+        console.log('EditProfile: Profile username:', data?.user?.username);
+        
+        if (currentUsername && data?.user?.username && currentUsername !== data.user.username) {
+          console.log('EditProfile: WARNING - Profile data does not match current user!');
+          console.log('EditProfile: This suggests a backend issue where wrong profile is returned');
+        }
+        
         const profile = interestFormService.toProfileData(data);
+        console.log('EditProfile: Profile data converted:', profile);
+        console.log('EditProfile: Date of birth format:', profile.dateOfBirth);
         
         setFormData(profile);
         if (profile.profilePhoto) {
@@ -57,7 +120,7 @@ export default function EditProfileScreen() {
     };
 
     loadProfileData();
-  }, []);
+  }, [isAuthenticated, authLoading]);
 
   const validateField = (name: keyof ProfileData, value: any): string => {
     switch (name) {
@@ -74,10 +137,35 @@ export default function EditProfileScreen() {
           ? 'Height must be between 100 and 250 cm' : '';
       case 'dateOfBirth':
         if (!value) return '';
-        const date = new Date(value);
+        
+        // Handle different date formats
+        let date: Date;
+        if (value.includes('-')) {
+          // Handle YYYY-MM-DD format from backend
+          date = new Date(value);
+        } else if (value.includes('/')) {
+          // Handle MM/DD/YYYY format
+          date = new Date(value);
+        } else {
+          // Try to parse as-is
+          date = new Date(value);
+        }
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+          return 'Invalid date format';
+        }
+        
         const today = new Date();
-        const age = today.getFullYear() - date.getFullYear();
-        return age < 13 || age > 120 ? 'Invalid date of birth' : '';
+        let age = today.getFullYear() - date.getFullYear();
+        
+        // Adjust age calculation for more accuracy
+        const monthDiff = today.getMonth() - date.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
+          age--;
+        }
+        
+        return age < 13 || age > 120 ? 'Age must be between 13 and 120 years' : '';
       default:
         return '';
     }
@@ -129,8 +217,42 @@ export default function EditProfileScreen() {
 
     try {
       setSaving(true);
+      console.log('EditProfile: Starting save process with form data:', formData);
       const interestFormData = interestFormService.fromProfileData(formData);
-      await interestFormService.updateInterestForm(interestFormData);
+      console.log('EditProfile: Converted to interest form data:', interestFormData);
+      
+      // Validate the data format
+      if (!interestFormData.name || !interestFormData.surname) {
+        throw new Error('Name and surname are required');
+      }
+      
+      console.log('EditProfile: Data validation passed');
+      
+      // Try update first, if it fails, try create
+      try {
+        console.log('EditProfile: Attempting to update existing form');
+        await interestFormService.updateInterestForm(interestFormData);
+        console.log('EditProfile: Update successful');
+      } catch (updateError) {
+        console.log('EditProfile: Update failed, trying create instead:', updateError);
+        try {
+          await interestFormService.createInterestForm(interestFormData);
+          console.log('EditProfile: Create successful');
+        } catch (createError) {
+          console.log('EditProfile: Create also failed:', createError);
+          
+          // Test if we can make any authenticated requests at all
+          console.log('EditProfile: Testing basic authentication...');
+          try {
+            await interestFormService.testAuthentication();
+            console.log('EditProfile: Basic authentication test passed');
+          } catch (authError) {
+            console.log('EditProfile: Basic authentication test failed:', authError);
+          }
+          
+          throw createError;
+        }
+      }
       
       Alert.alert('Success', 'Profile updated successfully', [
         { text: 'OK', onPress: () => router.back() }

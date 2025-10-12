@@ -9,7 +9,7 @@ import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Spacer from '@/components/ui/Spacer';
 import Divider from '@/components/ui/Divider';
-import { interestFormService } from '@/services/interestFormService';
+import interestFormService from '@/services/interestFormService';
 import { feedService } from '@/services/feedService';
 import { useAuthContext } from '@/context/AuthContext';
 import DebugStorage from '@/components/DebugStorage';

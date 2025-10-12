@@ -89,9 +89,24 @@ export const authService = {
   },
 
   getAccessToken: async (): Promise<string | null> => {
-    const token = await storage.getItem('accessToken');
-    console.log('AuthService: Retrieved access token:', token ? `Token exists (${token.substring(0, 20)}...)` : 'No token');
-    return token;
+    try {
+      const token = await storage.getItem('accessToken');
+      console.log('AuthService: Retrieved access token:', token ? `Token exists (${token.substring(0, 20)}...)` : 'No token');
+      
+      // If no token found, try again after a short delay (race condition fix)
+      if (!token) {
+        console.log('AuthService: No token found, waiting 100ms and retrying...');
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const retryToken = await storage.getItem('accessToken');
+        console.log('AuthService: Retry result:', retryToken ? `Token exists (${retryToken.substring(0, 20)}...)` : 'Still no token');
+        return retryToken;
+      }
+      
+      return token;
+    } catch (error) {
+      console.error('AuthService: Error retrieving access token:', error);
+      return null;
+    }
   },
 
   getRefreshToken: async (): Promise<string | null> => {

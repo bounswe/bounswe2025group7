@@ -39,6 +39,14 @@ class HttpClient {
     console.log('HttpClient: Method:', method);
     console.log('HttpClient: Headers:', requestHeaders);
     console.log('HttpClient: Body:', data);
+    
+    // Debug: Log the exact Authorization header being sent
+    if (requestHeaders['Authorization']) {
+      console.log('HttpClient: Authorization header being sent:', requestHeaders['Authorization']);
+      console.log('HttpClient: Token length:', requestHeaders['Authorization'].length);
+    } else {
+      console.log('HttpClient: No Authorization header in request');
+    }
 
     const response = await fetch(fullUrl, requestConfig);
     console.log('HttpClient: Response status:', response.status);

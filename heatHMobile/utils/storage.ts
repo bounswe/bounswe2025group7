@@ -1,11 +1,12 @@
-// Temporary in-memory storage solution
-// TODO: Replace with AsyncStorage for persistent storage
-const inMemoryStorage: Record<string, string> = {};
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const storage = {
   getItem: async (key: string): Promise<string | null> => {
     try {
-      return inMemoryStorage[key] || null;
+      console.log(`Storage: Getting item ${key}`);
+      const value = await AsyncStorage.getItem(key);
+      console.log(`Storage: Retrieved ${key}:`, value ? `Value exists (${value.substring(0, 20)}...)` : 'No value');
+      return value;
     } catch (error) {
       console.error(`Error getting item ${key}:`, error);
       return null;
@@ -14,7 +15,7 @@ export const storage = {
 
   setItem: async (key: string, value: string): Promise<void> => {
     try {
-      inMemoryStorage[key] = value;
+      await AsyncStorage.setItem(key, value);
       console.log(`Stored ${key}:`, value.substring(0, 20) + '...');
     } catch (error) {
       console.error(`Error setting item ${key}:`, error);
@@ -23,7 +24,8 @@ export const storage = {
 
   removeItem: async (key: string): Promise<void> => {
     try {
-      delete inMemoryStorage[key];
+      await AsyncStorage.removeItem(key);
+      console.log(`Removed ${key} from storage`);
     } catch (error) {
       console.error(`Error removing item ${key}:`, error);
     }
@@ -31,7 +33,7 @@ export const storage = {
 
   clear: async (): Promise<void> => {
     try {
-      Object.keys(inMemoryStorage).forEach(key => delete inMemoryStorage[key]);
+      await AsyncStorage.clear();
     } catch (error) {
       console.error('Error clearing storage:', error);
     }
