@@ -18,8 +18,7 @@ public class Recipe {
 
     @ElementCollection
     @CollectionTable(name = "recipe_ingredients", joinColumns = @JoinColumn(name = "recipe_id"))
-    @Column(name = "ingredient", nullable = false)
-    private List<String> ingredients;
+    private List<Ingredients> ingredients;
 
     @Column
     private String tag;
@@ -46,6 +45,9 @@ public class Recipe {
     @Column
     private double easinessScore;
 
+    @Embedded
+    private NutritionData nutritionData;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
@@ -55,6 +57,4 @@ public class Recipe {
     public List<String> getInstructions(){return instructions;}
     public int getTotalCalorie(){return totalCalorie;}
     public double getPrice() {return price;}
-
-
 }
