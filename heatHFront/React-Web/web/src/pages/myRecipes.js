@@ -85,7 +85,7 @@ const MyRecipes = () => {
   const [recipeToDelete, setRecipeToDelete] = useState(null);
 
   // Check if all form fields are filled
-  const isFormComplete = newTitle && newType && newTag && newInstructions && newIngredients.length > 0 && newTotalCalory && newPrice;
+  const isFormComplete = newTitle && newType && newTag && newInstructions && newIngredients.length > 0 && newPrice;
 
   // Fetch my recipes on component mount
   useEffect(() => {
