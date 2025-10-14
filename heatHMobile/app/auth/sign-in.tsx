@@ -60,7 +60,38 @@ export default function SignInScreen() {
       // Navigation will be handled by useEffect
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.response?.data?.message || err.message || 'Login failed. Please try again.');
+      
+      // Parse the error message to extract status code
+      let statusCode = null;
+      if (err.message && err.message.includes('HTTP error! status:')) {
+        const match = err.message.match(/HTTP error! status: (\d+)/);
+        if (match) {
+          statusCode = parseInt(match[1]);
+        }
+      }
+      
+      // Handle specific error cases
+      if (statusCode === 401) {
+        setError('Incorrect email or password. Please check your credentials and try again.');
+      } else if (statusCode === 403) {
+        setError('Incorrect email or password. Please check your credentials and try again.');
+      } else if (statusCode === 404) {
+        setError('Account not found. Please check your email address or sign up for a new account.');
+      } else if (statusCode === 429) {
+        setError('Too many login attempts. Please wait a few minutes before trying again.');
+      } else if (statusCode === 500) {
+        setError('Server error. Please try again later.');
+      } else if (err.message?.includes('Network Error') || err.message?.includes('fetch')) {
+        setError('Network error. Please check your internet connection and try again.');
+      } else if (err.message?.includes('timeout')) {
+        setError('Request timed out. Please check your internet connection and try again.');
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError('Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

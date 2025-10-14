@@ -45,10 +45,37 @@ export default function SignUpScreen() {
       router.replace('/auth/sign-in?success=Registration successful! Please sign in.');
     } catch (err: any) {
       console.error('Registration error:', err);
-      if (err.response?.status === 409 || err.response?.status === 403) {
-        setError('An account already exists. Please sign in instead.');
+      
+      // Parse the error message to extract status code
+      let statusCode = null;
+      if (err.message && err.message.includes('HTTP error! status:')) {
+        const match = err.message.match(/HTTP error! status: (\d+)/);
+        if (match) {
+          statusCode = parseInt(match[1]);
+        }
+      }
+      
+      // Handle specific error cases
+      if (statusCode === 409) {
+        setError('An account with this email already exists. Please sign in instead or use a different email.');
+      } else if (statusCode === 403) {
+        setError('An account with this email already exists. Please sign in instead or use a different email.');
+      } else if (statusCode === 400) {
+        setError('Invalid registration data. Please check your email and password format.');
+      } else if (statusCode === 422) {
+        setError('Invalid email or password format. Please check your input.');
+      } else if (statusCode === 500) {
+        setError('Server error. Please try again later.');
+      } else if (err.message?.includes('Network Error') || err.message?.includes('fetch')) {
+        setError('Network error. Please check your internet connection and try again.');
+      } else if (err.message?.includes('timeout')) {
+        setError('Request timed out. Please check your internet connection and try again.');
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
+        setError(err.message);
       } else {
-        setError(err.response?.data?.message || err.message || 'Registration failed');
+        setError('Registration failed. Please try again.');
       }
     } finally {
       setLoading(false);
