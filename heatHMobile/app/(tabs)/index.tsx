@@ -1,14 +1,14 @@
-import { StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { StyleSheet, SafeAreaView, View } from 'react-native';
 import HomeHeader from '@/components/home/HomeHeader';
 import HomeFeed from '@/components/home/HomeFeed';
 
 export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <View style={styles.content}>
         <HomeHeader />
         <HomeFeed />
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollView: {
+  content: {
     flex: 1,
   },
 });

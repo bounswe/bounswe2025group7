@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, Alert, RefreshControl, View } from 'react-native';
+import { ScrollView, StyleSheet, Alert, RefreshControl, View, Image } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import Screen from '@/components/layout/Screen';
@@ -181,178 +181,6 @@ export default function MyProfileScreen() {
     router.push('/profile/edit');
   };
 
-  const handleDebugAuth = async () => {
-    console.log('🔍 DEBUG: Starting authentication debug...');
-    
-    // Check AuthContext state
-    console.log('🔍 AuthContext state:', { isAuthenticated, authLoading });
-    
-    // Check stored token
-    const storedToken = await authService.getAccessToken();
-    console.log('🔍 Stored token:', storedToken ? `Token exists (${storedToken.substring(0, 20)}...)` : 'No token');
-    
-    if (storedToken) {
-      try {
-        const payload = JSON.parse(atob(storedToken.split('.')[1]));
-        console.log('🔍 JWT payload:', payload);
-        console.log('🔍 Username from JWT:', payload.sub);
-        console.log('🔍 Token issued at:', new Date(payload.iat * 1000));
-        console.log('🔍 Token expires at:', new Date(payload.exp * 1000));
-        
-        // Check if this matches the current user
-        console.log('🔍 Current user should be: yigitmemcer3@gmail.com');
-        console.log('🔍 Token user is:', payload.sub);
-        console.log('🔍 Users match:', payload.sub === 'yigitmemcer3@gmail.com');
-      } catch (e) {
-        console.log('🔍 Could not decode JWT:', e);
-      }
-    }
-    
-    // Check all stored tokens
-    console.log('🔍 Checking all stored tokens...');
-    try {
-      const accessToken = await storage.getItem('accessToken');
-      const refreshToken = await storage.getItem('refreshToken');
-      console.log('🔍 Access token in storage:', accessToken ? `Token exists (${accessToken.substring(0, 20)}...)` : 'No token');
-      console.log('🔍 Refresh token in storage:', refreshToken ? `Token exists (${refreshToken.substring(0, 20)}...)` : 'No token');
-      
-      if (accessToken) {
-        try {
-          const payload = JSON.parse(atob(accessToken.split('.')[1]));
-          console.log('🔍 Storage access token user:', payload.sub);
-        } catch (e) {
-          console.log('🔍 Could not decode storage access token:', e);
-        }
-      }
-    } catch (e) {
-      console.log('🔍 Error checking storage:', e);
-    }
-    
-    // Test API call
-    try {
-      console.log('🔍 Testing API call...');
-      const testData = await interestFormService.getInterestForm();
-      console.log('🔍 API response:', testData);
-      
-      // Test a different endpoint to see if the issue is specific to get-form
-      console.log('🔍 Testing check-first-login endpoint...');
-      try {
-        const checkResponse = await interestFormService.testAuthentication();
-        console.log('🔍 Check-first-login response:', checkResponse);
-      } catch (checkError) {
-        console.log('🔍 Check-first-login failed:', checkError);
-      }
-      
-      // Test user service to see if we can get current user info
-      console.log('🔍 Testing user service...');
-      try {
-        const { userService } = await import('@/services/userService');
-        const userInfo = await userService.me();
-        console.log('🔍 User service response:', userInfo);
-      } catch (userError) {
-        console.log('🔍 User service failed:', userError);
-      }
-      
-      // Test feed service to see if it returns user-specific data
-      console.log('🔍 Testing feed service...');
-      try {
-        const { feedService } = await import('@/services/feedService');
-        const feedData = await feedService.getFeedByUser();
-        console.log('🔍 Feed service response:', feedData);
-      } catch (feedError) {
-        console.log('🔍 Feed service failed:', feedError);
-      }
-    } catch (e) {
-      console.log('🔍 API call failed:', e);
-    }
-  };
-
-  const handleForceTokenRefresh = async () => {
-    console.log('🔄 Force Token Refresh: Starting...');
-    
-    // Clear all storage
-    await storage.clear();
-    console.log('🔄 Force Token Refresh: Storage cleared');
-    
-    // Redirect to sign-in
-    router.replace('/auth/sign-in');
-    console.log('🔄 Force Token Refresh: Redirected to sign-in');
-  };
-
-  const handleClearAllTokens = async () => {
-    console.log('🧹 Clear All Tokens: Starting...');
-    
-    // Clear all storage
-    await storage.clear();
-    console.log('🧹 Clear All Tokens: Storage cleared');
-    
-    // Also clear AuthContext token
-    const { logout } = useAuthContext();
-    await logout();
-    console.log('🧹 Clear All Tokens: AuthContext cleared');
-    
-    // Redirect to sign-in
-    router.replace('/auth/sign-in');
-    console.log('🧹 Clear All Tokens: Redirected to sign-in');
-  };
-
-  const handleForceCleanLogin = async () => {
-    console.log('🧽 Force Clean Login: Starting...');
-    
-    // Clear all storage completely
-    await storage.clear();
-    console.log('🧽 Force Clean Login: Storage cleared');
-    
-    // Clear AuthContext
-    const { logout } = useAuthContext();
-    await logout();
-    console.log('🧽 Force Clean Login: AuthContext cleared');
-    
-    // Wait a moment to ensure everything is cleared
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log('🧽 Force Clean Login: Wait completed');
-    
-    // Redirect to sign-in
-    router.replace('/auth/sign-in');
-    console.log('🧽 Force Clean Login: Redirected to sign-in');
-  };
-
-  const handleCheckTokenOnly = async () => {
-    console.log('🔍 Check Token Only: Starting...');
-    
-    try {
-      const token = await authService.getAccessToken();
-      console.log('🔍 Check Token Only: Token:', token ? `Token exists (${token.substring(0, 20)}...)` : 'No token');
-      
-      if (token) {
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          console.log('🔍 Check Token Only: Token user:', payload.sub);
-          console.log('🔍 Check Token Only: Token issued at:', new Date(payload.iat * 1000));
-          console.log('🔍 Check Token Only: Token expires at:', new Date(payload.exp * 1000));
-        } catch (e) {
-          console.log('🔍 Check Token Only: Could not decode token:', e);
-        }
-      }
-      
-      // Also check what's in storage directly
-      const accessToken = await storage.getItem('accessToken');
-      const refreshToken = await storage.getItem('refreshToken');
-      console.log('🔍 Check Token Only: Access token in storage:', accessToken ? `Token exists (${accessToken.substring(0, 20)}...)` : 'No token');
-      console.log('🔍 Check Token Only: Refresh token in storage:', refreshToken ? `Token exists (${refreshToken.substring(0, 20)}...)` : 'No token');
-      
-      if (accessToken) {
-        try {
-          const payload = JSON.parse(atob(accessToken.split('.')[1]));
-          console.log('🔍 Check Token Only: Storage access token user:', payload.sub);
-        } catch (e) {
-          console.log('🔍 Check Token Only: Could not decode storage access token:', e);
-        }
-      }
-    } catch (e) {
-      console.log('🔍 Check Token Only: Error:', e);
-    }
-  };
 
   const handleLikeFeed = async (feedId: number, currentlyLiked: boolean) => {
     try {
@@ -393,43 +221,59 @@ export default function MyProfileScreen() {
 
   const renderFeedItem = (feed: FeedResponse) => (
     <Card key={feed.id} style={styles.feedItem}>
-      <View style={styles.feedHeader}>
-        <Badge label={feed.type} />
-        <ThemedText style={styles.feedDate}>
-          {new Date(feed.createdAt).toLocaleDateString()}
+      {/* Text Feed */}
+      {feed.type === 'TEXT' && (
+        <ThemedText style={styles.feedContent}>
+          {feed.text}
         </ThemedText>
-      </View>
-      
-      <Spacer size={8} />
-      
-      <ThemedText style={styles.feedContent}>
-        {feed.text || 'Recipe post'}
-      </ThemedText>
-      
-      {feed.type === 'RECIPE' && feed.recipe && (
+      )}
+
+      {/* Image Feed */}
+      {feed.type === 'IMAGE_AND_TEXT' && (
         <>
-          <Spacer size={8} />
-          <ThemedText style={styles.recipeTitle}>
-            {feed.recipe.title}
+          {feed.image && (
+            <View style={styles.feedImageContainer}>
+              <Image 
+                source={{ uri: feed.image }} 
+                style={styles.feedImage}
+                resizeMode="cover"
+              />
+            </View>
+          )}
+          <ThemedText style={styles.feedContent}>
+            {feed.text}
           </ThemedText>
         </>
       )}
+
+      {/* Recipe Feed */}
+      {feed.type === 'RECIPE' && feed.recipe && (
+        <>
+          <ThemedText style={styles.recipeTitle}>
+            {feed.recipe.title}
+          </ThemedText>
+          <View style={styles.recipeImageContainer}>
+            <Image 
+              source={{ uri: feed.recipe.photo }} 
+              style={styles.recipeImage}
+              resizeMode="cover"
+            />
+          </View>
+          {feed.text && (
+            <ThemedText style={styles.feedContent}>
+              {feed.text}
+            </ThemedText>
+          )}
+        </>
+      )}
       
-      <Spacer size={12} />
-      
-      <View style={styles.feedActions}>
-        <Button
-          title={feed.likedByCurrentUser ? 'Unlike' : 'Like'}
-          onPress={() => handleLikeFeed(feed.id, feed.likedByCurrentUser)}
-          style={styles.actionButton}
-        />
-        {feed.type === 'RECIPE' && feed.recipe && (
-          <Button
-            title="Save Recipe"
-            onPress={() => handleSaveRecipe(feed.recipe.id, false)}
-            style={styles.saveButton}
-          />
-        )}
+      <View style={styles.feedFooter}>
+        <ThemedText style={styles.feedDate}>
+          {new Date(feed.createdAt).toLocaleString()}
+        </ThemedText>
+        <ThemedText style={styles.likeCount}>
+          {feed.likeCount} {feed.likeCount === 1 ? 'like' : 'likes'}
+        </ThemedText>
       </View>
     </Card>
   );
@@ -484,48 +328,12 @@ export default function MyProfileScreen() {
             <ThemedText style={styles.profileName}>
               {profileData?.firstName} {profileData?.lastName}
             </ThemedText>
-            <Spacer size={8} />
-                   <Button 
-                     title="Edit Profile" 
-                     onPress={handleEditProfile}
-                     style={styles.editButton}
-                   />
-                   <Spacer size={8} />
-                   <Button 
-                     title="🔍 Debug Auth" 
-                     onPress={handleDebugAuth}
-                     style={styles.debugButton}
-                   />
-                   <Spacer size={8} />
-                   <Button 
-                     title="🧹 Clear Storage" 
-                     onPress={handleForceTokenRefresh}
-                     style={styles.clearButton}
-                   />
-                   <Spacer size={8} />
-                   <Button 
-                     title="🔄 Force Refresh" 
-                     onPress={handleForceTokenRefresh}
-                     style={styles.refreshButton}
-                   />
-                   <Spacer size={8} />
-                   <Button 
-                     title="🧹 Clear All Tokens" 
-                     onPress={handleClearAllTokens}
-                     style={styles.clearAllButton}
-                   />
-                   <Spacer size={8} />
-                   <Button 
-                     title="🔍 Check Token Only" 
-                     onPress={handleCheckTokenOnly}
-                     style={styles.checkTokenButton}
-                   />
-                   <Spacer size={8} />
-                   <Button 
-                     title="🧽 Force Clean Login" 
-                     onPress={handleForceCleanLogin}
-                     style={styles.forceCleanButton}
-                   />
+            <Spacer size={16} />
+            <Button 
+              title="Edit Profile" 
+              onPress={handleEditProfile}
+              style={styles.editButton}
+            />
           </View>
         </Card>
 
@@ -574,13 +382,13 @@ export default function MyProfileScreen() {
 
         {/* User Feeds */}
         <Card style={styles.feedsCard}>
-          <ThemedText style={styles.sectionTitle}>My Posts</ThemedText>
+          <ThemedText style={styles.sectionTitle}>Recent Activity</ThemedText>
           <Spacer size={16} />
           
           {userFeed.length === 0 ? (
             <View style={styles.emptyState}>
               <ThemedText style={styles.emptyText}>
-                No posts yet. Start sharing your recipes!
+                No recent activity yet. Start sharing your recipes!
               </ThemedText>
             </View>
           ) : (
@@ -614,51 +422,23 @@ const styles = StyleSheet.create({
   profileCard: {
     margin: 16,
     alignItems: 'center',
-    paddingVertical: 24,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
   },
   profileHeader: {
     alignItems: 'center',
   },
   profileName: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
     color: '#333',
+    marginBottom: 8,
   },
   editButton: {
-    marginTop: 8,
     minWidth: 120,
+    backgroundColor: '#169873',
   },
-  debugButton: {
-    marginTop: 4,
-    minWidth: 120,
-    backgroundColor: '#FF6B6B',
-  },
-  clearButton: {
-    marginTop: 4,
-    minWidth: 120,
-    backgroundColor: '#FF9500',
-  },
-         refreshButton: {
-           marginTop: 4,
-           minWidth: 120,
-           backgroundColor: '#007AFF',
-         },
-         clearAllButton: {
-           marginTop: 4,
-           minWidth: 120,
-           backgroundColor: '#FF3B30',
-         },
-         checkTokenButton: {
-           marginTop: 4,
-           minWidth: 120,
-           backgroundColor: '#5856D6',
-         },
-         forceCleanButton: {
-           marginTop: 4,
-           minWidth: 120,
-           backgroundColor: '#FF9500',
-         },
   
   // Info Card Styles
   infoCard: {
@@ -701,39 +481,59 @@ const styles = StyleSheet.create({
   
   // Feed Item Styles
   feedItem: {
-    marginBottom: 12,
+    marginBottom: 16,
     marginHorizontal: 0,
-  },
-  feedHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  feedDate: {
-    fontSize: 12,
-    color: '#666',
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
   },
   feedContent: {
     fontSize: 16,
     color: '#333',
     lineHeight: 22,
+    marginBottom: 8,
+  },
+  feedImageContainer: {
+    width: '100%',
+    marginBottom: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  feedImage: {
+    width: '100%',
+    height: 200,
   },
   recipeTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#333',
+    marginBottom: 8,
   },
-  feedActions: {
+  recipeImageContainer: {
+    width: '100%',
+    marginBottom: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    aspectRatio: 16/9,
+  },
+  recipeImage: {
+    width: '100%',
+    height: '100%',
+  },
+  feedFooter: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
   },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+  feedDate: {
+    fontSize: 12,
+    color: '#666',
   },
-  saveButton: {
-    backgroundColor: '#34C759',
+  likeCount: {
+    fontSize: 12,
+    color: '#666',
   },
 });
 
