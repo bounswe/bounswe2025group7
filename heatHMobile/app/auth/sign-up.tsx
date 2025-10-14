@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, KeyboardAvoidingView, Platform, View } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -64,53 +64,74 @@ export default function SignUpScreen() {
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ThemedView style={styles.content}>
-        <ThemedText style={styles.title}>Create Account</ThemedText>
-        <ThemedText style={styles.subtitle}>Sign up to get started</ThemedText>
+      <View style={styles.background}>
+        <View style={styles.gradientOverlay} />
+        
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <View style={styles.logoCircle}>
+                <ThemedText style={styles.logoText}>H</ThemedText>
+              </View>
+            </View>
+            <ThemedText style={styles.title}>Create Account</ThemedText>
+            <ThemedText style={styles.subtitle}>Join our community today</ThemedText>
+          </View>
 
-        <Input
-          placeholder="Email Address"
-          value={form.username}
-          onChangeText={(value) => handleChange('username', value)}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={styles.input}
-        />
+          <View style={styles.formContainer}>
+            <Input
+              placeholder="Email Address"
+              value={form.username}
+              onChangeText={(value) => handleChange('username', value)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={styles.input}
+            />
 
-        <Input
-          placeholder="Password"
-          value={form.password}
-          onChangeText={(value) => handleChange('password', value)}
-          secureTextEntry
-          style={styles.input}
-        />
+            <Input
+              placeholder="Password"
+              value={form.password}
+              onChangeText={(value) => handleChange('password', value)}
+              secureTextEntry
+              style={styles.input}
+            />
 
-        {error ? (
-          <ThemedText style={styles.errorText}>{error}</ThemedText>
-        ) : null}
+            {error ? (
+              <View style={styles.errorContainer}>
+                <ThemedText style={styles.errorText}>{error}</ThemedText>
+              </View>
+            ) : null}
 
-        {passwordError ? (
-          <ThemedText style={styles.errorText}>{passwordError}</ThemedText>
-        ) : null}
+            {passwordError ? (
+              <View style={styles.errorContainer}>
+                <ThemedText style={styles.errorText}>{passwordError}</ThemedText>
+              </View>
+            ) : null}
 
-        {emailError ? (
-          <ThemedText style={styles.errorText}>{emailError}</ThemedText>
-        ) : null}
+            {emailError ? (
+              <View style={styles.errorContainer}>
+                <ThemedText style={styles.errorText}>{emailError}</ThemedText>
+              </View>
+            ) : null}
 
-        <Button
-          title={loading ? 'Creating Account...' : 'Create Account'}
-          onPress={handleSubmit}
-          disabled={loading || !!passwordError || !!emailError || !form.username || !form.password}
-          style={styles.button}
-        />
+            <Button
+              title={loading ? 'Creating Account...' : 'Create Account'}
+              onPress={handleSubmit}
+              disabled={loading || !!passwordError || !!emailError || !form.username || !form.password}
+              style={styles.button}
+            />
 
-        <ThemedText style={styles.signInText}>
-          Already have an account?{' '}
-          <ThemedText style={styles.signInLink} onPress={handleSignIn}>
-            Sign In
-          </ThemedText>
-        </ThemedText>
-      </ThemedView>
+            <View style={styles.signInContainer}>
+              <ThemedText style={styles.signInText}>
+                Already have an account?{' '}
+                <ThemedText style={styles.signInLink} onPress={handleSignIn}>
+                  Sign In
+                </ThemedText>
+              </ThemedText>
+            </View>
+          </View>
+        </View>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -119,41 +140,109 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  background: {
+    flex: 1,
+    backgroundColor: '#f8fffe',
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
+    backgroundColor: '#127e5e',
+    opacity: 0.1,
+  },
   content: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 40,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  logoContainer: {
+    marginBottom: 24,
+  },
+  logoCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#127e5e',
+    alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#127e5e',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  logoText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
+    color: '#127e5e',
   },
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 32,
-    opacity: 0.7,
+    color: '#666',
+    fontWeight: '400',
+  },
+  formContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 8,
   },
   input: {
     marginBottom: 16,
   },
   button: {
-    marginTop: 16,
+    marginTop: 8,
     marginBottom: 16,
   },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
+  errorContainer: {
+    backgroundColor: '#fff5f5',
+    padding: 12,
+    borderRadius: 8,
     marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ff6b6b',
+  },
+  errorText: {
+    color: '#ff6b6b',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  signInContainer: {
+    marginTop: 8,
   },
   signInText: {
     textAlign: 'center',
-    opacity: 0.7,
+    color: '#666',
+    fontSize: 16,
   },
   signInLink: {
-    color: '#007AFF',
+    color: '#127e5e',
     fontWeight: '600',
   },
 });
