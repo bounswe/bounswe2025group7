@@ -24,29 +24,40 @@ export default function Input({ label, error, style, ...props }: InputProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   label: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     marginBottom: 8,
-    color: '#333',
+    color: '#127e5e',
   },
   input: {
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: '#e8f5f0',
+    borderRadius: 12,
     fontSize: 16,
     backgroundColor: '#fff',
+    color: '#333',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   errorInput: {
-    borderColor: '#ff4444',
+    borderColor: '#ff6b6b',
+    backgroundColor: '#fff5f5',
   },
   errorText: {
-    color: '#ff4444',
+    color: '#ff6b6b',
     fontSize: 14,
-    marginTop: 4,
+    marginTop: 6,
+    fontWeight: '500',
   },
 });
 
