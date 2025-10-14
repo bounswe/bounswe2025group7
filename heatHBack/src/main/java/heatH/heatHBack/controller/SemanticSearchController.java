@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SemanticSearchController {
     private final SemanticSearchService semanticSearchService;
-    @GetMapping
+    @PostMapping
     public ResponseEntity<List<Recipe>> search(@RequestBody SemanticSearchRequest request) {
         List<Recipe> results = semanticSearchService.search(request.getQuery(), request.getTopK());
         
