@@ -46,7 +46,7 @@ export default function RecipeList({
       <FlatList
         data={recipes}
         renderItem={renderRecipe}
-        keyExtractor={(item) => item.getId()}
+        keyExtractor={(item) => `recipe-${item.getId()}`}
         numColumns={numColumns}
         columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
         contentContainerStyle={styles.content}
@@ -63,6 +63,15 @@ export default function RecipeList({
         }
         ListEmptyComponent={renderEmptyComponent}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={5}
+        getItemLayout={numColumns === 1 ? (data, index) => ({
+          length: 200, // Approximate height of RecipeCard
+          offset: 200 * index,
+          index,
+        }) : undefined}
       />
     </View>
   );

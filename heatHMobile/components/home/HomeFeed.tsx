@@ -32,28 +32,36 @@ export default function HomeFeed() {
   }, []);
 
   return (
-    <HomeSection title="Feed">
-      {loading && (
-        <View style={{ padding: 20 }}>
-          <ActivityIndicator size="large" />
-        </View>
-      )}
-      
-      {error && (
-        <View style={{ padding: 20 }}>
-          <Text style={{ color: 'red' }}>{error}</Text>
-        </View>
-      )}
+    <View style={{ flex: 1 }}>
+      <HomeSection title="Feed">
+        {loading && (
+          <View style={{ padding: 20 }}>
+            <ActivityIndicator size="large" />
+          </View>
+        )}
+        
+        {error && (
+          <View style={{ padding: 20 }}>
+            <Text style={{ color: 'red' }}>{error}</Text>
+          </View>
+        )}
+      </HomeSection>
       
       {!loading && !error && (
         <FlatList
           data={feeds}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={{ padding: 10 }}
+          keyExtractor={(item) => `feed-${item.id}`}
+          contentContainerStyle={{ padding: 10, flexGrow: 1 }}
           renderItem={({ item }) => <FeedCard feed={item} />}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={5}
+          style={{ flex: 1 }}
         />
       )}
-    </HomeSection>
+    </View>
   );
 }
 
