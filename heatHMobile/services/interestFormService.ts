@@ -183,6 +183,9 @@ const interestFormService = {
 
   // Convert ProfileData to InterestFormData
   fromProfileData: (data: any) => {
+    const photo: string | null = typeof data.profilePhoto === 'string' && data.profilePhoto.startsWith('data:image/')
+      ? data.profilePhoto
+      : null;
     return {
       name: data.firstName || '',
       surname: data.lastName || '',
@@ -190,7 +193,7 @@ const interestFormService = {
       height: data.height || 0,
       dateOfBirth: data.dateOfBirth || '',
       gender: data.gender || '',
-      profilePhoto: data.profilePhoto || null,
+      profilePhoto: photo,
     };
   },
 };
