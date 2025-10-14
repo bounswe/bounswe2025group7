@@ -1,7 +1,7 @@
 import { config } from '@/constants/config';
 import { storage } from '@/utils/storage';
 
-const getAuthHeaders = async () => {
+const getAuthHeaders = async (): Promise<Record<string, string>> => {
   try {
     const token = await storage.getItem('accessToken');
     return token ? { Authorization: `Bearer ${token}` } : {};
@@ -106,18 +106,17 @@ export const apiClient = {
     return (await res.json()) as T;
   },
 
-  delete: async <T>(url: string, token?: string): Promise<T> => {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-    
-    const res = await fetch(`${config.apiBaseUrl}/api${url}`, {
+  delete: async <T>(url: string, options?: RequestInit): Promise<T> => {
+    const fullUrl = url.startsWith('http') ? url : `${config.apiBaseUrl}${url}`;
+    const authHeaders = await getAuthHeaders();
+    const res = await fetch(fullUrl, {
       method: 'DELETE',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+        ...options?.headers,
+      },
+      ...options,
     });
     
     if (!res.ok) {

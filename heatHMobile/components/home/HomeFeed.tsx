@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { FlatList, Text, ActivityIndicator, View } from 'react-native';
 import HomeSection from './HomeSection';
 import { feedService, FeedResponse } from '@/services/feedService';
-import { autoLoginService } from '@/services/autoLoginService';
 import FeedCard from './FeedCard';
 
 export default function HomeFeed() {
@@ -15,15 +14,8 @@ export default function HomeFeed() {
       try {
         setLoading(true);
         
-        // Auto-login first to get the token
-        console.log('Logging in...');
-        const loginResult = await autoLoginService.autoLogin();
-        
-        if (!loginResult.success) {
-          throw new Error(loginResult.error || 'Login failed');
-        }
-        
-        console.log('Login successful, fetching feeds...');
+        // User should already be authenticated through AuthContext
+        console.log('Fetching feeds for authenticated user...');
         const response = await feedService.getRecentFeeds(0);
         console.log('Feeds fetched successfully:', response.length, 'items');
         setFeeds(response);

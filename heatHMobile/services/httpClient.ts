@@ -1,4 +1,4 @@
-const BASE_URL = 'http://35.198.76.72:8080/api'; // Same backend as web application
+import { config } from '@/constants/config';
 
 interface ApiResponse<T> {
   data: T;
@@ -25,22 +25,30 @@ class HttpClient {
       console.log('HttpClient: No token provided, request will be unauthenticated');
     }
 
-    const config: RequestInit = {
+    const requestConfig: RequestInit = {
       method,
       headers: requestHeaders,
     };
 
     if (data) {
-      config.body = JSON.stringify(data);
+      requestConfig.body = JSON.stringify(data);
     }
 
-    const fullUrl = `${BASE_URL}${url}`;
+    const fullUrl = `${config.apiBaseUrl}${url}`;
     console.log('HttpClient: Making request to:', fullUrl);
     console.log('HttpClient: Method:', method);
     console.log('HttpClient: Headers:', requestHeaders);
     console.log('HttpClient: Body:', data);
+    
+    // Debug: Log the exact Authorization header being sent
+    if (requestHeaders['Authorization']) {
+      console.log('HttpClient: Authorization header being sent:', requestHeaders['Authorization']);
+      console.log('HttpClient: Token length:', requestHeaders['Authorization'].length);
+    } else {
+      console.log('HttpClient: No Authorization header in request');
+    }
 
-    const response = await fetch(fullUrl, config);
+    const response = await fetch(fullUrl, requestConfig);
     console.log('HttpClient: Response status:', response.status);
     console.log('HttpClient: Response headers:', Object.fromEntries(response.headers.entries()));
 
@@ -61,7 +69,7 @@ class HttpClient {
 
   async get<T>(url: string, params?: Record<string, string>, token?: string | null): Promise<ApiResponse<T>> {
     const queryString = params ? `?${new URLSearchParams(params).toString()}` : '';
-    console.log('HttpClient: Making GET request to:', `${BASE_URL}${url}${queryString}`);
+    console.log('HttpClient: Making GET request to:', `${config.apiBaseUrl}${url}${queryString}`);
     return this.makeRequest<T>('GET', `${url}${queryString}`, undefined, undefined, token);
   }
 

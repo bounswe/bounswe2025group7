@@ -13,8 +13,10 @@ import Divider from '@/components/ui/Divider';
 import Grid from '@/components/ui/Grid';
 import Badge from '@/components/ui/Badge';
 import Spacer from '@/components/ui/Spacer';
-import { interestFormService } from '@/services/interestFormService';
+import interestFormService from '@/services/interestFormService';
 import { feedService, FeedResponse } from '@/services/feedService';
+import { authService } from '@/services/authService';
+import { storage } from '@/utils/storage';
 import { ProfileData } from '@/models/User';
 import { useRouter } from 'expo-router';
 import { useAuthContext } from '@/context/AuthContext';
@@ -39,6 +41,34 @@ export default function MyProfileScreen() {
   useEffect(() => {
     console.log('👤 Profile - useEffect triggered - authLoading:', authLoading, 'isAuthenticated:', isAuthenticated);
     
+    // Debug: Check what token is currently stored at the very start
+    const checkCurrentToken = async () => {
+      try {
+        const currentToken = await authService.getAccessToken();
+        console.log('👤 Profile - Current token at start of useEffect:', currentToken ? `Token exists (${currentToken.substring(0, 20)}...)` : 'No token');
+        
+        if (currentToken) {
+          try {
+            const payload = JSON.parse(atob(currentToken.split('.')[1]));
+            console.log('👤 Profile - Token user at start of useEffect:', payload.sub);
+            console.log('👤 Profile - Token issued at:', new Date(payload.iat * 1000));
+            console.log('👤 Profile - Token expires at:', new Date(payload.exp * 1000));
+          } catch (e) {
+            console.log('👤 Profile - Could not decode token at start:', e);
+          }
+        }
+      } catch (e) {
+        console.log('👤 Profile - Error checking token at start:', e);
+      }
+    };
+    
+    checkCurrentToken();
+    
+    // Clear previous data when authentication state changes
+    setProfileData(null);
+    setUserFeed([]);
+    setError(null);
+    
     // Wait for authentication to complete
     if (authLoading) {
       console.log('👤 Profile - Waiting for auth to complete...');
@@ -55,13 +85,27 @@ export default function MyProfileScreen() {
     }
 
     console.log('👤 Profile - User authenticated, fetching data...');
-    // Clear any previous errors
-    setError(null);
 
     const fetchProfileData = async () => {
       try {
         setLoadingProfile(true);
         console.log('Fetching profile data...');
+        
+        // Debug: Check what user is currently authenticated
+        const token = await authService.getAccessToken();
+        console.log('Current token:', token ? `Token exists (${token.substring(0, 20)}...)` : 'No token');
+        
+        // Debug: Decode JWT to see username
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            console.log('JWT payload:', payload);
+            console.log('Current username from JWT:', payload.sub);
+          } catch (e) {
+            console.log('Could not decode JWT:', e);
+          }
+        }
+        
         const data = await interestFormService.getInterestForm();
         console.log('Profile data received:', data);
         const profile = interestFormService.toProfileData(data);
@@ -100,7 +144,21 @@ export default function MyProfileScreen() {
     setError(null);
     
     try {
-      console.log('Starting refresh...');
+      console.log('🔄 Starting refresh...');
+      
+      // Debug: Check current authentication state
+      const currentToken = await authService.getAccessToken();
+      console.log('🔄 Current token during refresh:', currentToken ? `Token exists (${currentToken.substring(0, 20)}...)` : 'No token');
+      
+      if (currentToken) {
+        try {
+          const payload = JSON.parse(atob(currentToken.split('.')[1]));
+          console.log('🔄 JWT payload during refresh:', payload);
+          console.log('🔄 Username from JWT during refresh:', payload.sub);
+        } catch (e) {
+          console.log('🔄 Could not decode JWT during refresh:', e);
+        }
+      }
       
       // Refetch both profile and feed data
       const [profileData, feedData] = await Promise.all([
@@ -108,7 +166,7 @@ export default function MyProfileScreen() {
         feedService.getFeedByUser()
       ]);
       
-      console.log('Refresh successful:', { profileData, feedData });
+      console.log('🔄 Refresh successful:', { profileData, feedData });
       setProfileData(profileData);
       setUserFeed(feedData);
     } catch (err: any) {
@@ -121,6 +179,179 @@ export default function MyProfileScreen() {
 
   const handleEditProfile = () => {
     router.push('/profile/edit');
+  };
+
+  const handleDebugAuth = async () => {
+    console.log('🔍 DEBUG: Starting authentication debug...');
+    
+    // Check AuthContext state
+    console.log('🔍 AuthContext state:', { isAuthenticated, authLoading });
+    
+    // Check stored token
+    const storedToken = await authService.getAccessToken();
+    console.log('🔍 Stored token:', storedToken ? `Token exists (${storedToken.substring(0, 20)}...)` : 'No token');
+    
+    if (storedToken) {
+      try {
+        const payload = JSON.parse(atob(storedToken.split('.')[1]));
+        console.log('🔍 JWT payload:', payload);
+        console.log('🔍 Username from JWT:', payload.sub);
+        console.log('🔍 Token issued at:', new Date(payload.iat * 1000));
+        console.log('🔍 Token expires at:', new Date(payload.exp * 1000));
+        
+        // Check if this matches the current user
+        console.log('🔍 Current user should be: yigitmemcer3@gmail.com');
+        console.log('🔍 Token user is:', payload.sub);
+        console.log('🔍 Users match:', payload.sub === 'yigitmemcer3@gmail.com');
+      } catch (e) {
+        console.log('🔍 Could not decode JWT:', e);
+      }
+    }
+    
+    // Check all stored tokens
+    console.log('🔍 Checking all stored tokens...');
+    try {
+      const accessToken = await storage.getItem('accessToken');
+      const refreshToken = await storage.getItem('refreshToken');
+      console.log('🔍 Access token in storage:', accessToken ? `Token exists (${accessToken.substring(0, 20)}...)` : 'No token');
+      console.log('🔍 Refresh token in storage:', refreshToken ? `Token exists (${refreshToken.substring(0, 20)}...)` : 'No token');
+      
+      if (accessToken) {
+        try {
+          const payload = JSON.parse(atob(accessToken.split('.')[1]));
+          console.log('🔍 Storage access token user:', payload.sub);
+        } catch (e) {
+          console.log('🔍 Could not decode storage access token:', e);
+        }
+      }
+    } catch (e) {
+      console.log('🔍 Error checking storage:', e);
+    }
+    
+    // Test API call
+    try {
+      console.log('🔍 Testing API call...');
+      const testData = await interestFormService.getInterestForm();
+      console.log('🔍 API response:', testData);
+      
+      // Test a different endpoint to see if the issue is specific to get-form
+      console.log('🔍 Testing check-first-login endpoint...');
+      try {
+        const checkResponse = await interestFormService.testAuthentication();
+        console.log('🔍 Check-first-login response:', checkResponse);
+      } catch (checkError) {
+        console.log('🔍 Check-first-login failed:', checkError);
+      }
+      
+      // Test user service to see if we can get current user info
+      console.log('🔍 Testing user service...');
+      try {
+        const { userService } = await import('@/services/userService');
+        const userInfo = await userService.me();
+        console.log('🔍 User service response:', userInfo);
+      } catch (userError) {
+        console.log('🔍 User service failed:', userError);
+      }
+      
+      // Test feed service to see if it returns user-specific data
+      console.log('🔍 Testing feed service...');
+      try {
+        const { feedService } = await import('@/services/feedService');
+        const feedData = await feedService.getFeedByUser();
+        console.log('🔍 Feed service response:', feedData);
+      } catch (feedError) {
+        console.log('🔍 Feed service failed:', feedError);
+      }
+    } catch (e) {
+      console.log('🔍 API call failed:', e);
+    }
+  };
+
+  const handleForceTokenRefresh = async () => {
+    console.log('🔄 Force Token Refresh: Starting...');
+    
+    // Clear all storage
+    await storage.clear();
+    console.log('🔄 Force Token Refresh: Storage cleared');
+    
+    // Redirect to sign-in
+    router.replace('/auth/sign-in');
+    console.log('🔄 Force Token Refresh: Redirected to sign-in');
+  };
+
+  const handleClearAllTokens = async () => {
+    console.log('🧹 Clear All Tokens: Starting...');
+    
+    // Clear all storage
+    await storage.clear();
+    console.log('🧹 Clear All Tokens: Storage cleared');
+    
+    // Also clear AuthContext token
+    const { logout } = useAuthContext();
+    await logout();
+    console.log('🧹 Clear All Tokens: AuthContext cleared');
+    
+    // Redirect to sign-in
+    router.replace('/auth/sign-in');
+    console.log('🧹 Clear All Tokens: Redirected to sign-in');
+  };
+
+  const handleForceCleanLogin = async () => {
+    console.log('🧽 Force Clean Login: Starting...');
+    
+    // Clear all storage completely
+    await storage.clear();
+    console.log('🧽 Force Clean Login: Storage cleared');
+    
+    // Clear AuthContext
+    const { logout } = useAuthContext();
+    await logout();
+    console.log('🧽 Force Clean Login: AuthContext cleared');
+    
+    // Wait a moment to ensure everything is cleared
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log('🧽 Force Clean Login: Wait completed');
+    
+    // Redirect to sign-in
+    router.replace('/auth/sign-in');
+    console.log('🧽 Force Clean Login: Redirected to sign-in');
+  };
+
+  const handleCheckTokenOnly = async () => {
+    console.log('🔍 Check Token Only: Starting...');
+    
+    try {
+      const token = await authService.getAccessToken();
+      console.log('🔍 Check Token Only: Token:', token ? `Token exists (${token.substring(0, 20)}...)` : 'No token');
+      
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          console.log('🔍 Check Token Only: Token user:', payload.sub);
+          console.log('🔍 Check Token Only: Token issued at:', new Date(payload.iat * 1000));
+          console.log('🔍 Check Token Only: Token expires at:', new Date(payload.exp * 1000));
+        } catch (e) {
+          console.log('🔍 Check Token Only: Could not decode token:', e);
+        }
+      }
+      
+      // Also check what's in storage directly
+      const accessToken = await storage.getItem('accessToken');
+      const refreshToken = await storage.getItem('refreshToken');
+      console.log('🔍 Check Token Only: Access token in storage:', accessToken ? `Token exists (${accessToken.substring(0, 20)}...)` : 'No token');
+      console.log('🔍 Check Token Only: Refresh token in storage:', refreshToken ? `Token exists (${refreshToken.substring(0, 20)}...)` : 'No token');
+      
+      if (accessToken) {
+        try {
+          const payload = JSON.parse(atob(accessToken.split('.')[1]));
+          console.log('🔍 Check Token Only: Storage access token user:', payload.sub);
+        } catch (e) {
+          console.log('🔍 Check Token Only: Could not decode storage access token:', e);
+        }
+      }
+    } catch (e) {
+      console.log('🔍 Check Token Only: Error:', e);
+    }
   };
 
   const handleLikeFeed = async (feedId: number, currentlyLiked: boolean) => {
@@ -196,7 +427,7 @@ export default function MyProfileScreen() {
           <Button
             title="Save Recipe"
             onPress={() => handleSaveRecipe(feed.recipe.id, false)}
-            style={[styles.actionButton, styles.saveButton]}
+            style={styles.saveButton}
           />
         )}
       </View>
@@ -254,11 +485,47 @@ export default function MyProfileScreen() {
               {profileData?.firstName} {profileData?.lastName}
             </ThemedText>
             <Spacer size={8} />
-            <Button 
-              title="Edit Profile" 
-              onPress={handleEditProfile}
-              style={styles.editButton}
-            />
+                   <Button 
+                     title="Edit Profile" 
+                     onPress={handleEditProfile}
+                     style={styles.editButton}
+                   />
+                   <Spacer size={8} />
+                   <Button 
+                     title="🔍 Debug Auth" 
+                     onPress={handleDebugAuth}
+                     style={styles.debugButton}
+                   />
+                   <Spacer size={8} />
+                   <Button 
+                     title="🧹 Clear Storage" 
+                     onPress={handleForceTokenRefresh}
+                     style={styles.clearButton}
+                   />
+                   <Spacer size={8} />
+                   <Button 
+                     title="🔄 Force Refresh" 
+                     onPress={handleForceTokenRefresh}
+                     style={styles.refreshButton}
+                   />
+                   <Spacer size={8} />
+                   <Button 
+                     title="🧹 Clear All Tokens" 
+                     onPress={handleClearAllTokens}
+                     style={styles.clearAllButton}
+                   />
+                   <Spacer size={8} />
+                   <Button 
+                     title="🔍 Check Token Only" 
+                     onPress={handleCheckTokenOnly}
+                     style={styles.checkTokenButton}
+                   />
+                   <Spacer size={8} />
+                   <Button 
+                     title="🧽 Force Clean Login" 
+                     onPress={handleForceCleanLogin}
+                     style={styles.forceCleanButton}
+                   />
           </View>
         </Card>
 
@@ -362,6 +629,36 @@ const styles = StyleSheet.create({
     marginTop: 8,
     minWidth: 120,
   },
+  debugButton: {
+    marginTop: 4,
+    minWidth: 120,
+    backgroundColor: '#FF6B6B',
+  },
+  clearButton: {
+    marginTop: 4,
+    minWidth: 120,
+    backgroundColor: '#FF9500',
+  },
+         refreshButton: {
+           marginTop: 4,
+           minWidth: 120,
+           backgroundColor: '#007AFF',
+         },
+         clearAllButton: {
+           marginTop: 4,
+           minWidth: 120,
+           backgroundColor: '#FF3B30',
+         },
+         checkTokenButton: {
+           marginTop: 4,
+           minWidth: 120,
+           backgroundColor: '#5856D6',
+         },
+         forceCleanButton: {
+           marginTop: 4,
+           minWidth: 120,
+           backgroundColor: '#FF9500',
+         },
   
   // Info Card Styles
   infoCard: {
