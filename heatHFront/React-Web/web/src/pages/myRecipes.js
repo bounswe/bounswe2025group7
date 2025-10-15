@@ -202,7 +202,7 @@ const MyRecipes = () => {
       // ✅ Updated ingredient mapping for new API schema
       const ingredientList = newIngredients.map(ing => ({
         name: ing.name,
-        quantity: Number(ing.quantity) || 0, // ensure it's an integer
+        quantity: Number(ing.amount) || 0, // ensure it's an integer
       }));
 
       const recipeData = {

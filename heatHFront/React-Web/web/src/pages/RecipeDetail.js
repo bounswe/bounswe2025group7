@@ -405,7 +405,7 @@ const RecipeDetail = () => {
                   </Grid>
                 )}
 
-                {recipe["totalCalorie"] > 0 && (
+                {recipe["totalCalorie"] >= 0 && (
                   <Grid item xs={12}>
                     <Box sx={{
                       display: 'flex', alignItems: 'center', gap: 1,
@@ -506,9 +506,8 @@ const RecipeDetail = () => {
               {recipe["ingredients"] && recipe["ingredients"].length > 0 ? (
                 <List disablePadding>
                   {recipe["ingredients"].map((ingredientStr, idx) => {
-                    const parts = ingredientStr.split(':');
-                    const name = parts[0] ? parts[0].trim() : "";
-                    const amount = parts[1] ? parts[1].trim() : "";
+                    const name = ingredientStr["name"] ? ingredientStr["name"] : "";
+                    const amount = ingredientStr["quantity"] ? ingredientStr["quantity"] : "";
                     return (
                       <ListItem
                         key={idx}
