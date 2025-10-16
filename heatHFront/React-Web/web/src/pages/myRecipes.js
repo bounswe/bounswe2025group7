@@ -6,6 +6,7 @@ import {
   List, ListItem, ListItemText, Paper, Avatar, CircularProgress, Alert,
   Tooltip
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { alpha, styled } from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -43,6 +44,7 @@ const HeaderSection = styled(Box)(({ theme }) => ({
 const MyRecipes = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -83,7 +85,7 @@ const MyRecipes = () => {
   const [recipeToDelete, setRecipeToDelete] = useState(null);
 
   // Check if all form fields are filled
-  const isFormComplete = newTitle && newType && newTag && newInstructions && newIngredients.length > 0 && newTotalCalory && newPrice;
+  const isFormComplete = newTitle && newType && newTag && newInstructions && newIngredients.length > 0 && newPrice;
 
   // Fetch my recipes on component mount
   useEffect(() => {
@@ -344,7 +346,7 @@ const MyRecipes = () => {
       <Box>
         <div style={{ textAlign: 'center' }}>
           <Typography variant="h3" sx={{ color: 'primary.main', backgroundColor: 'white' }}>
-            My Recipes
+            {t('recipes.myRecipes')}
           </Typography>
         </div>
 
@@ -359,7 +361,7 @@ const MyRecipes = () => {
           {/* Button to open Add Recipe Dialog */}
           <Box sx={{ mb: 4, textAlign: 'center' }}>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-              Create your own recipes and share them with others. Visit Saved Recipes to view recipes you've bookmarked.
+              {t('recipes.createRecipe')} {t('recipes.savedRecipes')}
             </Typography>
 
             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
@@ -372,7 +374,7 @@ const MyRecipes = () => {
                 }}
                 startIcon={<AddIcon />}
               >
-                Create New Recipe
+                {t('recipes.createRecipe')}
               </Button>
 
               <Button
@@ -380,7 +382,7 @@ const MyRecipes = () => {
                 color="primary"
                 onClick={() => navigate('/saved')}
               >
-                View Saved Recipes
+                {t('recipes.savedRecipes')}
               </Button>
             </Box>
           </Box>
@@ -393,10 +395,10 @@ const MyRecipes = () => {
           ) : recipes.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                No Recipes Yet
+                {t('recipes.myRecipes')}
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                You haven't created any recipes yet. Click "Create New Recipe" to get started!
+                {t('recipes.createRecipe')}
               </Typography>
             </Box>
           ) : (

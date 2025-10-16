@@ -1,5 +1,6 @@
 package heatH.heatHBack.controller;
 
+import heatH.heatHBack.model.client.FatSecretClient;
 import heatH.heatHBack.model.request.*;
 import heatH.heatHBack.model.response.AuthResponse;
 import heatH.heatHBack.service.implementation.AuthService;
@@ -9,12 +10,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @Controller
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final FatSecretClient fatSecretClient;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {

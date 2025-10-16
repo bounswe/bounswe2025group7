@@ -2,7 +2,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
-import theme from './theme/theme'; 
+import theme from './theme/theme';
+import './i18n'; // Import i18n configuration 
 import LandingPage from './pages/LandingPage';
 
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -25,6 +26,8 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsofService';
 import ContactUs from './pages/ContactUs';
 import UserProfile from './pages/UserProfile';
+import LanguageTest from './pages/LanguageTest';
+import SemanticSearch from './pages/SemanticSearch';
 
 function App() {
   return (
@@ -40,10 +43,12 @@ function App() {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/contact" element={<ContactUs />} />
+          <Route path="/language-test" element={<LanguageTest />} />
 
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/home" element={<HomePage />} />
+            <Route path="/search" element={<SemanticSearch />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/setup" element={<InitialProfileSetup />} />
             <Route path="/profile/edit" element={<EditProfile />} />   
