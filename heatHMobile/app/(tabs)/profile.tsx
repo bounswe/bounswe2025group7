@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, Alert, RefreshControl, View, Image } from 'react-native';
+import { ScrollView, StyleSheet, Alert, RefreshControl, View, Image, Switch } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import Screen from '@/components/layout/Screen';
@@ -20,10 +20,14 @@ import { storage } from '@/utils/storage';
 import { ProfileData } from '@/models/User';
 import { useRouter } from 'expo-router';
 import { useAuthContext } from '@/context/AuthContext';
+import { useThemePreference } from '@/context/ThemeContext';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 export default function MyProfileScreen() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuthContext();
+  const { resolvedScheme, setPreference } = useThemePreference();
+  const isDark = resolvedScheme === 'dark';
   
   // States for profile data
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
@@ -36,6 +40,10 @@ export default function MyProfileScreen() {
   // States for UI
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  const handleToggleDarkMode = (value: boolean) => {
+    setPreference(value ? 'dark' : 'light');
+  };
 
   // Load profile data and feeds
   useEffect(() => {
@@ -221,15 +229,8 @@ export default function MyProfileScreen() {
 
   const renderFeedItem = (feed: FeedResponse) => (
     <Card key={feed.id} style={styles.feedItem}>
-      {/* Text Feed */}
-      {feed.type === 'TEXT' && (
-        <ThemedText style={styles.feedContent}>
-          {feed.text}
-        </ThemedText>
-      )}
-
-      {/* Image Feed */}
-      {feed.type === 'IMAGE_AND_TEXT' && (
+      {/* Post (text and/or image) */}
+      {feed.type === 'POST' && (
         <>
           {feed.image && (
             <View style={styles.feedImageContainer}>
@@ -240,9 +241,11 @@ export default function MyProfileScreen() {
               />
             </View>
           )}
-          <ThemedText style={styles.feedContent}>
-            {feed.text}
-          </ThemedText>
+          {feed.text && (
+            <ThemedText style={styles.feedContent}>
+              {feed.text}
+            </ThemedText>
+          )}
         </>
       )}
 
@@ -286,7 +289,7 @@ export default function MyProfileScreen() {
           <ThemedText>
             {authLoading ? 'Logging in...' : 'Loading profile...'}
           </ThemedText>
-          <ThemedText style={{ fontSize: 12, marginTop: 8, color: '#666' }}>
+          <ThemedText style={{ fontSize: 12, marginTop: 8 }}>
             Auth: {isAuthenticated ? 'Yes' : 'No'} | Loading: {authLoading ? 'Yes' : 'No'}
           </ThemedText>
         </ThemedView>
@@ -378,6 +381,22 @@ export default function MyProfileScreen() {
               </Grid>
             )}
           </Grid>
+
+          <Spacer size={16} />
+          <Divider />
+          <Spacer size={12} />
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleLabelRow}>
+              <IconSymbol name={isDark ? 'moon.fill' : 'sun.max.fill'} size={18} color={isDark ? '#ffd54f' : '#127d5d'} />
+              <ThemedText style={[styles.infoLabel, styles.toggleLabelText]}>Dark Mode</ThemedText>
+            </View>
+            <Switch
+              value={isDark}
+              onValueChange={handleToggleDarkMode}
+              trackColor={{ false: '#bdbdbd', true: '#127d5d' }}
+              thumbColor={isDark ? '#ffffff' : '#f4f3f4'}
+            />
+          </View>
         </Card>
 
         {/* User Feeds */}
@@ -403,7 +422,6 @@ export default function MyProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   loadingContainer: {
     flex: 1,
@@ -432,7 +450,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: '#333',
     marginBottom: 8,
   },
   editButton: {
@@ -448,19 +465,29 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 8,
   },
   infoLabel: {
     fontSize: 14,
-    color: '#666',
     marginBottom: 4,
     fontWeight: '500',
   },
   infoValue: {
     fontSize: 16,
-    color: '#333',
     fontWeight: '600',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  toggleLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  toggleLabelText: {
+    marginLeft: 8,
   },
   
   // Feeds Card Styles
@@ -475,7 +502,6 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     textAlign: 'center',
-    color: '#666',
     fontStyle: 'italic',
   },
   
@@ -490,7 +516,6 @@ const styles = StyleSheet.create({
   },
   feedContent: {
     fontSize: 16,
-    color: '#333',
     lineHeight: 22,
     marginBottom: 8,
   },
@@ -507,7 +532,6 @@ const styles = StyleSheet.create({
   recipeTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 8,
   },
   recipeImageContainer: {
@@ -529,11 +553,9 @@ const styles = StyleSheet.create({
   },
   feedDate: {
     fontSize: 12,
-    color: '#666',
   },
   likeCount: {
     fontSize: 12,
-    color: '#666',
   },
 });
 

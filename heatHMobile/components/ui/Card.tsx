@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { ViewStyle, StyleSheet } from 'react-native';
 import { ThemedView } from '@/components/themed-view';
 
 interface CardProps {
@@ -10,7 +10,7 @@ interface CardProps {
 
 export default function Card({ children, style, elevation = 2 }: CardProps) {
   return (
-    <ThemedView style={[styles.card, { elevation }, style]}>
+    <ThemedView lightColor="#ffffff" darkColor="#1b1d1e" style={[styles.card, { elevation }, style]}>
       {children}
     </ThemedView>
   );
@@ -18,7 +18,6 @@ export default function Card({ children, style, elevation = 2 }: CardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     marginVertical: 8,
