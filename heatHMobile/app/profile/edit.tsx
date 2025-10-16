@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, Alert, Image } from 'react-native';
+import { ScrollView, StyleSheet, Alert, Image, View, TouchableOpacity, Modal, Platform, StatusBar } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import Screen from '@/components/layout/Screen';
-import Section from '@/components/layout/Section';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Loader from '@/components/ui/Loader';
@@ -15,9 +15,16 @@ import { useRouter } from 'expo-router';
 import { useAuthContext } from '@/context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
 
+const GENDER_OPTIONS = [
+  { value: 'male', label: 'Male', icon: '👨' },
+  { value: 'female', label: 'Female', icon: '👩' },
+  { value: 'other', label: 'Other', icon: '👤' },
+];
+
 export default function EditProfileScreen() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuthContext();
+  const insets = useSafeAreaInsets();
   
   const [formData, setFormData] = useState<ProfileData>({
     firstName: '',
@@ -34,6 +41,8 @@ export default function EditProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // Load existing profile data
   useEffect(() => {
@@ -89,16 +98,16 @@ export default function EditProfileScreen() {
         
         const data = await interestFormService.getInterestForm();
         console.log('EditProfile: Profile data received:', data);
-        console.log('EditProfile: User in profile data:', data?.user);
-        console.log('EditProfile: Username in profile data:', data?.user?.username);
-        console.log('EditProfile: Profile ID:', data?.id);
+        console.log('EditProfile: User in profile data:', (data as any)?.user);
+        console.log('EditProfile: Username in profile data:', (data as any)?.user?.username);
+        console.log('EditProfile: Profile ID:', (data as any)?.id);
         
         // Check if the profile data belongs to the current user
         const currentUsername = token ? JSON.parse(atob(token.split('.')[1])).sub : null;
         console.log('EditProfile: Current username from JWT:', currentUsername);
-        console.log('EditProfile: Profile username:', data?.user?.username);
+        console.log('EditProfile: Profile username:', (data as any)?.user?.username);
         
-        if (currentUsername && data?.user?.username && currentUsername !== data.user.username) {
+        if (currentUsername && (data as any)?.user?.username && currentUsername !== (data as any).user.username) {
           console.log('EditProfile: WARNING - Profile data does not match current user!');
           console.log('EditProfile: This suggests a backend issue where wrong profile is returned');
         }
@@ -171,9 +180,29 @@ export default function EditProfileScreen() {
     }
   };
 
+  const formatDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const handleChange = (name: keyof ProfileData, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
     setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+  };
+
+  const handleDateChange = (event: any, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    
+    if (date) {
+      setSelectedDate(date);
+      const formattedDate = formatDate(date);
+      setFormData(prev => ({ ...prev, dateOfBirth: formattedDate as any }));
+      setErrors(prev => ({ ...prev, dateOfBirth: validateField('dateOfBirth', formattedDate) as any }));
+    }
   };
 
   const handlePhotoChange = async () => {
@@ -205,7 +234,7 @@ export default function EditProfileScreen() {
       const fieldName = key as keyof ProfileData;
       const error = validateField(fieldName, formData[fieldName]);
       if (error) {
-        newErrors[fieldName] = error;
+        (newErrors as any)[fieldName] = error;
       }
     });
 
@@ -267,191 +296,540 @@ export default function EditProfileScreen() {
 
   if (loading) {
     return (
-      <Screen>
-        <ThemedView style={styles.loadingContainer}>
-          <Loader />
-          <ThemedText>Loading profile...</ThemedText>
-        </ThemedView>
-      </Screen>
+      <View style={styles.loadingContainer}>
+        <Loader />
+        <ThemedText>Loading profile...</ThemedText>
+      </View>
     );
   }
 
   if (error) {
     return (
-      <Screen>
-        <ThemedView style={styles.errorContainer}>
-          <ErrorMessage message={error} />
-          <Button title="Go Back" onPress={() => router.back()} />
-        </ThemedView>
-      </Screen>
+      <View style={styles.errorContainer}>
+        <ErrorMessage message={error} />
+        <Button title="Go Back" onPress={() => router.back()} />
+      </View>
     );
   }
 
   return (
-    <Screen>
-      <ScrollView style={styles.container}>
-        <Section style={styles.header}>
+    <SafeAreaView style={styles.safeArea} edges={['left','right','bottom']}> 
+      <StatusBar barStyle="light-content" backgroundColor="#127d5d" translucent />
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={[styles.header, { paddingTop: Math.max(insets.top, 8) }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ThemedText style={styles.backButtonText}>←</ThemedText>
+          </TouchableOpacity>
           <ThemedText style={styles.title}>Edit Profile</ThemedText>
-        </Section>
+          <View style={styles.backButton} />
+        </View>
 
-        {/* Profile Photo */}
-        <Section style={styles.photoSection}>
-          <ThemedText style={styles.sectionTitle}>Profile Photo</ThemedText>
-          {previewUrl ? (
-            <Image source={{ uri: previewUrl }} style={styles.profileImage} />
-          ) : (
-            <ThemedView style={styles.placeholderImage}>
-              <ThemedText>No photo</ThemedText>
-            </ThemedView>
-          )}
-          <Button 
-            title="Change Photo" 
-            onPress={handlePhotoChange}
-            style={styles.photoButton}
-          />
-        </Section>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Profile Photo Section */}
+          <View style={styles.photoContainer}>
+          <View style={styles.photoWrapper}>
+            {previewUrl ? (
+              <Image source={{ uri: previewUrl }} style={styles.profileImage} />
+            ) : (
+              <View style={styles.placeholderImage}>
+                <ThemedText style={styles.placeholderText}>👤</ThemedText>
+              </View>
+            )}
+            <TouchableOpacity 
+              style={styles.changePhotoButton}
+              onPress={handlePhotoChange}
+            >
+              <ThemedText style={styles.changePhotoIcon}>📷</ThemedText>
+            </TouchableOpacity>
+          </View>
+          <ThemedText style={styles.photoHint}>Tap camera icon to change photo</ThemedText>
+        </View>
 
-        {/* Personal Information */}
-        <Section style={styles.formSection}>
-          <ThemedText style={styles.sectionTitle}>Personal Information</ThemedText>
-          
-          <Input
-            label="First Name"
-            value={formData.firstName}
-            onChangeText={(value) => handleChange('firstName', value)}
-            error={errors.firstName}
-            placeholder="Enter your first name"
-          />
-          
-          <Input
-            label="Last Name"
-            value={formData.lastName}
-            onChangeText={(value) => handleChange('lastName', value)}
-            error={errors.lastName}
-            placeholder="Enter your last name"
-          />
-          
-          <Input
-            label="Date of Birth"
-            value={formData.dateOfBirth}
-            onChangeText={(value) => handleChange('dateOfBirth', value)}
-            error={errors.dateOfBirth}
-            placeholder="YYYY-MM-DD"
-          />
-          
-          <Input
-            label="Gender"
-            value={formData.gender}
-            onChangeText={(value) => handleChange('gender', value)}
-            error={errors.gender}
-            placeholder="Enter your gender"
-          />
-        </Section>
+        {/* Form Sections */}
+        <View style={styles.formContainer}>
+          {/* Personal Information */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Personal Information</ThemedText>
+            
+            <View style={styles.inputRow}>
+              <View style={styles.inputHalf}>
+                <ThemedText style={styles.inputLabel}>First Name</ThemedText>
+                <Input
+                  value={formData.firstName}
+                  onChangeText={(value) => handleChange('firstName', value)}
+                  error={errors.firstName}
+                  placeholder="Enter first name"
+                  style={styles.input}
+                />
+              </View>
+              
+              <View style={styles.inputHalf}>
+                <ThemedText style={styles.inputLabel}>Last Name</ThemedText>
+                <Input
+                  value={formData.lastName}
+                  onChangeText={(value) => handleChange('lastName', value)}
+                  error={errors.lastName}
+                  placeholder="Enter last name"
+                  style={styles.input}
+                />
+              </View>
+            </View>
+            
+            <View style={styles.inputContainer}>
+              <ThemedText style={styles.inputLabel}>Date of Birth</ThemedText>
+              <TouchableOpacity
+                style={styles.dateInput}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <ThemedText style={formData.dateOfBirth ? styles.dateInputText : styles.dateInputPlaceholder}>
+                  {formData.dateOfBirth || 'Select your date of birth'}
+                </ThemedText>
+                <ThemedText style={styles.calendarIcon}>📅</ThemedText>
+              </TouchableOpacity>
+              {errors.dateOfBirth && (
+                <ThemedText style={styles.errorText}>{errors.dateOfBirth}</ThemedText>
+              )}
+            </View>
 
-        {/* Physical Information */}
-        <Section style={styles.formSection}>
-          <ThemedText style={styles.sectionTitle}>Physical Information</ThemedText>
-          
-          <Input
-            label="Weight (kg)"
-            value={formData.weight?.toString() || ''}
-            onChangeText={(value) => handleChange('weight', value)}
-            error={errors.weight}
-            placeholder="Enter your weight"
-            keyboardType="numeric"
-          />
-          
-          <Input
-            label="Height (cm)"
-            value={formData.height?.toString() || ''}
-            onChangeText={(value) => handleChange('height', value)}
-            error={errors.height}
-            placeholder="Enter your height"
-            keyboardType="numeric"
-          />
-        </Section>
+            <View style={styles.inputContainer}>
+              <ThemedText style={styles.inputLabel}>Gender</ThemedText>
+              <View style={styles.genderContainer}>
+                {GENDER_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      styles.genderOption,
+                      formData.gender === option.value && styles.genderOptionSelected
+                    ]}
+                    onPress={() => handleChange('gender', option.value)}
+                  >
+                    <ThemedText style={styles.genderIcon}>{option.icon}</ThemedText>
+                    <ThemedText style={[
+                      styles.genderText,
+                      formData.gender === option.value && styles.genderTextSelected
+                    ]}>
+                      {option.label}
+                    </ThemedText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {errors.gender && (
+                <ThemedText style={styles.errorText}>{errors.gender}</ThemedText>
+              )}
+            </View>
+          </View>
 
-        {/* Action Buttons */}
-        <Section style={styles.buttonSection}>
-          <Button
-            title={saving ? "Saving..." : "Save Changes"}
-            onPress={handleSave}
-            disabled={saving}
-            style={styles.saveButton}
-          />
-          <Button
-            title="Cancel"
-            onPress={() => router.back()}
-            style={styles.cancelButton}
-          />
-        </Section>
-      </ScrollView>
-    </Screen>
+          {/* Physical Information */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Physical Information</ThemedText>
+            
+            <View style={styles.inputRow}>
+              <View style={styles.inputHalf}>
+                <ThemedText style={styles.inputLabel}>Weight (kg)</ThemedText>
+                <Input
+                  value={formData.weight?.toString() || ''}
+                  onChangeText={(value) => handleChange('weight', value)}
+                  error={errors.weight as unknown as string}
+                  placeholder="e.g., 70"
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+              </View>
+              
+              <View style={styles.inputHalf}>
+                <ThemedText style={styles.inputLabel}>Height (cm)</ThemedText>
+                <Input
+                  value={formData.height?.toString() || ''}
+                  onChangeText={(value) => handleChange('height', value)}
+                  error={errors.height as unknown as string}
+                  placeholder="e.g., 175"
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.buttonSection}>
+            <Button
+              title={saving ? "Saving..." : "Save Changes"}
+              onPress={handleSave}
+              disabled={saving}
+              style={styles.saveButton}
+            />
+            <Button
+              title="Cancel"
+              onPress={() => router.back()}
+              style={styles.cancelButton}
+            />
+          </View>
+        </View>
+        </ScrollView>
+
+        {/* Date Picker Modal */}
+        {showDatePicker && (
+          <Modal
+            transparent={true}
+            animationType="slide"
+            visible={showDatePicker}
+            onRequestClose={() => setShowDatePicker(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <ThemedText style={styles.modalTitle}>Select Date of Birth</ThemedText>
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setShowDatePicker(false)}
+                  >
+                    <ThemedText style={styles.closeButtonText}>✕</ThemedText>
+                  </TouchableOpacity>
+                </View>
+                
+                <DateTimePicker
+                  value={selectedDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={handleDateChange}
+                  maximumDate={new Date()}
+                  minimumDate={new Date(1900, 0, 1)}
+                />
+                
+                {Platform.OS === 'ios' && (
+                  <View style={styles.modalActions}>
+                    <Button
+                      title="Done"
+                      onPress={() => setShowDatePicker(false)}
+                      style={styles.modalButton}
+                    />
+                  </View>
+                )}
+              </View>
+            </View>
+          </Modal>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#127d5d',
+  },
   container: {
     flex: 1,
+    backgroundColor: '#f8fffe',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    backgroundColor: '#f8fffe',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 24,
+    backgroundColor: '#f8fffe',
   },
+  
+  // Header Styles
   header: {
-    padding: 20,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#127d5d',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButtonText: {
+    fontSize: 28,
+    color: '#fff',
+    fontWeight: '600',
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
+    color: '#fff',
   },
-  photoSection: {
-    padding: 20,
+  
+  // Photo Section Styles
+  photoContainer: {
     alignItems: 'center',
+    paddingVertical: 32,
+    backgroundColor: '#fff',
+    marginBottom: 16,
+  },
+  photoWrapper: {
+    position: 'relative',
+    marginBottom: 12,
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
+    borderColor: '#127d5d',
+  },
+  placeholderImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#e8f5f0',
+    borderWidth: 4,
+    borderColor: '#127d5d',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: 48,
+    color: '#127d5d',
+  },
+  changePhotoButton: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#127d5d',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  changePhotoIcon: {
+    fontSize: 20,
+  },
+  photoHint: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  
+  // Form Container Styles
+  formContainer: {
+    paddingHorizontal: 20,
+  },
+  section: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
+    fontWeight: '600',
+    color: '#127d5d',
+    marginBottom: 20,
   },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 15,
+  
+  // Input Styles
+  inputRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
   },
-  placeholderImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
+  inputHalf: {
+    flex: 1,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#127d5d',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#e8f5f0',
+    borderRadius: 12,
+  },
+  errorText: {
+    color: '#ff6b6b',
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  
+  // Date Picker Styles
+  dateInput: {
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#e8f5f0',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  photoButton: {
-    marginTop: 10,
+  dateInputText: {
+    fontSize: 16,
+    color: '#333',
+    flex: 1,
   },
-  formSection: {
-    padding: 20,
+  dateInputPlaceholder: {
+    fontSize: 16,
+    color: '#999',
+    flex: 1,
   },
+  calendarIcon: {
+    fontSize: 20,
+    color: '#127d5d',
+  },
+  
+  // Gender Selection Styles
+  genderContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  genderOption: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#e8f5f0',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 90,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  genderOptionSelected: {
+    backgroundColor: '#f0fff4',
+    borderColor: '#127d5d',
+    shadowColor: '#127d5d',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  genderIcon: {
+    fontSize: 28,
+    marginBottom: 8,
+  },
+  genderText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+    textAlign: 'center',
+  },
+  genderTextSelected: {
+    color: '#127d5d',
+    fontWeight: '600',
+  },
+  
+  // Button Section Styles
   buttonSection: {
-    padding: 20,
-    gap: 10,
+    marginTop: 8,
+    gap: 12,
   },
   saveButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#127d5d',
+    shadowColor: '#127d5d',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   cancelButton: {
-    backgroundColor: '#8E8E93',
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#127d5d',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '50%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#127d5d',
+  },
+  closeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#f8fffe',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e8f5f0',
+  },
+  closeButtonText: {
+    fontSize: 16,
+    color: '#127d5d',
+    fontWeight: '600',
+  },
+  modalActions: {
+    marginTop: 20,
+  },
+  modalButton: {
+    backgroundColor: '#127d5d',
   },
 });
