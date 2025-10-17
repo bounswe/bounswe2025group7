@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, StatusBar } from 'react-native';
+import { ScrollView, StyleSheet, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface ScreenProps {
   children: ReactNode;
@@ -15,7 +16,7 @@ export default function Screen({
   if (scroll) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor }]}>
-        <StatusBar barStyle="dark-content" backgroundColor={backgroundColor} />
+        <StatusBar barStyle="dark-content" backgroundColor={backgroundColor} translucent={false} />
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -27,7 +28,7 @@ export default function Screen({
   }
   return (
     <SafeAreaView style={[styles.container, { backgroundColor }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={backgroundColor} />
+      <StatusBar barStyle="dark-content" backgroundColor={backgroundColor} translucent={false} />
       {children}
     </SafeAreaView>
   );
