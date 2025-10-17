@@ -75,8 +75,8 @@ export default function ForgotPasswordScreen() {
         <Button
           title="Back to Sign In"
           onPress={handleBackToSignIn}
-          variant="text"
           style={styles.linkButton}
+          textStyle={{ color: '#127e5e' }}
         />
       </ThemedView>
     </KeyboardAvoidingView>
@@ -113,6 +113,10 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     marginBottom: 16,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   errorText: {
     color: 'red',

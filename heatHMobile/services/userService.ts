@@ -13,7 +13,7 @@ export const userService = {
     try {
       return await apiClient.put('/user/profile', profileData);
     } catch (error) {
-      console.error('Failed to update user profile:', error);
+      
       throw error;
     }
   },
@@ -23,7 +23,7 @@ export const userService = {
     try {
       return await apiClient.get('/user/recipes');
     } catch (error) {
-      console.error('Failed to get user recipes:', error);
+      
       throw error;
     }
   }

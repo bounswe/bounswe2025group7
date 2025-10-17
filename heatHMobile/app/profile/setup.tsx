@@ -89,11 +89,8 @@ export default function ProfileSetupScreen() {
 
   // Check authentication on component mount
   useEffect(() => {
-    console.log('ProfileSetup: Component mounted');
-    console.log('ProfileSetup: Authentication status:', { isAuthenticated, token: token ? 'Token exists' : 'No token' });
     
     if (!isAuthenticated) {
-      console.log('ProfileSetup: User not authenticated, redirecting to sign-in');
       router.replace('/auth/sign-in');
       return;
     }
@@ -103,13 +100,10 @@ export default function ProfileSetupScreen() {
       try {
         const currentToken = await authService.getAccessToken();
         if (!currentToken) {
-          console.log('ProfileSetup: No token found, redirecting to sign-in');
           router.replace('/auth/sign-in');
           return;
         }
-        console.log('ProfileSetup: Token verification passed');
       } catch (error) {
-        console.log('ProfileSetup: Token verification failed, redirecting to sign-in');
         router.replace('/auth/sign-in');
       }
     };
@@ -187,17 +181,15 @@ export default function ProfileSetupScreen() {
   };
 
   const handleSubmit = async () => {
-    console.log('ProfileSetup: handleSubmit called - START');
     
     // Check authentication first
     if (!isAuthenticated) {
-      console.log('ProfileSetup: User not authenticated, redirecting to sign-in');
       Alert.alert('Authentication Error', 'You are not authenticated. Please sign in again.');
       router.replace('/auth/sign-in');
       return;
     }
 
-    console.log('ProfileSetup: User is authenticated, proceeding with validation');
+    
 
     // Validate all fields
     const newErrors: Partial<ProfileFormData> = {};
@@ -209,35 +201,24 @@ export default function ProfileSetupScreen() {
 
     // Check if any errors exist
     if (Object.values(newErrors).some(error => error)) {
-      console.log('ProfileSetup: Validation errors found, stopping submission');
       Alert.alert('Validation Error', 'Please fix the highlighted fields first.');
       return;
     }
 
-    console.log('ProfileSetup: Validation passed, setting loading state');
     setLoading(true);
 
     try {
       // Test authentication first
-      console.log('ProfileSetup: Testing authentication before form submission');
-      console.log('ProfileSetup: Current auth context state:', { 
-        isAuthenticated,
-        token: token ? 'Token exists' : 'No token'
-      });
+      
       
       // First, let's test if we can get the token
       const currentToken = await authService.getAccessToken();
-      console.log('ProfileSetup: Direct token retrieval:', currentToken ? 'Token exists' : 'No token');
       
       if (!currentToken) {
-        console.log('ProfileSetup: No token available, throwing error');
         throw new Error('No authentication token available');
       }
       
-      console.log('ProfileSetup: Token preview:', currentToken.substring(0, 20) + '...');
-      
       // Test basic connectivity first
-      console.log('ProfileSetup: Testing basic connectivity to backend');
       try {
         const testResponse = await fetch('http://35.198.76.72:8080/api/auth/exists', {
           method: 'POST',
@@ -246,14 +227,11 @@ export default function ProfileSetupScreen() {
           },
           body: JSON.stringify({ username: 'test@test.com' })
         });
-        console.log('ProfileSetup: Backend connectivity test result:', testResponse.status);
       } catch (connectivityError) {
-        console.log('ProfileSetup: Backend connectivity test failed:', connectivityError);
         throw new Error('Cannot reach backend server. Please check your internet connection.');
       }
       
       // Test authentication with a simple request
-      console.log('ProfileSetup: Testing authentication with simple request');
       try {
         const authTestResponse = await fetch('http://35.198.76.72:8080/api/interest-form/check-first-login', {
           method: 'GET',
@@ -262,23 +240,15 @@ export default function ProfileSetupScreen() {
             'Authorization': `Bearer ${currentToken}`
           }
         });
-        console.log('ProfileSetup: Authentication test response status:', authTestResponse.status);
         
         if (authTestResponse.status === 401 || authTestResponse.status === 403) {
           throw new Error('Authentication failed: Token is invalid or expired');
         }
-        
-        console.log('ProfileSetup: Authentication test passed');
       } catch (authError) {
-        console.log('ProfileSetup: Authentication test failed:', authError);
         throw authError;
       }
       
-      console.log('ProfileSetup: About to call interestFormService.testAuthentication()');
       await interestFormService.testAuthentication();
-      console.log('ProfileSetup: Authentication test passed, proceeding with form submission');
-
-      console.log('ProfileSetup: About to call interestFormService.createInterestForm()');
       await interestFormService.createInterestForm({
         name: formData.firstName,
         surname: formData.lastName,
@@ -288,7 +258,6 @@ export default function ProfileSetupScreen() {
         gender: formData.gender,
         profilePhoto: null, // TODO: Add image upload support
       });
-      console.log('ProfileSetup: Form submission completed successfully');
 
       // Update profile setup status in context
       await checkProfileSetup();

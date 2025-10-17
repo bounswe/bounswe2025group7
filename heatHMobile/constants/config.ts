@@ -6,7 +6,7 @@ const getApiBaseUrl = () => {
   if (Platform.OS === 'web') {
     // IMPORTANT: CORS proxies are unreliable. Please test on iOS/Android for best results.
     // Try alternative CORS proxy (allOrigins)
-    console.warn('⚠️ Using CORS proxy for web development. For production, test on iOS/Android.');
+    
     
     // Option 1: Try allOrigins proxy
     return 'https://api.allorigins.win/raw?url=' + encodeURIComponent('http://35.198.76.72:8080/api');

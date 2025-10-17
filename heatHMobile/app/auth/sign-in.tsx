@@ -39,27 +39,10 @@ export default function SignInScreen() {
 
     try {
       // Clear any existing tokens before login
-      console.log('SignIn: Clearing existing tokens before login');
-      
-      // Debug: Check token before logout
-      const tokenBeforeLogout = await authService.getAccessToken();
-      console.log('SignIn: Token before logout:', tokenBeforeLogout ? `Token exists (${tokenBeforeLogout.substring(0, 20)}...)` : 'No token');
-      
       await logout();
-      
-      // Debug: Check token after logout
-      const tokenAfterLogout = await authService.getAccessToken();
-      console.log('SignIn: Token after logout:', tokenAfterLogout ? `Token exists (${tokenAfterLogout.substring(0, 20)}...)` : 'No token');
-      
       await login(form.username, form.password);
-      
-      // Debug: Check token after login
-      const tokenAfterLogin = await authService.getAccessToken();
-      console.log('SignIn: Token after login:', tokenAfterLogin ? `Token exists (${tokenAfterLogin.substring(0, 20)}...)` : 'No token');
-      
       // Navigation will be handled by useEffect
     } catch (err: any) {
-      console.error('Login error:', err);
       
       // Parse the error message to extract status code
       let statusCode = null;

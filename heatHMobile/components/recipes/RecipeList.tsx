@@ -5,7 +5,7 @@ import RecipeCard from './RecipeCard';
 
 const { width } = Dimensions.get('window');
 const isTablet = width > 768;
-const numColumns = isTablet ? 3 : 2;
+const numColumns: 1 | 2 | 3 = (isTablet ? 3 : 2) as 2 | 3;
 
 interface RecipeListProps {
   recipes: RecipeModel[];
@@ -67,11 +67,11 @@ export default function RecipeList({
         maxToRenderPerBatch={10}
         windowSize={10}
         initialNumToRender={5}
-        getItemLayout={numColumns === 1 ? (data, index) => ({
+        getItemLayout={numColumns === 1 ? ((data, index) => ({
           length: 200, // Approximate height of RecipeCard
           offset: 200 * index,
           index,
-        }) : undefined}
+        })) : undefined}
       />
     </View>
   );

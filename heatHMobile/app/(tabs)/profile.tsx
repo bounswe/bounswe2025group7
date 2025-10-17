@@ -25,7 +25,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 
 export default function MyProfileScreen() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuthContext();
+  const { isAuthenticated, isLoading: authLoading, logout } = useAuthContext();
   const { resolvedScheme, setPreference } = useThemePreference();
   const isDark = resolvedScheme === 'dark';
   
@@ -47,26 +47,21 @@ export default function MyProfileScreen() {
 
   // Load profile data and feeds
   useEffect(() => {
-    console.log('👤 Profile - useEffect triggered - authLoading:', authLoading, 'isAuthenticated:', isAuthenticated);
     
     // Debug: Check what token is currently stored at the very start
     const checkCurrentToken = async () => {
       try {
         const currentToken = await authService.getAccessToken();
-        console.log('👤 Profile - Current token at start of useEffect:', currentToken ? `Token exists (${currentToken.substring(0, 20)}...)` : 'No token');
+        
         
         if (currentToken) {
           try {
             const payload = JSON.parse(atob(currentToken.split('.')[1]));
-            console.log('👤 Profile - Token user at start of useEffect:', payload.sub);
-            console.log('👤 Profile - Token issued at:', new Date(payload.iat * 1000));
-            console.log('👤 Profile - Token expires at:', new Date(payload.exp * 1000));
+            
           } catch (e) {
-            console.log('👤 Profile - Could not decode token at start:', e);
           }
         }
       } catch (e) {
-        console.log('👤 Profile - Error checking token at start:', e);
       }
     };
     
@@ -79,48 +74,38 @@ export default function MyProfileScreen() {
     
     // Wait for authentication to complete
     if (authLoading) {
-      console.log('👤 Profile - Waiting for auth to complete...');
       return;
     }
 
     // Check if user is authenticated
     if (!isAuthenticated) {
-      console.log('👤 Profile - User not authenticated, showing error');
       setError('Please log in to view your profile');
       setLoadingProfile(false);
       setLoadingFeed(false);
       return;
     }
 
-    console.log('👤 Profile - User authenticated, fetching data...');
+    
 
     const fetchProfileData = async () => {
       try {
         setLoadingProfile(true);
-        console.log('Fetching profile data...');
         
         // Debug: Check what user is currently authenticated
         const token = await authService.getAccessToken();
-        console.log('Current token:', token ? `Token exists (${token.substring(0, 20)}...)` : 'No token');
         
         // Debug: Decode JWT to see username
         if (token) {
           try {
             const payload = JSON.parse(atob(token.split('.')[1]));
-            console.log('JWT payload:', payload);
-            console.log('Current username from JWT:', payload.sub);
           } catch (e) {
-            console.log('Could not decode JWT:', e);
           }
         }
         
         const data = await interestFormService.getInterestForm();
-        console.log('Profile data received:', data);
         const profile = interestFormService.toProfileData(data);
-        console.log('Profile data converted:', profile);
         setProfileData(profile);
       } catch (err: any) {
-        console.error('Error fetching profile:', err);
         setError(`Failed to load profile data: ${err.message || 'Unknown error'}`);
       } finally {
         setLoadingProfile(false);
@@ -130,12 +115,9 @@ export default function MyProfileScreen() {
     const fetchFeedByUser = async () => {
       try {
         setLoadingFeed(true);
-        console.log('Fetching feed data...');
         const data = await feedService.getFeedByUser();
-        console.log('Feed data received:', data);
         setUserFeed(data);
       } catch (err: any) {
-        console.error('Error fetching feeds:', err);
         setError(`Failed to load feeds: ${err.message || 'Unknown error'}`);
       } finally {
         setLoadingFeed(false);
@@ -152,19 +134,14 @@ export default function MyProfileScreen() {
     setError(null);
     
     try {
-      console.log('🔄 Starting refresh...');
       
       // Debug: Check current authentication state
       const currentToken = await authService.getAccessToken();
-      console.log('🔄 Current token during refresh:', currentToken ? `Token exists (${currentToken.substring(0, 20)}...)` : 'No token');
       
       if (currentToken) {
         try {
           const payload = JSON.parse(atob(currentToken.split('.')[1]));
-          console.log('🔄 JWT payload during refresh:', payload);
-          console.log('🔄 Username from JWT during refresh:', payload.sub);
         } catch (e) {
-          console.log('🔄 Could not decode JWT during refresh:', e);
         }
       }
       
@@ -174,11 +151,9 @@ export default function MyProfileScreen() {
         feedService.getFeedByUser()
       ]);
       
-      console.log('🔄 Refresh successful:', { profileData, feedData });
       setProfileData(profileData);
       setUserFeed(feedData);
     } catch (err: any) {
-      console.error('Error refreshing data:', err);
       setError(`Failed to refresh data: ${err.message || 'Unknown error'}`);
     } finally {
       setRefreshing(false);
@@ -189,6 +164,15 @@ export default function MyProfileScreen() {
     router.push('/profile/edit');
   };
 
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.replace('/auth/sign-in');
+    } catch (e) {
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
 
   const handleLikeFeed = async (feedId: number, currentlyLiked: boolean) => {
     try {
@@ -205,7 +189,6 @@ export default function MyProfileScreen() {
           : feed
       ));
     } catch (err: any) {
-      console.error('Error toggling like:', err);
       Alert.alert('Error', 'Failed to update like status');
     }
   };
@@ -222,7 +205,6 @@ export default function MyProfileScreen() {
       // as saved recipes are separate from feeds
       Alert.alert('Success', `Recipe ${currentlySaved ? 'unsaved' : 'saved'} successfully!`);
     } catch (err: any) {
-      console.error('Error toggling save:', err);
       Alert.alert('Error', 'Failed to update save status');
     }
   };
@@ -414,6 +396,15 @@ export default function MyProfileScreen() {
             userFeed.map(renderFeedItem)
           )}
         </Card>
+
+        {/* Logout Button */}
+        <View style={{ paddingHorizontal: 16, paddingBottom: 24 }}>
+          <Button
+            title="Logout"
+            onPress={handleLogout}
+            style={styles.logoutButton}
+          />
+        </View>
       </ScrollView>
     </Screen>
   );
@@ -455,6 +446,9 @@ const styles = StyleSheet.create({
   editButton: {
     minWidth: 120,
     backgroundColor: '#169873',
+  },
+  logoutButton: {
+    backgroundColor: '#FF3B30',
   },
   
   // Info Card Styles

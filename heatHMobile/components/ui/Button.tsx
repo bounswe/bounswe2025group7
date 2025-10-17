@@ -1,11 +1,11 @@
-import { Pressable, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { Pressable, Text, StyleSheet, ViewStyle, TextStyle, StyleProp } from 'react-native';
 
 interface ButtonProps {
   title: string;
   onPress?: () => void;
   disabled?: boolean;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
 }
 
 export default function Button({ 
@@ -15,7 +15,8 @@ export default function Button({
   style, 
   textStyle 
 }: ButtonProps) {
-  const isLinkButton = style && (style as any).backgroundColor === 'transparent';
+  const flattened = StyleSheet.flatten(style) as ViewStyle | undefined;
+  const isLinkButton = flattened && flattened.backgroundColor === 'transparent';
   
   return (
     <Pressable 
