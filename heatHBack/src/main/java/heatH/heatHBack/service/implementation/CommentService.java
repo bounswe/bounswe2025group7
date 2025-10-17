@@ -71,6 +71,7 @@ public class CommentService {
                     response.setSurname(interestForm.getSurname());
                     response.setProfilePhoto(user.getProfilePhoto());
                     response.setUserId(user.getId());
+                    response.setId(comment.getId());
                     return response;
                 })
                 .toList();
