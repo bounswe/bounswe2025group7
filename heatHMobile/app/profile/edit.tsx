@@ -46,10 +46,8 @@ export default function EditProfileScreen() {
 
   // Load existing profile data
   useEffect(() => {
-    console.log('EditProfile: useEffect triggered - authLoading:', authLoading, 'isAuthenticated:', isAuthenticated);
     
     // Clear previous data when authentication state changes
-    console.log('EditProfile: Clearing form data due to auth state change');
     setFormData({
       firstName: '',
       lastName: '',
@@ -64,18 +62,16 @@ export default function EditProfileScreen() {
     
     // Wait for authentication to complete
     if (authLoading) {
-      console.log('EditProfile: Waiting for auth to complete...');
       return;
     }
 
     // Check if user is authenticated
     if (!isAuthenticated) {
-      console.log('EditProfile: User not authenticated, redirecting');
       router.replace('/auth/sign-in');
       return;
     }
 
-    console.log('EditProfile: User authenticated, loading profile data...');
+    
 
     const loadProfileData = async () => {
       try {
@@ -83,45 +79,30 @@ export default function EditProfileScreen() {
         
         // Debug: Check what user is currently authenticated
         const token = await authService.getAccessToken();
-        console.log('EditProfile: Current token:', token ? `Token exists (${token.substring(0, 20)}...)` : 'No token');
         
         // Debug: Decode JWT to see username
         if (token) {
           try {
             const payload = JSON.parse(atob(token.split('.')[1]));
-            console.log('EditProfile: JWT payload:', payload);
-            console.log('EditProfile: Current username from JWT:', payload.sub);
           } catch (e) {
-            console.log('EditProfile: Could not decode JWT:', e);
           }
         }
         
         const data = await interestFormService.getInterestForm();
-        console.log('EditProfile: Profile data received:', data);
-        console.log('EditProfile: User in profile data:', (data as any)?.user);
-        console.log('EditProfile: Username in profile data:', (data as any)?.user?.username);
-        console.log('EditProfile: Profile ID:', (data as any)?.id);
         
         // Check if the profile data belongs to the current user
         const currentUsername = token ? JSON.parse(atob(token.split('.')[1])).sub : null;
-        console.log('EditProfile: Current username from JWT:', currentUsername);
-        console.log('EditProfile: Profile username:', (data as any)?.user?.username);
         
         if (currentUsername && (data as any)?.user?.username && currentUsername !== (data as any).user.username) {
-          console.log('EditProfile: WARNING - Profile data does not match current user!');
-          console.log('EditProfile: This suggests a backend issue where wrong profile is returned');
         }
         
         const profile = interestFormService.toProfileData(data);
-        console.log('EditProfile: Profile data converted:', profile);
-        console.log('EditProfile: Date of birth format:', profile.dateOfBirth);
         
         setFormData(profile);
         if (profile.profilePhoto) {
           setPreviewUrl(profile.profilePhoto);
         }
       } catch (err: any) {
-        console.error('Error loading profile:', err);
         setError('Failed to load profile data');
       } finally {
         setLoading(false);
@@ -218,76 +199,51 @@ export default function EditProfileScreen() {
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
         const base64 = `data:image/jpeg;base64,${asset.base64}`;
-        setPreviewUrl(asset.uri);
         setFormData(prev => ({ ...prev, profilePhoto: base64 }));
+        setPreviewUrl(asset.uri || '');
       }
     } catch (err: any) {
-      console.error('Error picking image:', err);
       Alert.alert('Error', 'Failed to pick image');
     }
   };
 
   const handleSave = async () => {
-    // Validate all fields
-    const newErrors: Partial<ProfileData> = {};
-    Object.keys(formData).forEach(key => {
-      const fieldName = key as keyof ProfileData;
-      const error = validateField(fieldName, formData[fieldName]);
-      if (error) {
-        (newErrors as any)[fieldName] = error;
-      }
-    });
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      Alert.alert('Validation Error', 'Please fix the errors before saving');
-      return;
-    }
-
     try {
       setSaving(true);
-      console.log('EditProfile: Starting save process with form data:', formData);
       const interestFormData = interestFormService.fromProfileData(formData);
-      console.log('EditProfile: Converted to interest form data:', interestFormData);
       
       // Validate the data format
-      if (!interestFormData.name || !interestFormData.surname) {
-        throw new Error('Name and surname are required');
+      const errorsFound: string[] = [];
+      (['firstName', 'lastName', 'weight', 'height', 'dateOfBirth'] as Array<keyof ProfileData>).forEach((field) => {
+        const message = validateField(field, (formData as any)[field]);
+        if (message) errorsFound.push(`${field}: ${message}`);
+      });
+      if (errorsFound.length > 0) {
+        Alert.alert('Validation Error', errorsFound.join('\n'));
+        return;
       }
-      
-      console.log('EditProfile: Data validation passed');
       
       // Try update first, if it fails, try create
       try {
-        console.log('EditProfile: Attempting to update existing form');
         await interestFormService.updateInterestForm(interestFormData);
-        console.log('EditProfile: Update successful');
       } catch (updateError) {
-        console.log('EditProfile: Update failed, trying create instead:', updateError);
         try {
           await interestFormService.createInterestForm(interestFormData);
-          console.log('EditProfile: Create successful');
         } catch (createError) {
-          console.log('EditProfile: Create also failed:', createError);
           
           // Test if we can make any authenticated requests at all
-          console.log('EditProfile: Testing basic authentication...');
           try {
             await interestFormService.testAuthentication();
-            console.log('EditProfile: Basic authentication test passed');
           } catch (authError) {
-            console.log('EditProfile: Basic authentication test failed:', authError);
           }
           
+          Alert.alert('Error', 'Failed to save profile. Please try again.');
           throw createError;
         }
       }
-      
-      Alert.alert('Success', 'Profile updated successfully', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
+
+      Alert.alert('Success', 'Profile saved successfully');
     } catch (err: any) {
-      console.error('Error saving profile:', err);
       Alert.alert('Error', 'Failed to save profile. Please try again.');
     } finally {
       setSaving(false);

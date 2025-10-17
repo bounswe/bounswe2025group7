@@ -24,10 +24,10 @@ export default function Grid({
   spacing = 0,
   style 
 }: GridProps) {
-  const getFlexBasis = () => {
+  const getFlexBasis = (): number => {
     // Simple responsive breakpoint logic
     // In a real app, you'd use device dimensions
-    return `${(xs / 12) * 100}%`;
+    return (xs / 12) * 100;
   };
 
   const containerStyle = container ? {
@@ -37,7 +37,8 @@ export default function Grid({
   } : {};
 
   const itemStyle = item ? {
-    flexBasis: getFlexBasis(),
+    flexBasis: `${getFlexBasis()}%` as unknown as number,
+    maxWidth: `${getFlexBasis()}%` as unknown as number,
     paddingHorizontal: spacing / 2,
     marginBottom: spacing,
   } : {};

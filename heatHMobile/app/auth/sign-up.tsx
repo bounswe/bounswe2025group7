@@ -44,7 +44,6 @@ export default function SignUpScreen() {
       await register(form.username, form.password);
       router.replace('/auth/sign-in?success=Registration successful! Please sign in.');
     } catch (err: any) {
-      console.error('Registration error:', err);
       
       // Parse the error message to extract status code
       let statusCode = null;

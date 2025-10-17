@@ -127,7 +127,7 @@ export default function UserProfileScreen() {
   };
 
   const renderFeedItem = (feed: FeedResponse) => (
-    <Section key={feed.id} style={styles.feedItem}>
+    <ThemedView key={feed.id} style={styles.feedItem}>
       <ThemedText style={styles.feedContent}>
         {feed.text || 'Recipe post'}
       </ThemedText>
@@ -153,7 +153,7 @@ export default function UserProfileScreen() {
           />
         )}
       </ThemedView>
-    </Section>
+    </ThemedView>
   );
 
   if (loading) {
@@ -196,16 +196,16 @@ export default function UserProfileScreen() {
         />
 
         {/* Follow Button */}
-        <Section style={styles.actionSection}>
+        <ThemedView style={styles.actionSection}>
           <Button 
             title="Follow" 
             onPress={handleFollow}
             style={styles.followButton}
           />
-        </Section>
+        </ThemedView>
 
         {/* User Feeds */}
-        <Section style={styles.feedsSection}>
+        <ThemedView style={styles.feedsSection as any}>
           <ThemedText style={styles.sectionTitle}>Posts</ThemedText>
           {feeds.length === 0 ? (
             <ThemedText style={styles.emptyText}>
@@ -214,7 +214,7 @@ export default function UserProfileScreen() {
           ) : (
             feeds.map(renderFeedItem)
           )}
-        </Section>
+        </ThemedView>
       </ScrollView>
     </Screen>
   );

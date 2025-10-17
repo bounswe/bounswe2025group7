@@ -27,7 +27,6 @@ const interestFormService = {
 
   // Create a new interest form entry
   createInterestForm: async (data: InterestFormData) => {
-    console.log('InterestFormService: Creating interest form with data:', data);
     try {
       const response = await apiClient.post<string>('/interest-form/submit', data);
       return response;
@@ -40,21 +39,18 @@ const interestFormService = {
 
   // Fetch the existing interest form data
   getInterestForm: async () => {
-    console.log('InterestFormService: Getting interest form...');
     const response = await apiClient.get<InterestFormData>('/interest-form/get-form');
     return response;
   },
 
   // Update existing interest form data
   updateInterestForm: async (data: InterestFormData) => {
-    console.log('InterestFormService: Updating interest form with data:', data);
     const response = await apiClient.put<string>('/interest-form/update-form', data);
     return response;
   },
 
   // Test authentication by making a simple request
   testAuthentication: async () => {
-    console.log('InterestFormService: Testing authentication');
     try {
       await apiClient.get('/interest-form/check-first-login');
       return true;
