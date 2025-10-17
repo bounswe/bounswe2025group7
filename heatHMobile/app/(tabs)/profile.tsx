@@ -1,7 +1,56 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
+import { authService } from '../../services/authService';
 
 export default function ProfileScreen() {
+  const router = useRouter();
+
+  const performLogout = async () => {
+    try {
+      console.log('Logging out...');
+      await authService.logout();
+      console.log('Tokens cleared, navigating to sign-in...');
+      // Small delay to ensure storage is cleared
+      setTimeout(() => {
+        router.replace('/auth/sign-in' as any);
+      }, 100);
+    } catch (error) {
+      console.error('Logout error:', error);
+      if (Platform.OS === 'web') {
+        alert('Failed to logout. Please try again.');
+      } else {
+        Alert.alert('Error', 'Failed to logout. Please try again.');
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    if (Platform.OS === 'web') {
+      // Use native browser confirm for web
+      if (confirm('Are you sure you want to logout?')) {
+        await performLogout();
+      }
+    } else {
+      // Use Alert.alert for native
+      Alert.alert(
+        'Logout',
+        'Are you sure you want to logout?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Logout',
+            style: 'destructive',
+            onPress: performLogout,
+          },
+        ]
+      );
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
@@ -18,6 +67,10 @@ export default function ProfileScreen() {
         <Text style={styles.description}>
           This is a template profile page. Add user information, settings, and preferences here.
         </Text>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -62,6 +115,18 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: '#333',
     marginTop: 20,
+  },
+  logoutButton: {
+    backgroundColor: '#FF6347',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 30,
+  },
+  logoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
