@@ -51,6 +51,14 @@ export const feedService = {
     });
     return response.data;
   },
+
+  deleteComment: async (feedId: number, commentId: number) => {
+    const response = await apiClient.post('/feeds/delete-comment', { 
+      feed_id: feedId,
+      comment_id: commentId 
+    });
+    return response.data;
+  },
 };
 
 
