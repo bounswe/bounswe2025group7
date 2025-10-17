@@ -7,6 +7,8 @@ import { recipeService } from '@/services/recipeService';
 export default function TestScreen() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [commentIdInput, setCommentIdInput] = useState('5');
+  const [deleteRecipeModalVisible, setDeleteRecipeModalVisible] = useState(false);
+  const [recipeIdInput, setRecipeIdInput] = useState('1');
 
   // FeedService methods START ---------------------------------------------------------------------
   const handleFeedByUser = async () => {
@@ -309,18 +311,28 @@ export default function TestScreen() {
       const payload = {
         title: 'Test Recipe from Mobile',
         instructions: ['Step 1: Prepare ingredients', 'Step 2: Cook', 'Step 3: Serve'],
-        ingredients: ['Ingredient 1', 'Ingredient 2', 'Ingredient 3'],
+        ingredients: [
+          { name: 'Ingredient 1', quantity: 100 },
+          { name: 'Ingredient 2', quantity: 200 },
+          { name: 'Ingredient 3', quantity: 150 }
+        ],
         tag: 'test',
         type: 'dinner',
-        photo: testImageBase64
+        photo: testImageBase64,
+        totalCalorie: 500,
+        price: 25
       };
       
       const data = await recipeService.createRecipe(payload);
       const jsonString = JSON.stringify(data, null, 2);
       console.log('Create recipe response:', jsonString);
+      
+      // Format the display message
+      const displayMessage = `Successfully created recipe!\n\nTitle: ${payload.title}\nType: ${payload.type}\nTag: ${payload.tag}\nCalories: ${payload.totalCalorie}\nPrice: $${payload.price}\nIngredients: ${payload.ingredients.length}\nInstructions: ${payload.instructions.length} steps\n\nResponse:\n${jsonString}`;
+      
       Alert.alert(
         'Recipe Created', 
-        jsonString,
+        displayMessage,
         [{ text: 'OK' }],
         { cancelable: true }
       );
@@ -350,60 +362,61 @@ export default function TestScreen() {
     }
   };
 
-  const handleLikeRecipe = async () => {
+  const handleGetAllRecipes = async () => {
     try {
-      console.log('Liking recipe with ID 1...');
-      const data = await recipeService.updateRecipeAction(1, 'like', true);
+      console.log('Fetching all recipes...');
+      const data = await recipeService.getAllRecipes();
       const jsonString = JSON.stringify(data, null, 2);
-      console.log('Like recipe response:', jsonString);
+      console.log('Get all recipes response:', jsonString);
       Alert.alert(
-        'Recipe Liked', 
-        jsonString,
+        'All Recipes', 
+        `Returned ${Array.isArray(data) ? data.length : 0} recipes\n\n${jsonString}`,
         [{ text: 'OK' }],
         { cancelable: true }
       );
     } catch (error: any) {
-      console.error('Error liking recipe:', error);
-      const errorMsg = error.response?.data?.message || error.message || 'Failed to like recipe';
+      console.error('Error fetching all recipes:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to fetch all recipes';
       Alert.alert('Error', errorMsg);
     }
   };
 
-  const handleSaveRecipe = async () => {
-    try {
-      console.log('Saving recipe with ID 1...');
-      const data = await recipeService.updateRecipeAction(1, 'save', true);
-      const jsonString = JSON.stringify(data, null, 2);
-      console.log('Save recipe response:', jsonString);
-      Alert.alert(
-        'Recipe Saved', 
-        jsonString,
-        [{ text: 'OK' }],
-        { cancelable: true }
-      );
-    } catch (error: any) {
-      console.error('Error saving recipe:', error);
-      const errorMsg = error.response?.data?.message || error.message || 'Failed to save recipe';
-      Alert.alert('Error', errorMsg);
-    }
-  };
 
-  const handleRateRecipe = async () => {
+
+
+  const handleDeleteRecipe = async () => {
+    const recipeId = parseInt(recipeIdInput);
+    
+    if (isNaN(recipeId) || recipeId <= 0) {
+      Alert.alert('Invalid Input', 'Please enter a valid recipe ID (positive number)');
+      return;
+    }
+
+    setDeleteRecipeModalVisible(false);
+    
     try {
-      console.log('Rating recipe with ID 1...');
-      const data = await recipeService.submitRating(1, 5, 'easiness');
+      console.log(`Deleting recipe ${recipeId}...`);
+      const data = await recipeService.deleteRecipe(recipeId);
       const jsonString = JSON.stringify(data, null, 2);
-      console.log('Rate recipe response:', jsonString);
+      console.log('Delete recipe response:', jsonString);
       Alert.alert(
-        'Recipe Rated', 
-        jsonString,
+        'Recipe Deleted', 
+        `Successfully deleted recipe ${recipeId}\n\n${jsonString}`,
         [{ text: 'OK' }],
         { cancelable: true }
       );
     } catch (error: any) {
-      console.error('Error rating recipe:', error);
-      const errorMsg = error.response?.data?.message || error.message || 'Failed to rate recipe';
-      Alert.alert('Error', errorMsg);
+      if (error.response?.status === 403) {
+        Alert.alert(
+          'Recipe Not Available',
+          `Recipe ID ${recipeId} is not available or is not yours.`,
+          [{ text: 'OK' }],
+          { cancelable: true }
+        );
+      } else {
+        const errorMsg = error.response?.data?.message || error.message || 'Failed to delete recipe';
+        Alert.alert('Error', errorMsg);
+      }
     }
   };
   // RecipeService methods END ----------------------------------------------------------------------
@@ -551,24 +564,17 @@ export default function TestScreen() {
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.button}
-            onPress={handleLikeRecipe}
+            onPress={handleGetAllRecipes}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>like-recipe (ID: 1)</Text>
+            <Text style={styles.buttonText}>get-all-recipes</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            style={styles.button}
-            onPress={handleSaveRecipe}
+            style={[styles.button, styles.deleteButton]}
+            onPress={() => setDeleteRecipeModalVisible(true)}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>save-recipe (ID: 1)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={handleRateRecipe}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.buttonText}>rate-recipe (ID: 1, Rating: 5)</Text>
+            <Text style={styles.buttonText}>delete-recipe</Text>
           </TouchableOpacity>
         </View>
 
@@ -606,6 +612,48 @@ export default function TestScreen() {
                 <TouchableOpacity 
                   style={[styles.modalButton, styles.confirmButton]}
                   onPress={handleDeleteComment}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.modalButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Delete Recipe Modal */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={deleteRecipeModalVisible}
+          onRequestClose={() => setDeleteRecipeModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Delete Recipe</Text>
+              
+              <Text style={styles.inputLabel}>Enter Recipe ID:</Text>
+              <TextInput
+                style={styles.input}
+                value={recipeIdInput}
+                onChangeText={setRecipeIdInput}
+                keyboardType="numeric"
+                placeholder="Enter recipe ID"
+                placeholderTextColor="#999"
+                autoFocus={true}
+              />
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setDeleteRecipeModalVisible(false)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.confirmButton]}
+                  onPress={handleDeleteRecipe}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.modalButtonText}>Delete</Text>

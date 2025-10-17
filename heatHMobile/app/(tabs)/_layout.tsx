@@ -32,7 +32,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="test"
         options={{
-          title: 'API TESTS TITLE',
+          title: 'API TEST',
           tabBarLabel: 'api_tests',
         }}
       />
