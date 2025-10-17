@@ -419,6 +419,83 @@ export default function TestScreen() {
       }
     }
   };
+
+  const handleSaveRecipe = async () => {
+    try {
+      console.log('Saving recipe with ID 4...');
+      const data = await recipeService.saveRecipe(4);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Save recipe response:', jsonString);
+      Alert.alert(
+        'Recipe Saved', 
+        `Successfully saved recipe 4\n\n${jsonString}`,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      // Handle 403 error - recipe is already saved
+      if (error.response?.status === 403) {
+        Alert.alert(
+          'Already Saved',
+          'This recipe is already saved. You cannot save it again.',
+          [{ text: 'OK' }],
+          { cancelable: true }
+        );
+      } else {
+        console.error('Error saving recipe:', error);
+        const errorMsg = error.response?.data?.message || error.message || 'Failed to save recipe';
+        Alert.alert('Error', errorMsg);
+      }
+    }
+  };
+
+  const handleUnsaveRecipe = async () => {
+    try {
+      console.log('Unsaving recipe with ID 4...');
+      const data = await recipeService.unsaveRecipe(4);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Unsave recipe response:', jsonString);
+      Alert.alert(
+        'Recipe Unsaved', 
+        `Successfully unsaved recipe 4\n\n${jsonString}`,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      // Handle 403 error - recipe is not saved
+      if (error.response?.status === 403) {
+        Alert.alert(
+          'Not Saved',
+          'This recipe is not saved. You cannot unsave it.',
+          [{ text: 'OK' }],
+          { cancelable: true }
+        );
+      } else {
+        console.error('Error unsaving recipe:', error);
+        const errorMsg = error.response?.data?.message || error.message || 'Failed to unsave recipe';
+        Alert.alert('Error', errorMsg);
+      }
+    }
+  };
+
+  const handleGetSavedRecipes = async () => {
+    try {
+      console.log('Fetching saved recipes...');
+      const data = await recipeService.getSavedRecipes();
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Get saved recipes response:', jsonString);
+      Alert.alert(
+        'Saved Recipes', 
+        `Returned ${Array.isArray(data) ? data.length : 0} saved recipes\n\n${jsonString}`,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      console.error('Error fetching saved recipes:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to fetch saved recipes';
+      Alert.alert('Error', errorMsg);
+    }
+  };
   // RecipeService methods END ----------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------
 
@@ -575,6 +652,27 @@ export default function TestScreen() {
             activeOpacity={0.7}
           >
             <Text style={styles.buttonText}>delete-recipe</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleSaveRecipe}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>save-recipe (ID: 4)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleUnsaveRecipe}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>unsave-recipe (ID: 4)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleGetSavedRecipes}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>get-saved-recipes</Text>
           </TouchableOpacity>
         </View>
 

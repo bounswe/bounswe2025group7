@@ -22,6 +22,15 @@ export const recipeService = {
   
   deleteRecipe: (recipeId: number) => 
     apiClient.delete<string>('/recipe/delete-recipe', { data: { id: recipeId } }).then((r: any) => r.data),
+  
+  saveRecipe: (recipeId: number) => 
+    apiClient.post<string>('/saved-recipes/save', { recipeId }).then((r: any) => r.data),
+  
+  unsaveRecipe: (recipeId: number) => 
+    apiClient.post<string>('/saved-recipes/unsave', { recipeId }).then((r: any) => r.data),
+  
+  getSavedRecipes: () => 
+    apiClient.get<any[]>('/saved-recipes/get').then((r: any) => r.data),
 };
 
 
