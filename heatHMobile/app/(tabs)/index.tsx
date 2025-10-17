@@ -5,7 +5,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome to HeatH!</Text>
-      <Text style={styles.subtitle}>Your healthy recipes companion</Text>
+      <Text style={styles.subtitle}>Your healthy rec9ipes companion</Text>
     </View>
   );
 }

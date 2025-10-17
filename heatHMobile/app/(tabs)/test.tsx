@@ -381,9 +381,6 @@ export default function TestScreen() {
     }
   };
 
-
-
-
   const handleDeleteRecipe = async () => {
     const recipeId = parseInt(recipeIdInput);
     
