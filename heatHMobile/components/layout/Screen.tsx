@@ -1,6 +1,7 @@
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { ScrollView, StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface ScreenProps {
   children: ReactNode;
@@ -11,12 +12,16 @@ interface ScreenProps {
 export default function Screen({ 
   children, 
   scroll = true, 
-  backgroundColor = '#f8f9fa' 
+  backgroundColor,
 }: ScreenProps) {
+  const themedBackground = useThemeColor({}, 'background');
+  const bg = backgroundColor ?? themedBackground;
+  const barStyle = useMemo(() => (themedBackground === '#151718' ? 'light-content' as const : 'dark-content' as const), [themedBackground]);
+
   if (scroll) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor }]}>
-        <StatusBar barStyle="dark-content" backgroundColor={backgroundColor} translucent={false} />
+      <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+        <StatusBar barStyle={barStyle} backgroundColor={bg} translucent={false} />
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -27,8 +32,8 @@ export default function Screen({
     );
   }
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={backgroundColor} translucent={false} />
+    <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
+      <StatusBar barStyle={barStyle} backgroundColor={bg} translucent={false} />
       {children}
     </SafeAreaView>
   );

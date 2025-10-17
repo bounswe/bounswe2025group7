@@ -1,130 +1,119 @@
+import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import { config } from '@/constants/config';
 import { storage } from '@/utils/storage';
 
-const getAuthHeaders = async (): Promise<Record<string, string>> => {
-  try {
-    const token = await storage.getItem('accessToken');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  } catch (error) {
-    console.error('Error getting auth token:', error);
-    return {};
-  }
-};
+// Create axios instance similar to web app
+const client: AxiosInstance = axios.create({
+  baseURL: config.apiBaseUrl,
+  headers: { 'Content-Type': 'application/json' },
+});
 
-// Helper function to handle token refresh on 401 errors (matches frontend interceptor)
-const handleUnauthorized = async (originalRequest: RequestInit, url: string): Promise<Response> => {
-  try {
-    console.log('🔄 API Client: Handling 401, attempting token refresh...');
-    
-    // Try to refresh token (matches frontend pattern)
-    const { authService } = await import('./authService');
-    await authService.refreshToken();
-    
-    // Get new token and retry original request
-    const authHeaders = await getAuthHeaders();
-    const fullUrl = url.startsWith('http') ? url : `${config.apiBaseUrl}${url}`;
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...authHeaders,
-      ...(originalRequest.headers as Record<string, string>),
-    };
-    
-    console.log('🔄 API Client: Retrying request with new token');
-    return await fetch(fullUrl, {
-      ...originalRequest,
-      headers,
-    });
-  } catch (refreshError) {
-    console.error('🔄 API Client: Token refresh failed:', refreshError);
-    // Clear tokens and throw error (matches frontend pattern)
-    await storage.removeItem('accessToken');
-    await storage.removeItem('refreshToken');
-    throw new Error('Authentication failed. Please login again.');
+// Request interceptor: attach access token
+client.interceptors.request.use(async (axiosConfig: InternalAxiosRequestConfig) => {
+  const token = await storage.getItem('accessToken');
+  if (token) {
+    axiosConfig.headers = axiosConfig.headers ?? {};
+    axiosConfig.headers.Authorization = `Bearer ${token}`;
   }
-};
+  return axiosConfig;
+});
 
+// Response interceptor: handle 401 with refresh flow similar to web
+client.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const originalRequest: any = error.config || {};
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        const { authService } = await import('./authService');
+        await authService.refreshToken();
+        const newToken = await storage.getItem('accessToken');
+        if (newToken) {
+          originalRequest.headers = originalRequest.headers ?? {};
+          originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+        }
+        return client(originalRequest);
+      } catch (refreshError) {
+        await storage.removeItem('accessToken');
+        await storage.removeItem('refreshToken');
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Export a simple API like the existing one but returning parsed data (like web)
 export const apiClient = {
-  get: async <T>(url: string, options?: RequestInit): Promise<T> => {
-    const fullUrl = url.startsWith('http') ? url : `${config.apiBaseUrl}${url}`;
-    const authHeaders = await getAuthHeaders();
-    const res = await fetch(fullUrl, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...authHeaders,
-        ...options?.headers,
-      },
-    });
-    
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-    
-    return (await res.json()) as T;
+  get: async <T>(
+    url: string,
+    optionsOrToken?: { headers?: Record<string, string>; params?: Record<string, any> } | string
+  ): Promise<T> => {
+    const headers =
+      typeof optionsOrToken === 'string'
+        ? { Authorization: `Bearer ${optionsOrToken}` }
+        : optionsOrToken?.headers;
+    const params = typeof optionsOrToken === 'object' ? optionsOrToken?.params : undefined;
+    const res = await client.get<T>(url, { headers, params });
+    return res.data;
   },
-
-  post: async <T>(url: string, data?: any, options?: RequestInit): Promise<T> => {
-    const fullUrl = url.startsWith('http') ? url : `${config.apiBaseUrl}${url}`;
-    const authHeaders = await getAuthHeaders();
-    const res = await fetch(fullUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...authHeaders,
-        ...options?.headers,
-      },
-      body: data ? JSON.stringify(data) : undefined,
-      ...options,
-    });
-    
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-    
-    return (await res.json()) as T;
+  post: async <T>(
+    url: string,
+    data?: any,
+    optionsOrToken?: { headers?: Record<string, string>; params?: Record<string, any> } | string
+  ): Promise<T> => {
+    const headers =
+      typeof optionsOrToken === 'string'
+        ? { Authorization: `Bearer ${optionsOrToken}` }
+        : optionsOrToken?.headers;
+    const params = typeof optionsOrToken === 'object' ? optionsOrToken?.params : undefined;
+    const res = await client.post<T>(url, data, { headers, params });
+    return res.data;
   },
-
-  put: async <T>(url: string, data?: any, options?: RequestInit): Promise<T> => {
-    const fullUrl = url.startsWith('http') ? url : `${config.apiBaseUrl}${url}`;
-    const authHeaders = await getAuthHeaders();
-    const res = await fetch(fullUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...authHeaders,
-        ...options?.headers,
-      },
-      body: data ? JSON.stringify(data) : undefined,
-      ...options,
-    });
-    
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-    
-    return (await res.json()) as T;
+  put: async <T>(
+    url: string,
+    data?: any,
+    optionsOrToken?: { headers?: Record<string, string>; params?: Record<string, any> } | string
+  ): Promise<T> => {
+    const headers =
+      typeof optionsOrToken === 'string'
+        ? { Authorization: `Bearer ${optionsOrToken}` }
+        : optionsOrToken?.headers;
+    const params = typeof optionsOrToken === 'object' ? optionsOrToken?.params : undefined;
+    const res = await client.put<T>(url, data, { headers, params });
+    return res.data;
   },
+  delete: async <T>(
+    url: string,
+    optionsOrToken?: { headers?: Record<string, string>; params?: Record<string, any> } | string
+  ): Promise<T> => {
+    const headers =
+      typeof optionsOrToken === 'string'
+        ? { Authorization: `Bearer ${optionsOrToken}` }
+        : optionsOrToken?.headers;
+    const params = typeof optionsOrToken === 'object' ? optionsOrToken?.params : undefined;
+    const res = await client.delete<T>(url, { headers, params });
+    return res.data;
+  },
+};
 
-  delete: async <T>(url: string, options?: RequestInit): Promise<T> => {
-    const fullUrl = url.startsWith('http') ? url : `${config.apiBaseUrl}${url}`;
-    const authHeaders = await getAuthHeaders();
-    const res = await fetch(fullUrl, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        ...authHeaders,
-        ...options?.headers,
-      },
-      ...options,
-    });
-    
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-    
-    return (await res.json()) as T;
+export default client;
+
+// Saved-recipe helper functions for convenience (parity with web apiClient)
+export const checkIfRecipeSaved = async (recipeId: number): Promise<boolean> => {
+  try {
+    const saved = await apiClient.get<Array<{ recipeId: number }>>('/saved-recipes/get');
+    return saved.some((r) => r.recipeId === recipeId);
+  } catch (error) {
+    return false;
   }
 };
 
+export const saveRecipe = async (recipeId: number) => {
+  return apiClient.post('/saved-recipes/save', { recipeId });
+};
 
+export const unsaveRecipe = async (recipeId: number) => {
+  return apiClient.post('/saved-recipes/unsave', { recipeId });
+};
