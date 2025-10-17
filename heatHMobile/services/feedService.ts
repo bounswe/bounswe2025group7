@@ -19,6 +19,38 @@ export const feedService = {
     const response = await apiClient.post('/feeds/created-feed', postPayload);
     return response.data;
   },
+
+  likeFeed: async (feedId: number) => {
+    const response = await apiClient.post('/feeds/like', { feedId });
+    return response.data;
+  },
+
+  unlikeFeed: async (feedId: number) => {
+    const response = await apiClient.post('/feeds/unlike', { feedId });
+    return response.data;
+  },
+
+  getFeedOtherUser: async (userId: number) => {
+    const response = await apiClient.get('/feeds/other-user', {
+      params: { userId }
+    });
+    return response.data;
+  },
+
+  commentFeed: async (feedId: number, message: string) => {
+    const response = await apiClient.post('/feeds/comment', { 
+      feedId, 
+      message 
+    });
+    return response.data;
+  },
+
+  getFeedComments: async (feedId: number) => {
+    const response = await apiClient.get('/feeds/get-feed-comments', {
+      params: { feedId }
+    });
+    return response.data;
+  },
 };
 
 

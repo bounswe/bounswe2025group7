@@ -67,6 +67,121 @@ export default function TestScreen() {
       Alert.alert('Error', errorMsg);
     }
   };
+
+  const handleLikeFeed = async () => {
+    try {
+      console.log('Liking feed with ID 1...');
+      const data = await feedService.likeFeed(1);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Like feed response:', jsonString);
+      Alert.alert(
+        'Feed Liked', 
+        jsonString,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      // Handle 403 error - feed is already liked
+      if (error.response?.status === 403) {
+        Alert.alert(
+          'Already Liked',
+          'This feed is already liked. You cannot like it again.',
+          [{ text: 'OK' }],
+          { cancelable: true }
+        );
+      } else {
+        console.error('Error liking feed:', error);
+        const errorMsg = error.response?.data?.message || error.message || 'Failed to like feed';
+        Alert.alert('Error', errorMsg);
+      }
+    }
+  };
+
+  const handleUnlikeFeed = async () => {
+    try {
+      console.log('Unliking feed with ID 1...');
+      const data = await feedService.unlikeFeed(1);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Unlike feed response:', jsonString);
+      Alert.alert(
+        'Feed Unliked', 
+        jsonString,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      // Handle 403 error - feed is not liked
+      if (error.response?.status === 403) {
+        Alert.alert(
+          'Not Liked',
+          'This feed is not liked. You cannot unlike it.',
+          [{ text: 'OK' }],
+          { cancelable: true }
+        );
+      } else {
+        console.error('Error unliking feed:', error);
+        const errorMsg = error.response?.data?.message || error.message || 'Failed to unlike feed';
+        Alert.alert('Error', errorMsg);
+      }
+    }
+  };
+
+  const handleGetFeedOtherUser = async () => {
+    try {
+      console.log('Fetching feed for other user with ID 1...');
+      const data = await feedService.getFeedOtherUser(1);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Feed other user response:', jsonString);
+      Alert.alert(
+        'Other User Feed', 
+        jsonString,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      console.error('Error fetching other user feed:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to fetch other user feed';
+      Alert.alert('Error', errorMsg);
+    }
+  };
+
+  const handleCommentFeed = async () => {
+    try {
+      console.log('Commenting on feed with ID 12...');
+      const data = await feedService.commentFeed(12, 'This is a test comment');
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Comment feed response:', jsonString);
+      Alert.alert(
+        'Comment Added', 
+        jsonString,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      console.error('Error commenting on feed:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to comment on feed';
+      Alert.alert('Error', errorMsg);
+    }
+  };
+
+  const handleGetFeedComments = async () => {
+    try {
+      console.log('Fetching comments for feed with ID 12...');
+      const data = await feedService.getFeedComments(12);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Get feed comments response:', jsonString);
+      Alert.alert(
+        'Feed Comments', 
+        `Returned ${Array.isArray(data) ? data.length : 0} comments\n\n${jsonString}`,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      console.error('Error fetching feed comments:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to fetch feed comments';
+      Alert.alert('Error', errorMsg);
+    }
+  };
   // FeedService methods END ------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------
   // InterestFormService methods START --------------------------------------------------------------
@@ -306,6 +421,41 @@ export default function TestScreen() {
             activeOpacity={0.7}
           >
             <Text style={styles.buttonText}>create-feed</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleLikeFeed}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>like-feed (ID: 1)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleUnlikeFeed}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>unlike-feed (ID: 1)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleGetFeedOtherUser}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>get-feed-other-user (User ID: 1)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleCommentFeed}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>comment-feed (ID: 12, Message: "This is a test comment")</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleGetFeedComments}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>get-feed-comments (Feed ID: 12)</Text>
           </TouchableOpacity>
         </View>
 
