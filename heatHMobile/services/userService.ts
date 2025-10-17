@@ -1,22 +1,17 @@
-import { httpClient } from './httpClient';
-import { authService } from './authService';
 import { apiClient } from './apiClient';
 
 export const userService = {
   me: async () => {
-    const response = await apiClient.get<any>('/me');
-    return response;
+    return await apiClient.get<any>('/me');
   },
   byUsername: async (username: string) => {
-    const response = await apiClient.get<any>(`/users/${username}`);
-    return response;
+    return await apiClient.get<any>(`/users/${username}`);
   },
   
   // Update user profile
   updateProfile: async (profileData: any): Promise<any> => {
     try {
-      const response = await apiClient.put('/user/profile', profileData);
-      return response;
+      return await apiClient.put('/user/profile', profileData);
     } catch (error) {
       console.error('Failed to update user profile:', error);
       throw error;
@@ -26,8 +21,7 @@ export const userService = {
   // Get user's recipes
   getMyRecipes: async (): Promise<any> => {
     try {
-      const response = await apiClient.get('/user/recipes');
-      return response;
+      return await apiClient.get('/user/recipes');
     } catch (error) {
       console.error('Failed to get user recipes:', error);
       throw error;

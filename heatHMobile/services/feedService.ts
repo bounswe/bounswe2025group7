@@ -1,5 +1,3 @@
-import { httpClient } from './httpClient';
-import { authService } from './authService';
 import { apiClient } from './apiClient';
 
 // FeedResponse interface matching backend
@@ -40,26 +38,22 @@ interface SavedRecipeRequest {
 export const feedService = {
   // Get feeds by current user
   getFeedByUser: async (): Promise<FeedResponse[]> => {
-    const response = await apiClient.get<FeedResponse[]>('/feeds/feed-by-user');
-    return response;
+    return await apiClient.get<FeedResponse[]>('/feeds/feed-by-user');
   },
 
   // Get recent feeds for user (with pagination)
   getRecentFeeds: async (pageNumber: number = 0): Promise<FeedResponse[]> => {
-    const response = await apiClient.get<FeedResponse[]>(`/feeds/recent?pageNumber=${pageNumber}`);
-    return response;
+    return await apiClient.get<FeedResponse[]>(`/feeds/recent?pageNumber=${pageNumber}`);
   },
 
   // Get other user's profile and feeds
   getOtherUserProfile: async (userId: number): Promise<FeedProfileResponse> => {
-    const response = await apiClient.get<FeedProfileResponse>(`/feeds/other-user?userId=${userId}`);
-    return response;
+    return await apiClient.get<FeedProfileResponse>(`/feeds/other-user?userId=${userId}`);
   },
 
   // Create a new feed
   createFeed: async (postPayload: any): Promise<any> => {
-    const response = await apiClient.post<any>('/feeds/created-feed', postPayload);
-    return response;
+    return await apiClient.post<any>('/feeds/created-feed', postPayload);
   },
 
   // Like a feed

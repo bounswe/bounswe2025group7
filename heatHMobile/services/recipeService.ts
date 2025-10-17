@@ -1,4 +1,4 @@
-import { httpClient } from './httpClient';
+import { apiClient } from './apiClient';
 
 // Recipe interfaces matching backend
 export interface Recipe {
@@ -44,7 +44,7 @@ const RECIPE_API = '/recipe';
 export const recipeService = {
   // Create a new recipe
   createRecipe: async (recipeData: RecipeRequest): Promise<string> => {
-    const response = await httpClient.post('/recipe/create', {
+    const response = await apiClient.post<string>('/recipe/create', {
       title: recipeData.title,
       instructions: recipeData.instructions,
       ingredients: recipeData.ingredients,
@@ -52,24 +52,24 @@ export const recipeService = {
       type: recipeData.type,
       photo: recipeData.photo,
     });
-    return response.data;
+    return response;
   },
 
   // Get a recipe by ID
   getRecipe: async (recipeId: number): Promise<Recipe> => {
-    const response = await httpClient.get(`/recipe/get?recipeId=${recipeId}`);
-    return response.data;
+    const response = await apiClient.get<Recipe>(`/recipe/get`, { params: { recipeId } });
+    return response;
   },
 
   // Update a recipe's action (like, save, share)
   updateRecipeAction: async (recipeId: number, action: string, value: boolean): Promise<string> => {
-    const response = await httpClient.post(`/recipe/${action}`, { recipeId, value });
-    return response.data;
+    const response = await apiClient.post<string>(`/recipe/${action}`, { recipeId, value });
+    return response;
   },
 
   // Submit a rating for a recipe
   submitRating: async (recipeId: number, rating: number, type: string = 'easiness'): Promise<string> => {
-    const response = await httpClient.post('/recipe/rate', { recipeId, rating, type });
-    return response.data;
+    const response = await apiClient.post<string>('/recipe/rate', { recipeId, rating, type });
+    return response;
   },
 };

@@ -1,5 +1,5 @@
 import { storage } from '@/utils/storage';
-import { httpClient } from './httpClient';
+import { apiClient } from './apiClient';
 
 export interface AuthResponse {
   accessToken: string;
@@ -20,9 +20,9 @@ export const authService = {
   register: async (userData: RegisterData): Promise<AuthResponse> => {
     console.log('AuthService: Attempting registration to:', 'http://35.198.76.72:8080/api/auth/register');
     console.log('AuthService: Registration data:', { username: userData.username, password: '***' });
-    const response = await httpClient.post<AuthResponse>('/auth/register', userData);
+    const response = await apiClient.post<AuthResponse>('/auth/register', userData);
     console.log('AuthService: Registration response received:', response);
-    const { accessToken, refreshToken } = response.data;
+    const { accessToken, refreshToken } = response;
     console.log('AuthService: Tokens received:', { accessToken: accessToken ? 'exists' : 'missing', refreshToken: refreshToken ? 'exists' : 'missing' });
     
     // Store tokens in storage
@@ -30,15 +30,15 @@ export const authService = {
     await storage.setItem('refreshToken', refreshToken);
     console.log('AuthService: Tokens stored in storage');
     
-    return response.data;
+    return response;
   },
 
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     console.log('AuthService: Attempting login to:', 'http://35.198.76.72:8080/api/auth/login');
     console.log('AuthService: Credentials:', { username: credentials.username, password: '***' });
-    const response = await httpClient.post<AuthResponse>('/auth/login', credentials);
+    const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
     console.log('AuthService: Response received:', response);
-    const { accessToken, refreshToken } = response.data;
+    const { accessToken, refreshToken } = response;
     console.log('AuthService: Tokens received:', { accessToken: accessToken ? 'exists' : 'missing', refreshToken: refreshToken ? 'exists' : 'missing' });
     
     // Store tokens in storage
@@ -46,12 +46,12 @@ export const authService = {
     await storage.setItem('refreshToken', refreshToken);
     console.log('AuthService: Tokens stored in storage');
     
-    return response.data;
+    return response;
   },
 
   sendVerification: async (userData: { email: string }) => {
-    const response = await httpClient.post('/auth/send-verification-code', userData);
-    return response.data;
+    const response = await apiClient.post('/auth/send-verification-code', userData);
+    return response;
   },
 
   refreshToken: async (): Promise<AuthResponse> => {
@@ -67,10 +67,10 @@ export const authService = {
     }
     
     console.log('AuthService: Making refresh request to /auth/refresh-token');
-    const response = await httpClient.post<AuthResponse>('/auth/refresh-token', { refreshToken: refresh });
+    const response = await apiClient.post<AuthResponse>('/auth/refresh-token', { refreshToken: refresh });
     console.log('AuthService: Refresh response received:', response);
     
-    const { accessToken, refreshToken: newRefresh } = response.data;
+    const { accessToken, refreshToken: newRefresh } = response;
     console.log('AuthService: New tokens received:', { 
       accessToken: accessToken ? 'exists' : 'missing', 
       refreshToken: newRefresh ? 'exists' : 'missing' 
@@ -79,7 +79,7 @@ export const authService = {
     await storage.setItem('accessToken', accessToken);
     await storage.setItem('refreshToken', newRefresh);
     console.log('AuthService: Tokens stored in storage');
-    return response.data;
+    return response;
   },
 
   logout: async () => {
@@ -115,31 +115,32 @@ export const authService = {
 
   // Send a verification code to the given email
   sendVerificationCode: async (email: string) => {
-    const response = await httpClient.post('/auth/send-verification-code', { email });
-    return response.data;
+    const response = await apiClient.post('/auth/send-verification-code', { email });
+    return response;
   },
 
   // Verify a received code given email and code
   verifyCode: async (email: string, code: number) => {
-    const response = await httpClient.post('/auth/verify-code', { email, code });
-    return response.data;
+    const response = await apiClient.post('/auth/verify-code', { email, code });
+    return response;
   },
 
   // Check if an email is already registered
   exists: async (email: string) => {
-    const response = await httpClient.get('/auth/exists', { email });
-    return response.data;
+    const response = await apiClient.get('/auth/exists', { headers: { }, });
+    // Note: adjust to backend API signature if needed
+    return response as any;
   },
 
   // Forgot password - send reset code
   forgotPassword: async (email: string) => {
-    const response = await httpClient.post('/auth/forgot-password', { email });
-    return response.data;
+    const response = await apiClient.post('/auth/forgot-password', { email });
+    return response;
   },
 
   // Reset password with new password
   resetPassword: async (email: string, newPassword: string) => {
-    const response = await httpClient.post('/auth/reset-password', { email, newPassword });
-    return response.data;
+    const response = await apiClient.post('/auth/reset-password', { email, newPassword });
+    return response;
   },
 };
