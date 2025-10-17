@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { feedService } from '@/services/feedService';
 import { interestFormService } from '@/services/interestFormService';
+import { recipeService } from '@/services/recipeService';
 
 export default function TestScreen() {
   // FeedService methods START ---------------------------------------------------------------------
@@ -44,6 +45,25 @@ export default function TestScreen() {
     } catch (error: any) {
       console.error('Error creating feed:', error);
       const errorMsg = error.response?.data?.message || error.message || 'Failed to create feed';
+      Alert.alert('Error', errorMsg);
+    }
+  };
+
+  const handleGetRecentFeeds = async (pageNumber: number = 0) => {
+    try {
+      console.log(`Fetching recent feeds for page ${pageNumber}...`);
+      const data = await feedService.getRecentFeeds(pageNumber);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Recent feeds response:', jsonString);
+      Alert.alert(
+        `Recent Feeds - Page ${pageNumber}`, 
+        `Returned ${Array.isArray(data) ? data.length : 0} feeds\n\n${jsonString}`,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      console.error('Error fetching recent feeds:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to fetch recent feeds';
       Alert.alert('Error', errorMsg);
     }
   };
@@ -133,6 +153,115 @@ export default function TestScreen() {
   };
   // InterestFormService methods END ----------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------
+  // RecipeService methods START --------------------------------------------------------------------
+  const handleCreateRecipe = async () => {
+    try {
+      console.log('Creating recipe...');
+      // Small base64 encoded 1x1 red pixel image for testing
+      const testImageBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==';
+      
+      const payload = {
+        title: 'Test Recipe from Mobile',
+        instructions: ['Step 1: Prepare ingredients', 'Step 2: Cook', 'Step 3: Serve'],
+        ingredients: ['Ingredient 1', 'Ingredient 2', 'Ingredient 3'],
+        tag: 'test',
+        type: 'dinner',
+        photo: testImageBase64
+      };
+      
+      const data = await recipeService.createRecipe(payload);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Create recipe response:', jsonString);
+      Alert.alert(
+        'Recipe Created', 
+        jsonString,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      console.error('Error creating recipe:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to create recipe';
+      Alert.alert('Error', errorMsg);
+    }
+  };
+
+  const handleGetRecipe = async () => {
+    try {
+      console.log('Fetching recipe with ID 1...');
+      const data = await recipeService.getRecipe(1);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Get recipe response:', jsonString);
+      Alert.alert(
+        'Recipe Data', 
+        jsonString,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      console.error('Error fetching recipe:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to fetch recipe';
+      Alert.alert('Error', errorMsg);
+    }
+  };
+
+  const handleLikeRecipe = async () => {
+    try {
+      console.log('Liking recipe with ID 1...');
+      const data = await recipeService.updateRecipeAction(1, 'like', true);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Like recipe response:', jsonString);
+      Alert.alert(
+        'Recipe Liked', 
+        jsonString,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      console.error('Error liking recipe:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to like recipe';
+      Alert.alert('Error', errorMsg);
+    }
+  };
+
+  const handleSaveRecipe = async () => {
+    try {
+      console.log('Saving recipe with ID 1...');
+      const data = await recipeService.updateRecipeAction(1, 'save', true);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Save recipe response:', jsonString);
+      Alert.alert(
+        'Recipe Saved', 
+        jsonString,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      console.error('Error saving recipe:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to save recipe';
+      Alert.alert('Error', errorMsg);
+    }
+  };
+
+  const handleRateRecipe = async () => {
+    try {
+      console.log('Rating recipe with ID 1...');
+      const data = await recipeService.submitRating(1, 5, 'easiness');
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Rate recipe response:', jsonString);
+      Alert.alert(
+        'Recipe Rated', 
+        jsonString,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      console.error('Error rating recipe:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to rate recipe';
+      Alert.alert('Error', errorMsg);
+    }
+  };
+  // RecipeService methods END ----------------------------------------------------------------------
+  // ------------------------------------------------------------------------------------------------
 
   return (
     <ScrollView style={styles.scrollView}>
@@ -149,6 +278,27 @@ export default function TestScreen() {
             activeOpacity={0.7}
           >
             <Text style={styles.buttonText}>feed-by-user</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={() => handleGetRecentFeeds(0)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>get-recent-feeds (Page: 0)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={() => handleGetRecentFeeds(1)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>get-recent-feeds (Page: 1)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={() => handleGetRecentFeeds(2)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>get-recent-feeds (Page: 2)</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.button}
@@ -190,6 +340,47 @@ export default function TestScreen() {
             activeOpacity={0.7}
           >
             <Text style={styles.buttonText}>update-interest-form</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Recipe Service Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeader}>Recipe Service</Text>
+          <View style={styles.divider} />
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleCreateRecipe}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>create-recipe</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleGetRecipe}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>get-recipe (ID: 1)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleLikeRecipe}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>like-recipe (ID: 1)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleSaveRecipe}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>save-recipe (ID: 1)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleRateRecipe}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>rate-recipe (ID: 1, Rating: 5)</Text>
           </TouchableOpacity>
         </View>
       </View>
