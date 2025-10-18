@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
   return (
@@ -13,6 +14,9 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarLabel: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -20,13 +24,9 @@ export default function TabLayout() {
         options={{
           title: 'Search',
           tabBarLabel: 'Search',
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarLabel: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="search" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -34,6 +34,19 @@ export default function TabLayout() {
         options={{
           title: 'Saved Recipes',
           tabBarLabel: 'Saved',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="bookmark" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarLabel: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -41,6 +54,9 @@ export default function TabLayout() {
         options={{
           title: 'API TEST',
           tabBarLabel: 'api_tests',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="flask" size={size} color={color} />
+          ),
         }}
       />
     </Tabs>
