@@ -12,9 +12,11 @@ import {
   Dimensions
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { colors, textColors } from '../../constants/theme';
 import { recipeService } from '../../services/recipeService';
 import ShareModal from '../../components/ShareModal';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 60) / 2; // 2 columns with padding
@@ -26,6 +28,7 @@ interface SavedRecipe {
 }
 
 export default function SavedRecipesScreen() {
+  const router = useRouter();
   const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -97,8 +100,7 @@ export default function SavedRecipesScreen() {
 
   // Handle recipe press (navigation to recipe detail)
   const handleRecipePress = (recipe: SavedRecipe) => {
-    // TODO: Navigate to recipe detail page
-    Alert.alert('Recipe Detail', `Navigate to recipe: ${recipe.title}`);
+    router.push({ pathname: '/recipeDetail/recipeDetail', params: { recipeId: String(recipe.recipeId) } });
   };
 
   // Handle share recipe - show share modal
@@ -119,7 +121,7 @@ export default function SavedRecipesScreen() {
       <TouchableOpacity 
         style={styles.imageContainer}
         onPress={() => handleRecipePress(recipe)}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
       >
         <Image 
           source={{ uri: recipe.photo }} 
@@ -133,26 +135,30 @@ export default function SavedRecipesScreen() {
           {recipe.title}
         </Text>
         
-        <View style={styles.recipeActions}>
+        <View style={styles.actionRow}>
           <TouchableOpacity 
-            style={styles.actionButton}
+            accessibilityLabel="View recipe"
+            style={styles.iconButton}
             onPress={() => handleRecipePress(recipe)}
+            activeOpacity={0.8}
           >
-            <Text style={styles.actionButtonText}>View</Text>
+            <Ionicons name="eye-outline" size={18} color={colors.primary} />
           </TouchableOpacity>
-          
           <TouchableOpacity 
-            style={[styles.actionButton, styles.unsaveButton]}
-            onPress={() => handleUnsaveRecipe(recipe.recipeId)}
-          >
-            <Text style={[styles.actionButtonText, styles.unsaveButtonText]}>Unsave</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.actionButton}
+            accessibilityLabel="Share recipe"
+            style={styles.iconButton}
             onPress={() => handleShareRecipe(recipe)}
+            activeOpacity={0.8}
           >
-            <Text style={styles.actionButtonText}>Share</Text>
+            <Ionicons name="share-outline" size={18} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            accessibilityLabel="Unsave recipe"
+            style={styles.iconButton}
+            onPress={() => handleUnsaveRecipe(recipe.recipeId)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="bookmark" size={18} color={colors.primary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -162,10 +168,19 @@ export default function SavedRecipesScreen() {
   // Render empty state
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
+      <Ionicons name="bookmark-outline" size={56} color={textColors.disabled} />
       <Text style={styles.emptyText}>No saved recipes yet</Text>
       <Text style={styles.emptyDescription}>
         Recipes you save will appear here
       </Text>
+      <TouchableOpacity
+        style={styles.ctaButton}
+        onPress={() => router.push('/(tabs)/search')}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="search-outline" size={16} color={colors.white} />
+        <Text style={styles.ctaButtonText}>Browse recipes</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -311,6 +326,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  // removed overlay unsave FAB in favor of right-aligned row icons
   recipeContent: {
     padding: 12,
   },
@@ -321,10 +337,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     lineHeight: 20,
   },
-  recipeActions: {
+  actionRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 6,
   },
   actionButton: {
     flex: 1,
@@ -333,6 +350,17 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: colors.primary,
     marginHorizontal: 2,
+  },
+  iconButton: {
+    width: 38,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: colors.primary + '10',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+    borderWidth: 1,
+    borderColor: colors.primary + '22',
   },
   unsaveButton: {
     backgroundColor: colors.error,
@@ -361,6 +389,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: textColors.disabled,
     textAlign: 'center',
+  },
+  ctaButton: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: colors.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  ctaButtonText: {
+    color: colors.white,
+    fontWeight: '600',
+    marginLeft: 8,
+    fontSize: 14,
   },
 });
 
