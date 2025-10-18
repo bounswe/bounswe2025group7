@@ -17,7 +17,6 @@ import { colors, textColors } from '../../constants/theme';
 import { recipeService } from '../../services/recipeService';
 import ShareModal from '../../components/ShareModal';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 60) / 2; // 2 columns with padding
