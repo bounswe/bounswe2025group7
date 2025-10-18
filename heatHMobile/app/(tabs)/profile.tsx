@@ -522,38 +522,71 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
               <Text style={styles.loadingText}>Loading posts...</Text>
             </View>
           ) : userFeeds.length > 0 ? (
-            userFeeds.map((feed, index) => (
-              <View key={feed.id || index} style={styles.feedCard}>
-                <View style={styles.feedHeader}>
-                  <Text style={styles.feedDate}>
-                    {feed.createdAt ? new Date(feed.createdAt).toLocaleDateString() : ''}
-                  </Text>
+            userFeeds.map((feed, index) => {
+              const handleFeedPress = () => {
+                if (feed.type === 'RECIPE' && feed.recipe?.id) {
+                  router.push(`/recipeDetail/recipeDetail?recipeId=${feed.recipe.id}` as any);
+                }
+              };
+
+              const FeedContent = () => (
+                <View style={styles.feedCard}>
+                  <View style={styles.feedHeader}>
+                    <Text style={styles.feedDate}>
+                      {feed.createdAt ? new Date(feed.createdAt).toLocaleDateString() : ''}
+                    </Text>
+                  </View>
+                  
+                  {feed.text && (
+                    <Text style={styles.feedContent} numberOfLines={3}>
+                      {feed.text}
+                    </Text>
+                  )}
+                  
+                  {feed.type === 'RECIPE' && feed.recipe?.photo ? (
+                    <Image source={{ uri: feed.recipe.photo }} style={styles.feedImage} />
+                  ) : feed.image && (
+                    <Image source={{ uri: feed.image }} style={styles.feedImage} />
+                  )}
+                  
+                  {feed.type === 'RECIPE' && feed.recipe && (
+                    <View style={styles.recipeContainer}>
+                      <Text style={styles.recipeTitle}>Recipe</Text>
+                      <Text style={styles.recipeName}>{feed.recipe.title || 'Untitled Recipe'}</Text>
+                      {feed.recipe.description && (
+                        <Text style={styles.recipeDescription} numberOfLines={2}>
+                          {feed.recipe.description}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                  
+                  <View style={styles.feedStats}>
+                    <Text style={[styles.feedStat, feed.likedByCurrentUser && styles.likedStat]}>
+                      {feed.likedByCurrentUser ? '❤️' : '🤍'} {feed.likeCount || 0} likes
+                    </Text>
+                    <Text style={styles.feedStat}>
+                      💬 {feed.commentCount || 0} comments
+                    </Text>
+                  </View>
                 </View>
-                
-                {feed.text && (
-                  <Text style={styles.feedContent} numberOfLines={3}>
-                    {feed.text}
-                  </Text>
-                )}
-                
-                {feed.type === 'RECIPE' && feed.recipe?.photo ? (
-                  <Image source={{ uri: feed.recipe.photo }} style={styles.feedImage} />
-                ) : feed.image && (
-                  <Image source={{ uri: feed.image }} style={styles.feedImage} />
-                )}
-                
-              
-                
-                <View style={styles.feedStats}>
-                  <Text style={[styles.feedStat, feed.likedByCurrentUser && styles.likedStat]}>
-                    {feed.likedByCurrentUser ? '❤️' : '🤍'} {feed.likeCount || 0} likes
-                  </Text>
-                  <Text style={styles.feedStat}>
-                    💬 {feed.commentCount || 0} comments
-                  </Text>
+              );
+
+              return feed.type === 'RECIPE' ? (
+                <TouchableOpacity 
+                  key={feed.id || index} 
+                  onPress={handleFeedPress}
+                  style={styles.clickableFeedCard}
+                  activeOpacity={0.7}
+                >
+                  <FeedContent />
+                </TouchableOpacity>
+              ) : (
+                <View key={feed.id || index}>
+                  <FeedContent />
                 </View>
-              </View>
-            ))
+              );
+            })
           ) : (
             <View style={styles.emptyFeedsContainer}>
               <Text style={styles.emptyFeedsText}>No posts yet</Text>
@@ -1071,6 +1104,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+  },
+  clickableFeedCard: {
+    marginBottom: 12,
   },
   feedHeader: {
     flexDirection: 'row',
