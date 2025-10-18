@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Animated, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Animated, ActivityIndicator, FlatList, TextInput } from 'react-native';
 import { colors, textColors } from '@/constants/theme';
 import { feedService } from '@/services/feedService';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,6 +38,9 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
   const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
   const [commentsLoading, setCommentsLoading] = useState<boolean>(false);
   const [comments, setComments] = useState<any[]>([]);
+  const [commentMessage, setCommentMessage] = useState<string>('');
+  const [commentSubmitting, setCommentSubmitting] = useState<boolean>(false);
+  const [commentCount, setCommentCount] = useState<number>(feed.commentCount ?? 0);
   const likeScale = useRef(new Animated.Value(1)).current;
 
   const bumpLike = () => {
@@ -111,6 +114,25 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
     }
   };
 
+  const handleSubmitComment = async () => {
+    const trimmed = commentMessage.trim();
+    if (!trimmed || commentSubmitting) return;
+    setCommentSubmitting(true);
+    try {
+      await feedService.commentFeed(feed.id, trimmed);
+      setCommentMessage('');
+      setCommentCount((c) => c + 1);
+      // Refresh comments to include the new one
+      const data = await feedService.getFeedComments(feed.id);
+      setComments(Array.isArray(data) ? data : []);
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || error?.message || 'Failed to comment on feed';
+      Alert.alert('Error', errorMsg);
+    } finally {
+      setCommentSubmitting(false);
+    }
+  };
+
   const formatDateTime = (value: any) => {
     try {
       const date = new Date(value);
@@ -157,7 +179,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.7} onPress={handleShowComments} style={styles.actionContainer}>
           <Ionicons name="chatbubble-outline" size={18} color={textColors.secondary} />
-          <Text style={styles.meta}>{feed.commentCount ?? 0}</Text>
+          <Text style={styles.meta}>{commentCount}</Text>
         </TouchableOpacity>
       </View>
 
@@ -167,6 +189,8 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
         onBackButtonPress={() => setCommentsVisible(false)}
         useNativeDriver
         hideModalContentWhileAnimating
+        avoidKeyboard
+        propagateSwipe
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
@@ -176,47 +200,75 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
             </TouchableOpacity>
           </View>
 
-          {commentsLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={styles.loadingText}>Loading comments…</Text>
-            </View>
-          ) : comments.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="chatbubble-ellipses-outline" size={22} color={textColors.secondary} />
-              <Text style={styles.emptyText}>No comments yet</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={comments}
-              keyExtractor={(item: any, index: number) => String(item?.id ?? index)}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
-              renderItem={({ item }: { item: any }) => (
-                <View style={styles.commentRow}>
-                  {item?.profilePhoto ? (
-                    <Image source={{ uri: item.profilePhoto }} style={styles.commentAvatar} />
-                  ) : (
-                    <View style={[styles.commentAvatar, styles.commentAvatarFallback]} />
-                  )}
-                  <View style={styles.commentBody}>
-                    <View style={styles.commentHeaderRow}>
-                      <Text style={styles.commentName} numberOfLines={1}>
-                        {[item?.name, item?.surname].filter(Boolean).join(' ') || 'User'}
-                      </Text>
-                      {!!item?.createdAt && (
-                        <Text style={styles.commentTime}>{formatDateTime(item.createdAt)}</Text>
+          <View style={styles.modalBody}>
+            {commentsLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={styles.loadingText}>Loading comments…</Text>
+              </View>
+            ) : comments.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="chatbubble-ellipses-outline" size={22} color={textColors.secondary} />
+                <Text style={styles.emptyText}>No comments yet</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={comments}
+                keyExtractor={(item: any, index: number) => String(item?.id ?? index)}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                renderItem={({ item }: { item: any }) => (
+                  <View style={styles.commentRow}>
+                    {item?.profilePhoto ? (
+                      <Image source={{ uri: item.profilePhoto }} style={styles.commentAvatar} />
+                    ) : (
+                      <View style={[styles.commentAvatar, styles.commentAvatarFallback]} />
+                    )}
+                    <View style={styles.commentBody}>
+                      <View style={styles.commentHeaderRow}>
+                        <Text style={styles.commentName} numberOfLines={1}>
+                          {[item?.name, item?.surname].filter(Boolean).join(' ') || 'User'}
+                        </Text>
+                        {!!item?.createdAt && (
+                          <Text style={styles.commentTime}>{formatDateTime(item.createdAt)}</Text>
+                        )}
+                      </View>
+                      {!!item?.message && (
+                        <Text style={styles.commentMessage}>{String(item.message)}</Text>
                       )}
                     </View>
-                    {!!item?.message && (
-                      <Text style={styles.commentMessage}>{String(item.message)}</Text>
-                    )}
                   </View>
-                </View>
-              )}
-              contentContainerStyle={{ paddingBottom: 8 }}
-              style={{ maxHeight: 380 }}
+                )}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={{ paddingBottom: 8 }}
+                style={styles.commentsList}
+              />
+            )}
+          </View>
+
+          <View style={styles.commentInputRow}>
+            <TextInput
+              style={styles.commentTextInput}
+              placeholder="Write a comment..."
+              placeholderTextColor={textColors.secondary}
+              value={commentMessage}
+              onChangeText={setCommentMessage}
+              editable={!commentSubmitting}
+              returnKeyType="send"
+              onSubmitEditing={handleSubmitComment}
             />
-          )}
+            <TouchableOpacity
+              style={[styles.sendButton, (!commentMessage.trim() || commentSubmitting) && styles.sendButtonDisabled]}
+              onPress={handleSubmitComment}
+              activeOpacity={0.7}
+              disabled={!commentMessage.trim() || commentSubmitting}
+            >
+              {commentSubmitting ? (
+                <ActivityIndicator size="small" color={colors.white} />
+              ) : (
+                <Ionicons name="paper-plane-outline" size={18} color={colors.white} />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>
@@ -294,12 +346,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 12,
     padding: 12,
+    maxHeight: 520,
+    minHeight: 260,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 8,
+  },
+  modalBody: {
+    flexGrow: 1,
+    marginBottom: 8,
+  },
+  commentsList: {
+    maxHeight: 380,
   },
   modalTitle: {
     color: textColors.primary,
@@ -367,6 +428,35 @@ const styles = StyleSheet.create({
   },
   commentMessage: {
     color: textColors.primary,
+  },
+  commentInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.gray[200],
+  },
+  commentTextInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.gray[300],
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    color: textColors.primary,
+    backgroundColor: colors.white,
+  },
+  sendButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonDisabled: {
+    backgroundColor: colors.gray[300],
   },
 });
 
