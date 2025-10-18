@@ -12,39 +12,47 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { colors, textColors, borderColors } from '../../constants/theme';
 import { authService } from '../../services/authService';
-import { interestFormService } from '../../services/interestFormService';
-import { colors } from '../../constants/theme';
 
-export default function SignInScreen() {
+export default function ForgotPasswordScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
+  const handleRequestCode = async () => {
+    if (!email) {
+      Alert.alert('Error', 'Please enter your email address');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
       return;
     }
 
     setLoading(true);
     try {
-      await authService.login({ username: email, password: password });
+      await authService.sendVerificationCode(email);
       
-      // Check if this is the user's first login
-      try {
-        const isFirstLogged = await interestFormService.checkFirstLogin();
-        
-        if (isFirstLogged) {
-          router.replace('/(tabs)' as any);
-        } else {
-          router.replace('/first-login-profile' as any);
-
-        }
-      } catch (firstLoginError) {
-        router.replace('/(tabs)' as any);
-      }
+      Alert.alert(
+        'Verification Code Sent',
+        'We have sent a verification code to your email address. Please check your inbox and follow the instructions to reset your password.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Navigate to reset password page with email parameter
+              router.push({
+                pathname: '/auth/reset-password',
+                params: { email: email }
+              });
+            }
+          }
+        ]
+      );
     } catch (error: any) {
       let errorMessage = 'An unexpected error occurred. Please try again.';
       
@@ -52,8 +60,10 @@ export default function SignInScreen() {
         const status = error.response.status;
         const serverMessage = error.response.data?.message || error.response.data?.error;
         
-        if (status === 403 || status === 401) {
-          errorMessage = 'Invalid email or password. Please try again.';
+        if (status === 404) {
+          errorMessage = 'No account found with this email address.';
+        } else if (status === 429) {
+          errorMessage = 'Too many requests. Please wait a moment before trying again.';
         } else if (status === 500) {
           errorMessage = 'Server error. Please try again later.';
         } else if (serverMessage) {
@@ -63,7 +73,7 @@ export default function SignInScreen() {
         errorMessage = 'Unable to connect to the server. Please check your internet connection.';
       }
       
-      Alert.alert('Login Failed', errorMessage);
+      Alert.alert('Request Failed', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -76,60 +86,43 @@ export default function SignInScreen() {
     >
       <View style={styles.content}>
         <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+        <Text style={styles.title}>Forgot Password?</Text>
+        <Text style={styles.subtitle}>
+          Enter your email address and we'll send you a verification code to reset your password.
+        </Text>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>Email Address</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter your email"
+            placeholder="Enter your email address"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
+            autoComplete="email"
             editable={!loading}
           />
         </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            editable={!loading}
-          />
-        </View>
-
-        <TouchableOpacity
-          style={styles.forgotPasswordButton}
-          onPress={() => router.push('/auth/reset-password' as any)}
-          disabled={loading}
-        >
-          <Text style={styles.forgotPasswordText}>Forgot password?</Text>
-        </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
+          onPress={handleRequestCode}
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.white} />
           ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
+            <Text style={styles.buttonText}>Send Verification Code</Text>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.linkButton}
-          onPress={() => router.push('/auth/sign-up' as any)}
+          onPress={() => router.back()}
           disabled={loading}
         >
-          <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
+          <Text style={styles.linkText}>Back to Sign In</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -139,7 +132,7 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   logo: {
     width: 120,
@@ -155,15 +148,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
+    color: textColors.primary,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: textColors.secondary,
     marginBottom: 32,
     textAlign: 'center',
+    lineHeight: 22,
   },
   inputContainer: {
     marginBottom: 20,
@@ -171,16 +165,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: textColors.primary,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: borderColors.medium,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: colors.backgroundPaper,
+    color: textColors.primary,
   },
   button: {
     backgroundColor: colors.primary,
@@ -193,7 +188,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight,
   },
   buttonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -206,14 +201,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  forgotPasswordButton: {
-    alignItems: 'flex-end',
-    marginBottom: 16,
-  },
-  forgotPasswordText: {
-    color: colors.primary,
-    fontSize: 14,
-    fontWeight: '500',
-  },
 });
-

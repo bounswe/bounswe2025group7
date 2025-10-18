@@ -13,38 +13,61 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { authService } from '../../services/authService';
-import { interestFormService } from '../../services/interestFormService';
-import { colors } from '../../constants/theme';
+import { colors, textColors, borderColors } from '../../constants/theme';
 
-export default function SignInScreen() {
+export default function SignUpScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
+  const validateForm = () => {
+    if (!email || !password || !confirmPassword) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return false;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return false;
+    }
+
+    
+    // Confirm password match
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match. Please try again.');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSignUp = async () => {
+    if (!validateForm()) {
       return;
     }
 
     setLoading(true);
     try {
-      await authService.login({ username: email, password: password });
-      
-      // Check if this is the user's first login
-      try {
-        const isFirstLogged = await interestFormService.checkFirstLogin();
-        
-        if (isFirstLogged) {
-          router.replace('/(tabs)' as any);
-        } else {
-          router.replace('/first-login-profile' as any);
+      // TODO: Replace with actual sign-up API call
+      // await authService.register({ email, password });
+      await authService.register({ username: email, password });
+      Alert.alert(
+        'Success',
+        'Your account has been created successfully. You can now sign in with your credentials.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.replace('/auth/sign-in');
+            }
+          }
+        ]
+      );
 
-        }
-      } catch (firstLoginError) {
-        router.replace('/(tabs)' as any);
-      }
     } catch (error: any) {
       let errorMessage = 'An unexpected error occurred. Please try again.';
       
@@ -52,8 +75,10 @@ export default function SignInScreen() {
         const status = error.response.status;
         const serverMessage = error.response.data?.message || error.response.data?.error;
         
-        if (status === 403 || status === 401) {
-          errorMessage = 'Invalid email or password. Please try again.';
+        if (status === 409) {
+          errorMessage = 'An account with this email already exists. Please sign in instead.';
+        } else if (status === 400) {
+          errorMessage = 'Invalid email or password format. Please check your input.';
         } else if (status === 500) {
           errorMessage = 'Server error. Please try again later.';
         } else if (serverMessage) {
@@ -63,7 +88,7 @@ export default function SignInScreen() {
         errorMessage = 'Unable to connect to the server. Please check your internet connection.';
       }
       
-      Alert.alert('Login Failed', errorMessage);
+      Alert.alert('Sign Up Failed', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -76,8 +101,8 @@ export default function SignInScreen() {
     >
       <View style={styles.content}>
         <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.subtitle}>Sign up to get started</Text>
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email</Text>
@@ -88,6 +113,7 @@ export default function SignInScreen() {
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
+            autoComplete="email"
             editable={!loading}
           />
         </View>
@@ -100,36 +126,48 @@ export default function SignInScreen() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            autoComplete="new-password"
             editable={!loading}
           />
         </View>
 
-        <TouchableOpacity
-          style={styles.forgotPasswordButton}
-          onPress={() => router.push('/auth/reset-password' as any)}
-          disabled={loading}
-        >
-          <Text style={styles.forgotPasswordText}>Forgot password?</Text>
-        </TouchableOpacity>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Confirm Password</Text>
+          <TextInput
+            style={[
+              styles.input,
+              confirmPassword && password !== confirmPassword && styles.inputError
+            ]}
+            placeholder="Confirm your password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            autoComplete="new-password"
+            editable={!loading}
+          />
+          {confirmPassword && password !== confirmPassword && (
+            <Text style={styles.errorText}>Passwords do not match</Text>
+          )}
+        </View>
 
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
+          onPress={handleSignUp}
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.white} />
           ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
+            <Text style={styles.buttonText}>Sign Up</Text>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.linkButton}
-          onPress={() => router.push('/auth/sign-up' as any)}
+          onPress={() => router.back()}
           disabled={loading}
         >
-          <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
+          <Text style={styles.linkText}>Already have an account? Sign In</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -139,7 +177,7 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   logo: {
     width: 120,
@@ -155,13 +193,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
+    color: textColors.primary,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: textColors.secondary,
     marginBottom: 32,
     textAlign: 'center',
   },
@@ -171,16 +209,26 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: textColors.primary,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: borderColors.medium,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: colors.backgroundPaper,
+    color: textColors.primary,
+  },
+  inputError: {
+    borderColor: colors.error,
+  },
+  errorText: {
+    color: colors.error,
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
   button: {
     backgroundColor: colors.primary,
@@ -193,7 +241,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight,
   },
   buttonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -206,14 +254,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  forgotPasswordButton: {
-    alignItems: 'flex-end',
-    marginBottom: 16,
-  },
-  forgotPasswordText: {
-    color: colors.primary,
-    fontSize: 14,
-    fontWeight: '500',
-  },
 });
-
