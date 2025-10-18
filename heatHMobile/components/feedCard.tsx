@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Animated } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Animated, ActivityIndicator, FlatList } from 'react-native';
 import { colors, textColors } from '@/constants/theme';
 import { feedService } from '@/services/feedService';
 import { Ionicons } from '@expo/vector-icons';
+import Modal from 'react-native-modal';
 
 type FeedResponse = {
   id: number;
@@ -34,6 +35,9 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
 
   const [likedByCurrentUser, setLikedByCurrentUser] = useState<boolean>(!!feed.likedByCurrentUser);
   const [likeCount, setLikeCount] = useState<number>(feed.likeCount ?? 0);
+  const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
+  const [commentsLoading, setCommentsLoading] = useState<boolean>(false);
+  const [comments, setComments] = useState<any[]>([]);
   const likeScale = useRef(new Animated.Value(1)).current;
 
   const bumpLike = () => {
@@ -93,6 +97,28 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
     }
   };
 
+  const handleShowComments = async () => {
+    setCommentsVisible(true);
+    setCommentsLoading(true);
+    try {
+      const data = await feedService.getFeedComments(feed.id);
+      setComments(Array.isArray(data) ? data : []);
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || error?.message || 'Failed to fetch comments';
+      Alert.alert('Error', errorMsg);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  const formatDateTime = (value: any) => {
+    try {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) return date.toLocaleString();
+    } catch {}
+    return String(value ?? '');
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -129,11 +155,70 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
           </Animated.View>
           <Text style={styles.meta}>{likeCount}</Text>
         </TouchableOpacity>
-        <TouchableOpacity activeOpacity={0.7} style={styles.actionContainer}>
+        <TouchableOpacity activeOpacity={0.7} onPress={handleShowComments} style={styles.actionContainer}>
           <Ionicons name="chatbubble-outline" size={18} color={textColors.secondary} />
           <Text style={styles.meta}>{feed.commentCount ?? 0}</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        isVisible={commentsVisible}
+        onBackdropPress={() => setCommentsVisible(false)}
+        onBackButtonPress={() => setCommentsVisible(false)}
+        useNativeDriver
+        hideModalContentWhileAnimating
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Comments</Text>
+            <TouchableOpacity onPress={() => setCommentsVisible(false)}>
+              <Ionicons name="close" size={20} color={textColors.secondary} />
+            </TouchableOpacity>
+          </View>
+
+          {commentsLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.loadingText}>Loading comments…</Text>
+            </View>
+          ) : comments.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="chatbubble-ellipses-outline" size={22} color={textColors.secondary} />
+              <Text style={styles.emptyText}>No comments yet</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={comments}
+              keyExtractor={(item: any, index: number) => String(item?.id ?? index)}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              renderItem={({ item }: { item: any }) => (
+                <View style={styles.commentRow}>
+                  {item?.profilePhoto ? (
+                    <Image source={{ uri: item.profilePhoto }} style={styles.commentAvatar} />
+                  ) : (
+                    <View style={[styles.commentAvatar, styles.commentAvatarFallback]} />
+                  )}
+                  <View style={styles.commentBody}>
+                    <View style={styles.commentHeaderRow}>
+                      <Text style={styles.commentName} numberOfLines={1}>
+                        {[item?.name, item?.surname].filter(Boolean).join(' ') || 'User'}
+                      </Text>
+                      {!!item?.createdAt && (
+                        <Text style={styles.commentTime}>{formatDateTime(item.createdAt)}</Text>
+                      )}
+                    </View>
+                    {!!item?.message && (
+                      <Text style={styles.commentMessage}>{String(item.message)}</Text>
+                    )}
+                  </View>
+                </View>
+              )}
+              contentContainerStyle={{ paddingBottom: 8 }}
+              style={{ maxHeight: 380 }}
+            />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -204,6 +289,84 @@ const styles = StyleSheet.create({
   meta: {
     color: textColors.secondary,
     fontSize: 12,
+  },
+  modalContainer: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 12,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  modalTitle: {
+    color: textColors.primary,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 16,
+  },
+  loadingText: {
+    color: textColors.secondary,
+    fontSize: 13,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 24,
+    gap: 6,
+  },
+  emptyText: {
+    color: textColors.secondary,
+    fontSize: 13,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: colors.gray[200],
+    marginVertical: 8,
+  },
+  commentRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingVertical: 4,
+    alignItems: 'flex-start',
+  },
+  commentAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.gray[200],
+  },
+  commentAvatarFallback: {
+    borderWidth: 1,
+    borderColor: colors.gray[300],
+  },
+  commentBody: {
+    flex: 1,
+  },
+  commentHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  commentName: {
+    color: textColors.primary,
+    fontWeight: '600',
+    maxWidth: '70%',
+  },
+  commentTime: {
+    color: textColors.secondary,
+    fontSize: 11,
+  },
+  commentMessage: {
+    color: textColors.primary,
   },
 });
 
