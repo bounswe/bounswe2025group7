@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, textColors } from '../../constants/theme';
 import { recipeService } from '../../services/recipeService';
+import ShareModal from '../../components/ShareModal';
+import { useFocusEffect } from '@react-navigation/native';
 
 type Ingredient = string | { name: string; amount?: string | number; quantity?: number };
 
@@ -77,21 +79,31 @@ const RecipeDetail = () => {
 
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
+  const [saveBusy, setSaveBusy] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const onBack = () => {
-    // Make sure the back button always works even if there is no history
-    if ((router as any).canGoBack?.()) {
-      router.back();
-    } //else {
-      //router.replace('/(tabs)/myRecipe');
-    //}
+    if ((router as any).canGoBack?.()) router.back();
+    else router.replace('/(tabs)/myRecipe');
   };
 
+  // Normalize the recipe id used by save/unsave
+  const getRid = useCallback(() => {
+    const r: any = recipe;
+    const val = r?.id ?? r?.recipeId ?? effectiveId;
+    return Number(val);
+  }, [recipe, effectiveId]);
+
+  // Initial fetch + initial saved state
   useEffect(() => {
     const fetchRecipeDetails = async () => {
       try {
         const data = await recipeService.getRecipe(Number(effectiveId));
         setRecipe(data);
+
+        const saved = await recipeService.isRecipeSaved(Number(data?.id ?? data?.recipeId ?? effectiveId));
+        setIsSaved(saved);
       } catch (error) {
         console.error('Error fetching recipe details:', error);
       } finally {
@@ -100,6 +112,46 @@ const RecipeDetail = () => {
     };
     if (effectiveId) fetchRecipeDetails();
   }, [effectiveId]);
+
+  // Refresh saved state whenever this screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        try {
+          const saved = await recipeService.isRecipeSaved(getRid());
+          if (active) setIsSaved(saved);
+        } catch {}
+      })();
+      return () => { active = false; };
+    }, [getRid])
+  );
+
+  // Toggle with server re-check to keep UI in sync
+  const onToggleSave = async () => {
+    if (saveBusy) return;
+    const rid = getRid();
+    setSaveBusy(true);
+    try {
+      const currentlySaved = await recipeService.isRecipeSaved(rid).catch(() => isSaved);
+      if (currentlySaved) {
+        await recipeService.unsaveRecipe(rid);
+      } else {
+        await recipeService.saveRecipe(rid);
+      }
+    } catch {
+      Alert.alert('Error', 'Could not update saved state. Please try again.');
+    }
+    // Always re-check from server to reflect true state
+    try {
+      const fresh = await recipeService.isRecipeSaved(rid);
+      setIsSaved(fresh);
+    } catch {
+      // leave as-is on failure
+    } finally {
+      setSaveBusy(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -139,9 +191,26 @@ const RecipeDetail = () => {
         )}
       </View>
 
-      {/* Back button inside safe area */}
+      {/* Back, Save and Share buttons */}
       <TouchableOpacity style={[styles.backBtn, { top: insets.top + 8 }]} onPress={onBack} accessibilityLabel="Back">
         <Ionicons name="arrow-back" size={20} color="#fff" />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.saveBtn, { top: insets.top + 8, opacity: saveBusy ? 0.6 : 1 }]}
+        onPress={onToggleSave}
+        disabled={saveBusy}
+        accessibilityLabel={isSaved ? 'Unsave' : 'Save'}
+      >
+        <Ionicons name={isSaved ? 'bookmark' : 'bookmark-outline'} size={20} color={isSaved ? colors.primary : '#fff'} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.shareBtn, { top: insets.top + 8 }]}
+        onPress={() => setShareOpen(true)}
+        accessibilityLabel="Share"
+      >
+        <Ionicons name="share-outline" size={20} color="#fff" />
       </TouchableOpacity>
     </View>
   );
@@ -226,6 +295,17 @@ const RecipeDetail = () => {
       )}
 
       <View style={{ height: 24 }} />
+      {/* Share modal */}
+      <ShareModal
+        visible={shareOpen}
+        onClose={() => setShareOpen(false)}
+        item={{
+          id: recipe?.id ?? Number(effectiveId),
+          title: recipe?.title ?? '',
+          photo: recipe?.photo ?? 'https://picsum.photos/seed/recipe/300/300',
+        }}
+        baseUrl="https://heath.app"
+      />
     </ScrollView>
   );
 };
@@ -249,6 +329,26 @@ const styles = StyleSheet.create({
   backBtn: {
     position: 'absolute',
     left: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveBtn: {
+    position: 'absolute',
+    right: 56,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareBtn: {
+    position: 'absolute',
+    right: 12,
     width: 36,
     height: 36,
     borderRadius: 18,

@@ -9,9 +9,11 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { authService } from '../../services/authService';
+import { interestFormService } from '../../services/interestFormService';
 import { colors } from '../../constants/theme';
 
 export default function SignInScreen() {
@@ -29,8 +31,20 @@ export default function SignInScreen() {
     setLoading(true);
     try {
       await authService.login({ username: email, password: password });
-      Alert.alert('Success', 'Login successful!');
-      router.replace('/(tabs)' as any);
+      
+      // Check if this is the user's first login
+      try {
+        const isFirstLogged = await interestFormService.checkFirstLogin();
+        
+        if (isFirstLogged) {
+          router.replace('/(tabs)' as any);
+        } else {
+          router.replace('/first-login-profile' as any);
+
+        }
+      } catch (firstLoginError) {
+        router.replace('/(tabs)' as any);
+      }
     } catch (error: any) {
       let errorMessage = 'An unexpected error occurred. Please try again.';
       
@@ -61,6 +75,7 @@ export default function SignInScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
+        <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Sign in to continue</Text>
 
@@ -125,6 +140,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    alignSelf: 'center',
+    marginBottom: 24,
   },
   content: {
     flex: 1,

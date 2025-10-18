@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, FlatList, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, FlatList, Alert, TouchableOpacity, TextInput, Image } from 'react-native';
 import { colors, textColors } from '../../constants/theme';
 import { feedService } from '../../services/feedService';
 import FeedCard from '@/components/feedCard';
+import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
   const [feeds, setFeeds] = useState<any>(null);
@@ -12,6 +14,10 @@ export default function HomeScreen() {
   const [page, setPage] = useState<number>(0);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  const [newPostText, setNewPostText] = useState<string>('');
+  const [creating, setCreating] = useState<boolean>(false);
+  const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
+  const [selectedImageDataUri, setSelectedImageDataUri] = useState<string | null>(null);
 
   const loadInitial = async () => {
     setLoading(true);
@@ -63,6 +69,71 @@ export default function HomeScreen() {
     }
   };
 
+  const pickImageFromGallery = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission required', 'We need gallery permission to select a photo.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+        base64: true,
+        selectionLimit: 1,
+      });
+
+      if (result.canceled) return;
+      const asset = result.assets?.[0];
+      if (!asset) return;
+
+      const mime = (asset as any).mimeType || 'image/jpeg';
+      const base64 = asset.base64;
+      if (!base64) {
+        Alert.alert('Error', 'Could not read selected image.');
+        return;
+      }
+      const dataUri = `data:${mime};base64,${base64}`;
+      setSelectedImageUri(asset.uri);
+      setSelectedImageDataUri(dataUri);
+    } catch (e: any) {
+      const msg = e?.message || 'Failed to select image';
+      Alert.alert('Error', msg);
+    }
+  };
+
+  const clearSelectedImage = () => {
+    setSelectedImageUri(null);
+    setSelectedImageDataUri(null);
+  };
+
+  const handleCreateFeed = async () => {
+    const text = newPostText.trim();
+    if (!text && !selectedImageDataUri) {
+      return;
+    }
+    if (creating) return;
+    setCreating(true);
+    try {
+      const hasImage = !!selectedImageDataUri;
+      const payload: any = hasImage
+        ? { type: 'IMAGE_AND_TEXT', text, image: selectedImageDataUri }
+        : { type: 'TEXT', text };
+      await feedService.createFeed(payload);
+      // Always refresh from server after creating
+      setNewPostText('');
+      clearSelectedImage();
+      await handleRefresh();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to create feed';
+      Alert.alert('Error', msg);
+    } finally {
+      setCreating(false);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     (async () => {
@@ -101,6 +172,48 @@ export default function HomeScreen() {
         keyExtractor={(item: any) => String(item.id ?? Math.random())}
         renderItem={({ item }) => <FeedCard feed={item} />}
         ListEmptyComponent={<Text style={styles.emptyText}>No feeds found.</Text>}
+        ListHeaderComponent={(
+          <View style={styles.composeCard}>
+            <TextInput
+              value={newPostText}
+              onChangeText={setNewPostText}
+              placeholder="What's on your mind?"
+              placeholderTextColor={textColors.secondary}
+              multiline
+              style={styles.composeInput}
+              editable={!creating}
+            />
+            {!!selectedImageUri && (
+              <View style={styles.imagePreviewContainer}>
+                <Image source={{ uri: selectedImageUri }} style={styles.imagePreview} resizeMode="cover" />
+                <TouchableOpacity onPress={clearSelectedImage} style={styles.removeImageBtn} activeOpacity={0.7}>
+                  <Ionicons name="close" size={16} color={colors.white} />
+                </TouchableOpacity>
+              </View>
+            )}
+            <View style={styles.composeActions}>
+              <TouchableOpacity activeOpacity={0.7} onPress={pickImageFromGallery} style={styles.mediaButton} disabled={creating}>
+                <Ionicons name="image-outline" size={18} color={textColors.secondary} />
+                <Text style={styles.mediaButtonText}>Photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleCreateFeed}
+                disabled={creating || (newPostText.trim().length === 0 && !selectedImageUri)}
+                style={[
+                  styles.postButton,
+                  (creating || (newPostText.trim().length === 0 && !selectedImageUri)) && styles.postButtonDisabled,
+                ]}
+              >
+                {creating ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <Text style={styles.postButtonText}>Post</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
         contentContainerStyle={styles.listContent}
         refreshing={refreshing}
         onRefresh={handleRefresh}
@@ -181,6 +294,69 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.error,
+  },
+  composeCard: {
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    borderRadius: 8,
+    padding: 8,
+    marginBottom: 10,
+  },
+  composeInput: {
+    color: textColors.primary,
+    minHeight: 36,
+    maxHeight: 100,
+    textAlignVertical: 'top',
+  },
+  imagePreviewContainer: {
+    marginTop: 8,
+    position: 'relative',
+  },
+  imagePreview: {
+    width: '100%',
+    height: 140,
+    borderRadius: 8,
+    backgroundColor: colors.background,
+  },
+  removeImageBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: colors.gray[800],
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  composeActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 6,
+  },
+  mediaButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginRight: 8,
+  },
+  mediaButtonText: {
+    color: textColors.secondary,
+    fontSize: 11,
+  },
+  postButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  postButtonDisabled: {
+    backgroundColor: colors.gray[300],
+  },
+  postButtonText: {
+    color: colors.white,
+    fontWeight: '600',
   },
   scroll: {
     flex: 1,

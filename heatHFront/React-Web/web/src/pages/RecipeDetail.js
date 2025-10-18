@@ -27,6 +27,9 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import TwitterIcon from '@mui/icons-material/Twitter';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import GrainIcon from '@mui/icons-material/Grain';
+import WaterDropIcon from '@mui/icons-material/WaterDrop';
 
 // Recipe section styling
 const RecipeDetailSection = styled(Box)(({ theme }) => ({
@@ -440,6 +443,62 @@ const RecipeDetail = () => {
                     </Box>
                   </Grid>
                 )}
+
+                {recipe["nutritionData"]["carbs"] >= 0 && (
+                  <Grid item xs={12}>
+                    <Box sx={{
+                      display: 'flex', alignItems: 'center', gap: 1,
+                      p: 1.5,
+                      height: '100%',
+                      bgcolor: alpha(theme.palette.background.paper, 0.4),
+                      borderRadius: 1,
+                    }}>
+                      <GrainIcon color="primary" />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Carbohydrates</Typography>
+                        <Typography variant="body2" fontWeight="medium">{recipe["nutritionData"]["carbs"]}g</Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                )}
+
+                {recipe["nutritionData"]["protein"] >= 0 && (
+                  <Grid item xs={12}>
+                    <Box sx={{
+                      display: 'flex', alignItems: 'center', gap: 1,
+                      p: 1.5,
+                      height: '100%',
+                      bgcolor: alpha(theme.palette.background.paper, 0.4),
+                      borderRadius: 1,
+                    }}>
+                      <FitnessCenterIcon color="primary" />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Protein</Typography>
+                        <Typography variant="body2" fontWeight="medium">{recipe["nutritionData"]["protein"]}g</Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                )}
+
+                {recipe["nutritionData"]["fat"] >= 0 && (
+                  <Grid item xs={12}>
+                    <Box sx={{
+                      display: 'flex', alignItems: 'center', gap: 1,
+                      p: 1.5,
+                      height: '100%',
+                      bgcolor: alpha(theme.palette.background.paper, 0.4),
+                      borderRadius: 1,
+                    }}>
+                      <WaterDropIcon color="primary" />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Fat</Typography>
+                        <Typography variant="body2" fontWeight="medium">{recipe["nutritionData"]["fat"]}g</Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                )}
+
+
               </Grid>
             </Paper>
           )}

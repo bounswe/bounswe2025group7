@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { authService } from '../../services/authService';
@@ -99,6 +100,7 @@ export default function SignUpScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
+        <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
         <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Sign up to get started</Text>
 
@@ -176,6 +178,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    alignSelf: 'center',
+    marginBottom: 24,
   },
   content: {
     flex: 1,
