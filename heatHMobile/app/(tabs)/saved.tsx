@@ -28,7 +28,6 @@ interface SavedRecipe {
 }
 
 export default function SavedRecipesScreen() {
-  const router = useRouter();
   const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
