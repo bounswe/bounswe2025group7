@@ -75,7 +75,6 @@ export default function ProfileScreen() {
     try {
       // Check if user is authenticated
       const token = await authService.getAccessToken();
-      console.log('Auth token check:', token ? 'Token exists' : 'No token found');
       
       if (!token) {
         Alert.alert('Authentication Required', 'Please log in to view your profile');
@@ -84,7 +83,6 @@ export default function ProfileScreen() {
       }
       await Promise.all([loadProfileData(), loadUserFeeds()]);
     } catch (error) {
-      console.error('Auth check failed:', error);
       Alert.alert('Authentication Error', 'Please log in again');
       router.replace('/auth/sign-in' as any);
     }
@@ -94,10 +92,9 @@ export default function ProfileScreen() {
     try {
       setFeedsLoading(true);
       const feeds = await feedService.getFeedByUser();
-      console.log('User feeds loaded:', feeds);
+
       setUserFeeds(Array.isArray(feeds) ? feeds : []);
     } catch (error) {
-      console.error('Failed to load user feeds:', error);
       setUserFeeds([]);
     } finally {
       setFeedsLoading(false);
@@ -108,19 +105,16 @@ export default function ProfileScreen() {
     try {
       setIsLoading(true);
       const data = await interestFormService.getInterestForm();
-      console.log('Profile data from backend:', data);
-      console.log('Profile photo from backend:', data.profilePhoto ? 'exists' : 'null');
       
       setProfileData(data);
       setEditData(data);
       
       // Set profile image if it exists from backend
       const imageUri = createImageUri(data.profilePhoto);
-      console.log('Created image URI:', imageUri);
+
       setProfileImageUri(imageUri);
       setIsImageUpdated(false); // Reset image update flag when loading
     } catch (error: any) {
-      console.error('Failed to load profile data:', error);
       if (error.response?.status === 403) {
         Alert.alert('Authentication Error', 'Please log in again to access your profile');
         // Optionally redirect to login
@@ -193,7 +187,6 @@ export default function ProfileScreen() {
       Alert.alert('Success', 'Profile saved successfully');
 
     } catch (error: any) {
-      console.error('Failed to save profile:', error);
       if (error.response?.status === 403) {
         Alert.alert('Authentication Error', 'Your session has expired. Please log in again.');
       } else if (error.response?.status === 400) {
@@ -269,7 +262,6 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
       reader.readAsDataURL(blob);
     });
   } catch (error) {
-    console.error('Error converting image to base64:', error);
     throw error;
   }
 };
@@ -297,7 +289,6 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
         setIsImageUpdated(true);
       }
     } catch (error) {
-      console.error('Error picking image:', error);
       Alert.alert('Error', 'Failed to pick image');
     }
   };
@@ -327,15 +318,11 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
 
   const performLogout = async () => {
     try {
-      console.log('Logging out...');
       await authService.logout();
-      console.log('Tokens cleared, navigating to sign-in...');
-      // Small delay to ensure storage is cleared
       setTimeout(() => {
         router.replace('/auth/sign-in' as any);
       }, 100);
     } catch (error) {
-      console.error('Logout error:', error);
       if (Platform.OS === 'web') {
         alert('Failed to logout. Please try again.');
       } else {
@@ -402,8 +389,6 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
               <Image 
                 source={{ uri: profileImageUri }} 
                 style={styles.profileImage}
-                onError={(error) => console.log('Image load error:', error)}
-                onLoad={() => console.log('Image loaded successfully')}
               />
             ) : (
               <View style={styles.placeholderImage}>
