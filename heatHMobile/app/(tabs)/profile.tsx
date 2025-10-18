@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { authService } from '../../services/authService';
+import { colors, textColors } from '../../constants/theme';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -79,7 +80,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 20,
@@ -88,14 +89,15 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: colors.primary,
   },
   subtitle: {
     fontSize: 18,
-    color: '#666',
+    color: colors.secondary,
     marginBottom: 20,
   },
   card: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.backgroundPaper,
     padding: 15,
     borderRadius: 8,
     marginBottom: 10,
@@ -103,28 +105,28 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: colors.secondary,
     marginBottom: 5,
   },
   value: {
     fontSize: 16,
-    color: '#333',
+    color: colors.primaryDark,
   },
   description: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#333',
+    color: textColors.primary,
     marginTop: 20,
   },
   logoutButton: {
-    backgroundColor: '#FF6347',
+    backgroundColor: colors.error,
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 30,
   },
   logoutButtonText: {
-    color: '#fff',
+    color: colors.primaryContrast,
     fontSize: 16,
     fontWeight: '600',
   },

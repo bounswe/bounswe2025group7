@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { colors, textColors } from '../../constants/theme';
 
 export default function SavedRecipesScreen() {
   return (
@@ -21,7 +22,7 @@ export default function SavedRecipesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 20,
@@ -30,10 +31,11 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: textColors.primary,
   },
   subtitle: {
     fontSize: 18,
-    color: '#666',
+    color: textColors.secondary,
     marginBottom: 20,
   },
   emptyState: {
@@ -44,12 +46,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#999',
+    color: textColors.disabled,
     marginBottom: 10,
   },
   emptyDescription: {
     fontSize: 14,
-    color: '#999',
+    color: textColors.disabled,
   },
 });
 

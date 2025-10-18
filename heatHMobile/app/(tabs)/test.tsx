@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput,
 import { feedService } from '@/services/feedService';
 import { interestFormService } from '@/services/interestFormService';
 import { recipeService } from '@/services/recipeService';
+import { colors, textColors, borderColors } from '@/constants/theme';
 
 export default function TestScreen() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -692,7 +693,7 @@ export default function TestScreen() {
                 onChangeText={setCommentIdInput}
                 keyboardType="numeric"
                 placeholder="Enter comment ID"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.gray[400]}
                 autoFocus={true}
               />
 
@@ -734,7 +735,7 @@ export default function TestScreen() {
                 onChangeText={setRecipeIdInput}
                 keyboardType="numeric"
                 placeholder="Enter recipe ID"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.gray[400]}
                 autoFocus={true}
               />
 
@@ -766,7 +767,7 @@ export default function TestScreen() {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.backgroundPaper,
   },
   container: {
     flex: 1,
@@ -776,16 +777,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: textColors.primary,
     textAlign: 'center',
     marginBottom: 30,
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -797,21 +798,21 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#333',
+    color: textColors.primary,
     marginBottom: 10,
   },
   divider: {
     height: 1,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: borderColors.light,
     marginBottom: 15,
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 8,
     marginVertical: 8,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -821,13 +822,13 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   buttonText: {
-    color: '#fff',
+    color: colors.primaryContrast,
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
   },
   deleteButton: {
-    backgroundColor: '#dc3545',
+    backgroundColor: colors.error,
   },
   modalOverlay: {
     flex: 1,
@@ -836,12 +837,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     borderRadius: 16,
     padding: 24,
     width: '85%',
     maxWidth: 400,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -853,31 +854,31 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
+    color: textColors.primary,
     marginBottom: 8,
     textAlign: 'center',
   },
   modalSubtitle: {
     fontSize: 16,
-    color: '#666',
+    color: textColors.secondary,
     marginBottom: 20,
     textAlign: 'center',
   },
   inputLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: textColors.primary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.backgroundPaper,
     borderWidth: 2,
-    borderColor: '#007AFF',
+    borderColor: colors.primary,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 18,
-    color: '#333',
+    color: textColors.primary,
     marginBottom: 24,
     textAlign: 'center',
   },
@@ -893,13 +894,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#6c757d',
+    backgroundColor: colors.secondary,
   },
   confirmButton: {
-    backgroundColor: '#dc3545',
+    backgroundColor: colors.error,
   },
   modalButtonText: {
-    color: '#fff',
+    color: colors.primaryContrast,
     fontSize: 16,
     fontWeight: '600',
   },

@@ -10,6 +10,7 @@ import {
   Image 
 } from 'react-native';
 import { semanticSearchService } from '@/services/semanticSearchService';
+import { colors, textColors, borderColors } from '@/constants/theme';
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
@@ -94,7 +95,7 @@ export default function SearchScreen() {
 
       {loading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FF6347" />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Searching recipes...</Text>
         </View>
       )}
@@ -129,28 +130,28 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.backgroundPaper,
   },
   searchContainer: {
     flexDirection: 'row',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: borderColors.light,
   },
   searchInput: {
     flex: 1,
     height: 48,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: borderColors.medium,
     borderRadius: 8,
     paddingHorizontal: 16,
     fontSize: 16,
     marginRight: 12,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
   searchButton: {
-    backgroundColor: '#FF6347',
+    backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -158,20 +159,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   searchButtonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },
   errorContainer: {
-    backgroundColor: '#ffebee',
+    backgroundColor: colors.gray[50],
     padding: 16,
     margin: 16,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#f44336',
+    borderLeftColor: colors.error,
   },
   errorText: {
-    color: '#c62828',
+    color: colors.error,
     fontSize: 14,
   },
   loadingContainer: {
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#666',
+    color: textColors.secondary,
   },
   emptyContainer: {
     flex: 1,
@@ -192,19 +193,19 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#999',
+    color: textColors.disabled,
     textAlign: 'center',
   },
   listContainer: {
     padding: 16,
   },
   recipeCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderRadius: 12,
     marginBottom: 16,
     overflow: 'hidden',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
   recipeImage: {
     width: '100%',
     height: 200,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.gray[100],
   },
   recipeInfo: {
     padding: 16,
@@ -220,34 +221,34 @@ const styles = StyleSheet.create({
   recipeTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: textColors.primary,
     marginBottom: 8,
   },
   recipeTag: {
     fontSize: 14,
-    color: '#666',
+    color: textColors.secondary,
     marginBottom: 4,
   },
   recipeType: {
     fontSize: 14,
-    color: '#666',
+    color: textColors.secondary,
     marginBottom: 4,
   },
   recipeCalories: {
     fontSize: 14,
-    color: '#FF6347',
+    color: colors.warning,
     marginBottom: 4,
     fontWeight: '500',
   },
   recipePrice: {
     fontSize: 14,
-    color: '#4CAF50',
+    color: colors.success,
     marginBottom: 4,
     fontWeight: '500',
   },
   recipeSimilarity: {
     fontSize: 14,
-    color: '#2196F3',
+    color: colors.info,
     fontWeight: '600',
     marginTop: 4,
   },
