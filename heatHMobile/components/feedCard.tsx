@@ -1,6 +1,8 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Animated } from 'react-native';
 import { colors, textColors } from '@/constants/theme';
+import { feedService } from '@/services/feedService';
+import { Ionicons } from '@expo/vector-icons';
 
 type FeedResponse = {
   id: number;
@@ -30,6 +32,67 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
     feed.type === 'IMAGE_AND_TEXT' ? feed?.image ?? null :
     null;
 
+  const [likedByCurrentUser, setLikedByCurrentUser] = useState<boolean>(!!feed.likedByCurrentUser);
+  const [likeCount, setLikeCount] = useState<number>(feed.likeCount ?? 0);
+  const likeScale = useRef(new Animated.Value(1)).current;
+
+  const bumpLike = () => {
+    Animated.sequence([
+      Animated.timing(likeScale, {
+        toValue: 1.2,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+      Animated.spring(likeScale, {
+        toValue: 1,
+        friction: 5,
+        tension: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handleToggleLike = async () => {
+    const doLike = async () => {
+      await feedService.likeFeed(feed.id);
+      setLikedByCurrentUser(true);
+      setLikeCount((c) => c + 1);
+      bumpLike();
+    };
+
+    const doUnlike = async () => {
+      await feedService.unlikeFeed(feed.id);
+      setLikedByCurrentUser(false);
+      setLikeCount((c) => Math.max(0, c - 1));
+    };
+
+    const primaryIsLike = !likedByCurrentUser;
+    try {
+      if (primaryIsLike) {
+        await doLike();
+      } else {
+        await doUnlike();
+      }
+    } catch (error: any) {
+      if (error?.response?.status === 403) {
+        // Fallback to opposite action on 403
+        try {
+          if (primaryIsLike) {
+            await doUnlike();
+          } else {
+            await doLike();
+          }
+        } catch (err2: any) {
+          const errorMsg = err2?.response?.data?.message || err2?.message || 'Failed to toggle like';
+          Alert.alert('Error', errorMsg);
+        }
+      } else {
+        const errorMsg = error?.response?.data?.message || error?.message || 'Failed to toggle like';
+        Alert.alert('Error', errorMsg);
+      }
+    }
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -51,7 +114,16 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
       ) : null}
 
       <View style={styles.footer}>
-        <Text style={styles.meta}>❤️ {feed.likeCount ?? 0}</Text>
+        <TouchableOpacity activeOpacity={0.7} onPress={handleToggleLike} style={styles.likeContainer}>
+          <Animated.View style={{ transform: [{ scale: likeScale }] }}>
+            <Ionicons
+              name={likedByCurrentUser ? 'heart' : 'heart-outline'}
+              size={18}
+              color={colors.error}
+            />
+          </Animated.View>
+          <Text style={styles.meta}>{likeCount}</Text>
+        </TouchableOpacity>
         <Text style={styles.meta}>💬 {feed.commentCount ?? 0}</Text>
         <Text style={styles.meta}>#{feed.type}</Text>
       </View>
@@ -110,6 +182,11 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  likeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   meta: {
     color: textColors.secondary,
