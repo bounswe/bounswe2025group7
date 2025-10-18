@@ -1,69 +1,123 @@
-import React, { useState } from 'react';
+// ...existing code...
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
   TextInput, 
-  TouchableOpacity, 
   FlatList, 
   StyleSheet, 
   ActivityIndicator,
+  TouchableOpacity,
   Image 
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { semanticSearchService } from '@/services/semanticSearchService';
 import { colors, textColors, borderColors } from '@/constants/theme';
 
 export default function SearchScreen() {
+  const MIN_QUERY_LENGTH = 3;
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = async () => {
-    if (!query.trim()) {
-      setError('Please enter a search query');
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const requestId = useRef(0);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+
+    // clear previous debounce
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+      debounceTimeout.current = null;
+    }
+
+    // if query is empty, reset results + state
+    if (!trimmed) {
+      setResults([]);
+      setError(null);
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await semanticSearchService.search(query, 10);
-      setResults(data.results || data || []);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to search recipes');
-      console.error('Search error:', err);
-    } finally {
+    // if query is too short, don't search yet
+    if (trimmed.length < MIN_QUERY_LENGTH) {
+      setResults([]);
+      setError(null);
       setLoading(false);
+      return;
     }
-  };
+
+    // debounce the search to run 500ms after the last keystroke
+    debounceTimeout.current = setTimeout(() => {
+      const currentRequest = ++requestId.current;
+      setLoading(true);
+      setError(null);
+
+      (async () => {
+        try {
+          const data = await semanticSearchService.search(trimmed, 10);
+          // ignore stale responses
+          if (currentRequest !== requestId.current) return;
+          setResults(data.results || data || []);
+        } catch (err: any) {
+          if (currentRequest !== requestId.current) return;
+          setError(err?.response?.data?.message || 'Failed to search recipes');
+          console.error('Search error:', err);
+        } finally {
+          if (currentRequest !== requestId.current) return;
+          setLoading(false);
+        }
+      })();
+    }, 500);
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+        debounceTimeout.current = null;
+      }
+    };
+  }, [query]);
 
   const renderRecipeItem = ({ item }: { item: any }) => (
-    <View style={styles.recipeCard}>
-      {item.photo && (
-        <Image 
-          source={{ uri: item.photo }} 
-          style={styles.recipeImage}
-          resizeMode="cover"
-        />
-      )}
-      <View style={styles.recipeInfo}>
-        <Text style={styles.recipeTitle}>{item.title || 'Untitled Recipe'}</Text>
-        {item.tag && <Text style={styles.recipeTag}>Tag: {item.tag}</Text>}
-        {item.type && <Text style={styles.recipeType}>Type: {item.type}</Text>}
-        {item.totalCalorie !== undefined && (
-          <Text style={styles.recipeCalories}>Calories: {item.totalCalorie}</Text>
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={() => {
+        // navigate to details page using query param 'id'
+        router.push({ pathname: '/recipeDetail/recipeDetail', params: { recipeId: String(item.id) } });
+      }}
+    >
+      <View style={styles.recipeCard}>
+        {item.photo && (
+          <Image 
+            source={{ uri: item.photo }} 
+            style={styles.recipeImage}
+            resizeMode="cover"
+          />
         )}
-        {item.price !== undefined && (
-          <Text style={styles.recipePrice}>Price: ${item.price.toFixed(2)}</Text>
-        )}
-        {item.similarity !== undefined && (
-          <Text style={styles.recipeSimilarity}>
-            Match: {(item.similarity * 100).toFixed(1)}%
-          </Text>
-        )}
+        <View style={styles.recipeInfo}>
+          <Text style={styles.recipeTitle}>{item.title || 'Untitled Recipe'}</Text>
+          {item.tag && <Text style={styles.recipeTag}>Tag: {item.tag}</Text>}
+          {item.type && <Text style={styles.recipeType}>Type: {item.type}</Text>}
+          {item.totalCalorie !== undefined && (
+            <Text style={styles.recipeCalories}>Calories: {item.totalCalorie}</Text>
+          )}
+          {item.price !== undefined && (
+            <Text style={styles.recipePrice}>Price: ${item.price.toFixed(2)}</Text>
+          )}
+          {item.similarity !== undefined && (
+            <Text style={styles.recipeSimilarity}>
+              Match: {(item.similarity * 100).toFixed(1)}%
+            </Text>
+          )}
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
+
+  const trimmed = query.trim();
 
   return (
     <View style={styles.container}>
@@ -73,18 +127,10 @@ export default function SearchScreen() {
           placeholder="Search for recipes..."
           value={query}
           onChangeText={setQuery}
-          onSubmitEditing={handleSearch}
           returnKeyType="search"
+          autoCorrect={false}
+          autoCapitalize="none"
         />
-        <TouchableOpacity 
-          style={styles.searchButton} 
-          onPress={handleSearch}
-          disabled={loading}
-        >
-          <Text style={styles.searchButtonText}>
-            {loading ? 'Searching...' : 'Search'}
-          </Text>
-        </TouchableOpacity>
       </View>
 
       {error && (
@@ -100,7 +146,7 @@ export default function SearchScreen() {
         </View>
       )}
 
-      {!loading && results.length === 0 && query && !error && (
+      {!loading && results.length === 0 && trimmed.length >= MIN_QUERY_LENGTH && !error && (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No recipes found. Try a different search.</Text>
         </View>
@@ -116,10 +162,18 @@ export default function SearchScreen() {
         />
       )}
 
-      {!query && !loading && results.length === 0 && (
+      {!trimmed && !loading && results.length === 0 && (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>
             Enter a search query to find recipes using semantic search
+          </Text>
+        </View>
+      )}
+
+      {trimmed.length > 0 && trimmed.length < MIN_QUERY_LENGTH && !loading && (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>
+            Type at least {MIN_QUERY_LENGTH} characters to search
           </Text>
         </View>
       )}
@@ -127,6 +181,7 @@ export default function SearchScreen() {
   );
 }
 
+// ...existing styles...
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -147,21 +202,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 16,
     fontSize: 16,
-    marginRight: 12,
     backgroundColor: colors.white,
   },
-  searchButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+  loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  searchButtonText: {
-    color: colors.white,
+  loadingText: {
+    marginTop: 12,
     fontSize: 16,
-    fontWeight: '600',
+    color: textColors.secondary,
   },
   errorContainer: {
     backgroundColor: colors.gray[50],
@@ -174,16 +225,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.error,
     fontSize: 14,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: textColors.secondary,
   },
   emptyContainer: {
     flex: 1,
@@ -253,4 +294,3 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 });
-
