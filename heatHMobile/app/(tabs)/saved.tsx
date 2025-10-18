@@ -145,7 +145,7 @@ export default function SavedRecipesScreen() {
             style={[styles.actionButton, styles.unsaveButton]}
             onPress={() => handleUnsaveRecipe(recipe.recipeId)}
           >
-            <Text style={[styles.actionButtonText, styles.unsaveButtonText]}>Remove</Text>
+            <Text style={[styles.actionButtonText, styles.unsaveButtonText]}>Unsave</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: colors.white,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     textAlign: 'center',
   },
