@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Touchable
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, textColors } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { recipeService } from '../../services/recipeService';
 
 type Ingredient = string | { name: string; amount?: string | number; quantity?: number };
@@ -72,6 +72,7 @@ const displayIngredient = (ing: Ingredient) => {
 const RecipeDetail = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors, textColors, fonts, lineHeights } = useThemeColors();
   const { recipeId, id } = useLocalSearchParams<{ recipeId?: string; id?: string }>();
   const effectiveId = (recipeId ?? id) as string;
 
@@ -103,19 +104,19 @@ const RecipeDetail = () => {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: textColors.secondary, marginTop: 8 }}>Loading...</Text>
+        <Text style={{ color: textColors.secondary, marginTop: 8, fontFamily: fonts.regular, lineHeight: lineHeights.base }}>Loading...</Text>
       </View>
     );
   }
 
   if (!recipe) {
     return (
-      <View style={styles.center}>
-        <Text style={{ color: textColors.secondary }}>Recipe not found.</Text>
-        <TouchableOpacity style={[styles.backBtn, { position: 'relative', marginTop: 12 }]} onPress={onBack}>
-          <Ionicons name="arrow-back" size={20} color="#fff" />
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={{ color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }}>Recipe not found.</Text>
+        <TouchableOpacity style={[styles.backBtn, { position: 'relative', marginTop: 12, backgroundColor: colors.primary }]} onPress={onBack}>
+          <Ionicons name="arrow-back" size={20} color={colors.primaryContrast} />
         </TouchableOpacity>
       </View>
     );
@@ -126,97 +127,97 @@ const RecipeDetail = () => {
       {recipe.photo ? (
         <Image source={{ uri: recipe.photo }} style={styles.heroImage} resizeMode="cover" />
       ) : (
-        <View style={[styles.heroImage, { backgroundColor: '#e5e7eb' }]} />
+        <View style={[styles.heroImage, { backgroundColor: colors.gray[200] }]} />
       )}
 
       {/* Overlay for title and tag */}
       <View style={styles.heroOverlay}>
-        <Text numberOfLines={2} style={styles.heroTitle}>{recipe.title}</Text>
+        <Text numberOfLines={2} style={[styles.heroTitle, { color: colors.white, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>{recipe.title}</Text>
         {!!recipe.tag && (
-          <View style={styles.tag}>
-            <Text numberOfLines={1} ellipsizeMode="tail" style={styles.tagText}>{recipe.tag}</Text>
+          <View style={[styles.tag, { backgroundColor: colors.primary }]}>
+            <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.tagText, { color: colors.primaryContrast, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{recipe.tag}</Text>
           </View>
         )}
       </View>
 
       {/* Back button inside safe area */}
-      <TouchableOpacity style={[styles.backBtn, { top: insets.top + 8 }]} onPress={onBack} accessibilityLabel="Back">
-        <Ionicons name="arrow-back" size={20} color="#fff" />
+      <TouchableOpacity style={[styles.backBtn, { top: insets.top + 8, backgroundColor: colors.primary }]} onPress={onBack} accessibilityLabel="Back">
+        <Ionicons name="arrow-back" size={20} color={colors.primaryContrast} />
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.screen} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={[styles.screen, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <Hero />
 
       {/* Summary row like MyRecipe cards */}
       <View style={styles.cardRow}>
-        <View style={styles.miniCard}>
-          <Text style={styles.miniLabel}>Calories</Text>
-          <Text style={styles.miniValue}>{recipe.totalCalorie ?? '-'}</Text>
+        <View style={[styles.miniCard, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
+          <Text style={[styles.miniLabel, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.sm }]}>Calories</Text>
+          <Text style={[styles.miniValue, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.base }]}>{recipe.totalCalorie ?? '-'}</Text>
         </View>
-        <View style={styles.miniCard}>
-          <Text style={styles.miniLabel}>Type</Text>
-          <Text style={styles.miniValue}>{recipe.type ?? '-'}</Text>
+        <View style={[styles.miniCard, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
+          <Text style={[styles.miniLabel, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.sm }]}>Type</Text>
+          <Text style={[styles.miniValue, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.base }]}>{recipe.type ?? '-'}</Text>
         </View>
-        <View style={styles.miniCard}>
-          <Text style={styles.miniLabel}>Price</Text>
-          <Text style={styles.miniValue}>{recipe.price != null ? `$${recipe.price}` : '-'}</Text>
+        <View style={[styles.miniCard, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
+          <Text style={[styles.miniLabel, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.sm }]}>Price</Text>
+          <Text style={[styles.miniValue, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.base }]}>{recipe.price != null ? `$${recipe.price}` : '-'}</Text>
         </View>
       </View>
 
       {!!recipe.description && (
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.bodyText}>{recipe.description}</Text>
+        <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
+          <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>Description</Text>
+          <Text style={[styles.bodyText, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{recipe.description}</Text>
         </View>
       )}
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Ingredients</Text>
+      <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
+        <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>Ingredients</Text>
         {recipe.ingredients?.length ? (
           recipe.ingredients.map((ing, i) => (
-            <Text key={`ing-${i}`} style={styles.listItem}>• {displayIngredient(ing)}</Text>
+            <Text key={`ing-${i}`} style={[styles.listItem, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>• {displayIngredient(ing)}</Text>
           ))
         ) : (
-          <Text style={styles.muted}>No ingredients listed.</Text>
+          <Text style={[styles.muted, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No ingredients listed.</Text>
         )}
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Instructions</Text>
+      <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
+        <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>Instructions</Text>
         {recipe.instructions?.length ? (
           recipe.instructions.map((ins, i) => (
-            <Text key={`ins-${i}`} style={styles.listItem}>{i + 1}. {String(ins)}</Text>
+            <Text key={`ins-${i}`} style={[styles.listItem, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{i + 1}. {String(ins)}</Text>
           ))
         ) : (
-          <Text style={styles.muted}>No instructions provided.</Text>
+          <Text style={[styles.muted, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No instructions provided.</Text>
         )}
       </View>
 
       {(recipe.healthinessScore != null || recipe.easinessScore != null) && (
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Scores</Text>
+        <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
+          <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>Scores</Text>
           <View style={{ flexDirection: 'row', gap: 16 }}>
-            <Text style={styles.kv}>Healthiness: {recipe.healthinessScore ?? '-'}</Text>
-            <Text style={styles.kv}>Easiness: {recipe.easinessScore ?? '-'}</Text>
+            <Text style={[styles.kv, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Healthiness: {recipe.healthinessScore ?? '-'}</Text>
+            <Text style={[styles.kv, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Easiness: {recipe.easinessScore ?? '-'}</Text>
           </View>
         </View>
       )}
 
       {!!recipe.nutritionData && (
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Nutrition</Text>
+        <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
+          <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>Nutrition</Text>
           {(() => {
             const items = normalizeNutrition(recipe.nutritionData);
-            if (!items.length) return <Text style={styles.muted}>No nutrition data.</Text>;
+            if (!items.length) return <Text style={[styles.muted, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No nutrition data.</Text>;
             return (
               <View>
                 {items.map(({ label, value }, idx) => (
-                  <View key={`${label}-${idx}`} style={[styles.nutriRow, idx === items.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }]}>
-                    <Text style={styles.nutriName}>{label}</Text>
-                    <Text style={styles.nutriValue}>{value}</Text>
+                  <View key={`${label}-${idx}`} style={[styles.nutriRow, { borderBottomColor: colors.gray[200] }, idx === items.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }]}>
+                    <Text style={[styles.nutriName, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{label}</Text>
+                    <Text style={[styles.nutriValue, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{value}</Text>
                   </View>
                 ))}
               </View>
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
   heroTitle: { color: '#fff', fontSize: 22, fontWeight: '800', textShadowColor: 'rgba(0,0,0,0.3)', textShadowRadius: 2 },
-  tag: { alignSelf: 'flex-start', marginTop: 8, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: colors.primary, borderRadius: 12, maxWidth: '90%' },
+  tag: { alignSelf: 'flex-start', marginTop: 8, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, maxWidth: '90%' },
   tagText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   backBtn: {
     position: 'absolute',

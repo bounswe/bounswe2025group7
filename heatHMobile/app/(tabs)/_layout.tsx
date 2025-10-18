@@ -1,9 +1,11 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export default function TabLayout() {
+  const { colors, fonts, lineHeights } = useThemeColors();
+  
   return (
     <Tabs
       screenOptions={{
@@ -18,6 +20,16 @@ export default function TabLayout() {
         },
         headerTintColor: colors.white,
         headerShown: true,
+        tabBarLabelStyle: {
+          fontFamily: fonts.regular,
+          fontSize: fonts.regular === 'OpenDyslexic-Regular' ? 10 : 8,
+          lineHeight: fonts.regular === 'OpenDyslexic-Regular' ? lineHeights.xs : 12,
+        },
+        headerTitleStyle: {
+          fontFamily: fonts.bold,
+          fontSize: fonts.regular === 'OpenDyslexic-Regular' ? 16 : 14,
+          lineHeight: fonts.regular === 'OpenDyslexic-Regular' ? lineHeights.lg : 18,
+        },
       }}>
       <Tabs.Screen
         name="index"

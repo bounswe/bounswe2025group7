@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { colors, textColors } from '@/constants/theme';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 type FeedResponse = {
   id: number;
@@ -23,6 +23,7 @@ type FeedCardProps = {
 };
 
 export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
+  const { colors, textColors, fonts, lineHeights } = useThemeColors();
   const fullName = [feed.name, feed.surname].filter(Boolean).join(' ') || 'User';
   const created = feed.createdAt ? new Date(feed.createdAt).toLocaleString() : '';
   const imageUri =
@@ -31,29 +32,33 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
     null;
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: colors.gray[200] }]}>
       <View style={styles.header}>
         {feed.profilePhoto ? (
           <Image source={{ uri: feed.profilePhoto }} style={styles.avatar} />
         ) : (
-          <View style={[styles.avatar, styles.avatarFallback]} />
+          <View style={[styles.avatar, { backgroundColor: colors.gray[200], borderColor: colors.gray[300] }]} />
         )}
         <View style={styles.headerText}>
-          <Text style={styles.name}>{fullName}</Text>
-          {!!created && <Text style={styles.time}>{created}</Text>}
+          <Text style={[styles.name, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{fullName}</Text>
+          {!!created && <Text style={[styles.time, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{created}</Text>}
         </View>
       </View>
 
-      {!!feed.text && <Text style={styles.text}>{feed.text}</Text>}
+      {!!feed.text && <Text style={[styles.text, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{feed.text}</Text>}
 
       {imageUri ? (
-        <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
+        <Image source={{ uri: imageUri }} style={[styles.image, { backgroundColor: colors.background }]} resizeMode="cover" />
       ) : null}
 
       <View style={styles.footer}>
-        <Text style={styles.meta}>❤️ {feed.likeCount ?? 0}</Text>
-        <Text style={styles.meta}>💬 {feed.commentCount ?? 0}</Text>
-        <Text style={styles.meta}>#{feed.type}</Text>
+        <Text style={[styles.meta, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>
+          <Text style={{ fontSize: 14 }}>❤️</Text> {feed.likeCount ?? 0}
+        </Text>
+        <Text style={[styles.meta, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>
+          <Text style={{ fontSize: 14 }}>💬</Text> {feed.commentCount ?? 0}
+        </Text>
+        <Text style={[styles.meta, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>#{feed.type}</Text>
       </View>
     </View>
   );
@@ -61,8 +66,6 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.white,
-    borderColor: colors.gray[200],
     borderWidth: 1,
     borderRadius: 12,
     padding: 12,
@@ -77,34 +80,25 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.gray[200],
-  },
-  avatarFallback: {
-    borderWidth: 1,
-    borderColor: colors.gray[300],
   },
   headerText: {
     marginLeft: 10,
     flex: 1,
   },
   name: {
-    color: textColors.primary,
     fontWeight: '600',
   },
   time: {
-    color: textColors.secondary,
     fontSize: 12,
     marginTop: 2,
   },
   text: {
-    color: textColors.primary,
     marginBottom: 8,
   },
   image: {
     width: '100%',
     height: 200,
     borderRadius: 8,
-    backgroundColor: colors.background,
     marginBottom: 8,
   },
   footer: {
@@ -112,7 +106,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   meta: {
-    color: textColors.secondary,
     fontSize: 12,
   },
 });

@@ -17,7 +17,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { apiClient } from '../../services/apiClient';
-import { colors, textColors } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { recipeService } from '../../services/recipeService';
 import RecipeDetail from '../recipeDetail/recipeDetail';
 
@@ -38,6 +38,7 @@ type RecipeItem = {
 type IngredientForm = { name: string; amount: string };
 
 export default function MyRecipeScreen() {
+  const { colors, textColors, fonts, lineHeights } = useThemeColors();
   const router = useRouter();
 
   const [recipes, setRecipes] = useState<RecipeItem[]>([]);
@@ -232,21 +233,21 @@ export default function MyRecipeScreen() {
   const renderCard = ({ item }: { item: RecipeItem }) => {
     const cover = item.photo || item.image;
     return (
-      <TouchableOpacity style={styles.card} onPress={() => openDetail(item.id)} onLongPress={() => openItemMenu(item)}>
-        <View style={styles.imageWrap}>
+      <TouchableOpacity style={[styles.card, { backgroundColor: colors.backgroundPaper }]} onPress={() => openDetail(item.id)} onLongPress={() => openItemMenu(item)}>
+        <View style={[styles.imageWrap, { backgroundColor: colors.gray[100] }]}>
           {cover ? (
             <Image source={{ uri: cover }} style={styles.image} />
           ) : (
             <View style={[styles.image, styles.imagePlaceholder]}>
-              <Text style={styles.placeholderText}>No Image</Text>
+              <Text style={[styles.placeholderText, { color: colors.gray[400] }]}>No Image</Text>
             </View>
           )}
         </View>
-        <Text numberOfLines={1} style={styles.cardTitle}>
+        <Text numberOfLines={1} style={[styles.cardTitle, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>
           {item.title}
         </Text>
         {Array.isArray(item.instructions) && item.instructions.length > 0 ? (
-          <Text numberOfLines={1} style={styles.cardSubtitle}>
+          <Text numberOfLines={1} style={[styles.cardSubtitle, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>
             {item.instructions[0]}
           </Text>
         ) : null}
@@ -267,19 +268,19 @@ export default function MyRecipeScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: textColors.secondary, marginTop: 8 }}>Loading recipes...</Text>
+        <Text style={{ color: textColors.secondary, marginTop: 8, fontFamily: fonts.regular, lineHeight: lineHeights.base }}>Loading recipes...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {errorMsg ? <Text style={[styles.error, { color: colors.error }]}>{errorMsg}</Text> : null}
 
       {recipes.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>My Recipes</Text>
-          <Text style={styles.emptySub}>Create your first recipe.</Text>
+          <Text style={[styles.emptyTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>My Recipes</Text>
+          <Text style={[styles.emptySub, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Create your first recipe.</Text>
         </View>
       ) : (
         <FlatList
@@ -293,112 +294,112 @@ export default function MyRecipeScreen() {
         />
       )}
 
-      <TouchableOpacity style={styles.fab} onPress={openCreateForm} activeOpacity={0.9}>
-        <Text style={styles.fabPlus}>＋</Text>
+      <TouchableOpacity style={[styles.fab, { backgroundColor: colors.primary }]} onPress={openCreateForm} activeOpacity={0.9}>
+        <Text style={[styles.fabPlus, { color: colors.white, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>＋</Text>
       </TouchableOpacity>
 
       <Modal visible={openForm} transparent animationType="slide" onRequestClose={() => !submitting && setOpenForm(false)}>
         <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: undefined })} style={{ flex: 1 }}>
           <View style={styles.modalBackdrop}>
-            <View style={styles.modalCard}>
+            <View style={[styles.modalCard, { backgroundColor: colors.white }]}>
               <ScrollView contentContainerStyle={{ paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
-                <Text style={styles.modalTitle}>{isEditing ? 'Edit Recipe' : 'Create New Recipe'}</Text>
+                <Text style={[styles.modalTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>{isEditing ? 'Edit Recipe' : 'Create New Recipe'}</Text>
 
-                <Text style={styles.label}>Title</Text>
+                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Title</Text>
                 <TextInput
                   value={title}
                   onChangeText={setTitle}
                   placeholder="Title"
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
                   editable={!submitting}
                 />
 
-                <Text style={styles.label}>Type</Text>
+                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Type</Text>
                 <TextInput
                   value={type}
                   onChangeText={setType}
                   placeholder="e.g. breakfast, lunch"
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
                   editable={!submitting}
                 />
 
-                <Text style={styles.label}>Tag</Text>
-                <TextInput value={tag} onChangeText={setTag} placeholder="e.g. vegetarian" style={styles.input} editable={!submitting} />
+                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Tag</Text>
+                <TextInput value={tag} onChangeText={setTag} placeholder="e.g. vegetarian" style={[styles.input, { backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]} editable={!submitting} />
 
-                <Text style={styles.label}>Price</Text>
+                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Price</Text>
                 <TextInput
                   value={price}
                   onChangeText={setPrice}
                   keyboardType="numeric"
                   placeholder="e.g. 10"
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
                   editable={!submitting}
                 />
 
-                <Text style={styles.label}>Photo</Text>
+                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Photo</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <TouchableOpacity style={styles.pickBtn} onPress={handlePickImage} disabled={submitting}>
-                    <Text style={styles.pickBtnText}>Pick Image</Text>
+                  <TouchableOpacity style={[styles.pickBtn, { backgroundColor: colors.primary + '20' }]} onPress={handlePickImage} disabled={submitting}>
+                    <Text style={[styles.pickBtnText, { color: colors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Pick Image</Text>
                   </TouchableOpacity>
                   {imagePreview ? <Image source={{ uri: imagePreview }} style={{ width: 56, height: 56, borderRadius: 8 }} /> : null}
                 </View>
 
-                <Text style={[styles.label, { marginTop: 16 }]}>Instruction</Text>
+                <Text style={[styles.label, { marginTop: 16, color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Instruction</Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <TextInput
                     value={currentInstruction}
                     onChangeText={setCurrentInstruction}
                     placeholder="Type an instruction and tap Add"
-                    style={[styles.input, { flex: 1 }]}
+                    style={[styles.input, { flex: 1, backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
                     editable={!submitting}
                     onSubmitEditing={addInstruction}
                     returnKeyType="done"
                   />
-                  <TouchableOpacity style={styles.smallBtn} onPress={addInstruction} disabled={!currentInstruction || submitting}>
-                    <Text style={styles.smallBtnText}>Add</Text>
+                  <TouchableOpacity style={[styles.smallBtn, { backgroundColor: colors.primary }]} onPress={addInstruction} disabled={!currentInstruction || submitting}>
+                    <Text style={[styles.smallBtnText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Add</Text>
                   </TouchableOpacity>
                 </View>
                 {instructions.length === 0 ? (
-                  <Text style={styles.muted}>No instructions added yet</Text>
+                  <Text style={[styles.muted, { color: textColors.hint, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No instructions added yet</Text>
                 ) : (
                   <View style={styles.chipsWrap}>
                     {instructions.map((inst, idx) => (
-                      <TouchableOpacity key={`${inst}-${idx}`} style={styles.chip} onPress={() => removeInstruction(idx)}>
-                        <Text style={styles.chipText}>{`${idx + 1}. ${inst}`}</Text>
+                      <TouchableOpacity key={`${inst}-${idx}`} style={[styles.chip, { backgroundColor: colors.primary + '20' }]} onPress={() => removeInstruction(idx)}>
+                        <Text style={[styles.chipText, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{`${idx + 1}. ${inst}`}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
                 )}
 
-                <Text style={[styles.label, { marginTop: 16 }]}>Ingredient</Text>
+                <Text style={[styles.label, { marginTop: 16, color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Ingredient</Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <TextInput
                     value={curIngName}
                     onChangeText={setCurIngName}
                     placeholder="Name"
-                    style={[styles.input, { flex: 1 }]}
+                    style={[styles.input, { flex: 1, backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
                     editable={!submitting}
                   />
                   <TextInput
                     value={curIngAmt}
                     onChangeText={setCurIngAmt}
                     placeholder="Amount"
-                    style={[styles.input, { flex: 1 }]}
+                    style={[styles.input, { flex: 1, backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
                     editable={!submitting}
                     onSubmitEditing={addIngredient}
                     returnKeyType="done"
                   />
-                  <TouchableOpacity style={styles.smallBtn} onPress={addIngredient} disabled={!curIngName || !curIngAmt || submitting}>
-                    <Text style={styles.smallBtnText}>Add</Text>
+                  <TouchableOpacity style={[styles.smallBtn, { backgroundColor: colors.primary }]} onPress={addIngredient} disabled={!curIngName || !curIngAmt || submitting}>
+                    <Text style={[styles.smallBtnText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Add</Text>
                   </TouchableOpacity>
                 </View>
                 {ingredients.length === 0 ? (
-                  <Text style={styles.muted}>No ingredients added yet</Text>
+                  <Text style={[styles.muted, { color: textColors.hint, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No ingredients added yet</Text>
                 ) : (
                   <View style={styles.chipsWrap}>
                     {ingredients.map((ing, idx) => (
-                      <TouchableOpacity key={`${ing.name}-${idx}`} style={styles.chip} onPress={() => removeIngredient(idx)}>
-                        <Text style={styles.chipText}>{`${igName(ing)}: ${ing.amount}`}</Text>
+                      <TouchableOpacity key={`${ing.name}-${idx}`} style={[styles.chip, { backgroundColor: colors.primary + '20' }]} onPress={() => removeIngredient(idx)}>
+                        <Text style={[styles.chipText, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{`${igName(ing)}: ${ing.amount}`}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -406,9 +407,9 @@ export default function MyRecipeScreen() {
 
                 <View style={{ height: 12 }} />
 
-                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
                   <TouchableOpacity
-                    style={[styles.actionBtn, { backgroundColor: '#e5e7eb' }]}
+                    style={[styles.actionBtn, { backgroundColor: colors.gray[200] }]}
                     onPress={() => {
                       if (!submitting) {
                         setOpenForm(false);
@@ -417,15 +418,15 @@ export default function MyRecipeScreen() {
                     }}
                     disabled={submitting}
                   >
-                    <Text style={[styles.actionBtnText, { color: '#111827' }]}>Cancel</Text>
+                    <Text style={[styles.actionBtnText, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Cancel</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.actionBtn, { backgroundColor: isFormComplete ? colors.primary : '#9ca3af' }]}
+                    style={[styles.actionBtn, { backgroundColor: isFormComplete ? colors.primary : colors.gray[400] }]}
                     onPress={handleSubmit}
                     disabled={!isFormComplete || submitting}
                   >
-                    <Text style={styles.actionBtnText}>{submitting ? 'Submitting...' : isEditing ? 'Update' : 'Create'}</Text>
+                    <Text style={[styles.actionBtnText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{submitting ? 'Submitting...' : isEditing ? 'Update' : 'Create'}</Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>
@@ -440,30 +441,28 @@ export default function MyRecipeScreen() {
 const igName = (i: IngredientForm) => (i.name?.length ? i.name : 'Item');
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f7fb' },
+  container: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  error: { color: '#b91c1c', padding: 12, textAlign: 'center' },
+  error: { padding: 12, textAlign: 'center' },
   list: { padding: 12, paddingBottom: 96, gap: 12 },
   card: {
     flex: 1,
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 8,
-    shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 5,
     elevation: 2,
   },
-  imageWrap: { width: '100%', aspectRatio: 1, borderRadius: 8, overflow: 'hidden', backgroundColor: '#f3f4f6' },
+  imageWrap: { width: '100%', aspectRatio: 1, borderRadius: 8, overflow: 'hidden' },
   image: { width: '100%', height: '100%' },
   imagePlaceholder: { alignItems: 'center', justifyContent: 'center' },
-  placeholderText: { color: '#6b7280' },
-  cardTitle: { marginTop: 8, fontWeight: '700', color: '#111827' },
-  cardSubtitle: { marginTop: 2, color: '#6b7280', fontSize: 12 },
+  placeholderText: { /* Dynamic styling applied in component */ },
+  cardTitle: { marginTop: 8, fontWeight: '700' },
+  cardSubtitle: { marginTop: 2, fontSize: 12 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  emptyTitle: { fontSize: 20, fontWeight: '700', color: '#111827' },
-  emptySub: { marginTop: 6, color: '#6b7280' },
+  emptyTitle: { fontSize: 20, fontWeight: '700' },
+  emptySub: { marginTop: 6 },
   fab: {
     position: 'absolute',
     right: 18,
@@ -471,59 +470,50 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
     elevation: 6,
   },
-  fabPlus: { color: '#fff', fontSize: 28, lineHeight: 28, fontWeight: '700' },
+  fabPlus: { fontSize: 28, lineHeight: 28, fontWeight: '700' },
 
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.25)', padding: 16, justifyContent: 'flex-end' },
   modalCard: {
-    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
     maxHeight: '90%',
   },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 10 },
-  label: { color: '#374151', marginTop: 8, marginBottom: 6, fontWeight: '600' },
+  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 10 },
+  label: { marginTop: 8, marginBottom: 6, fontWeight: '600' },
   input: {
-    backgroundColor: '#f9fafb',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#111827',
   },
   pickBtn: {
-    backgroundColor: '#e5efff',
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 10,
   },
-  pickBtnText: { color: colors.primary, fontWeight: '700' },
+  pickBtnText: { fontWeight: '700' },
   smallBtn: {
-    backgroundColor: colors.primary,
     paddingHorizontal: 12,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  smallBtnText: { color: '#fff', fontWeight: '700' },
+  smallBtnText: { fontWeight: '700' },
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   chip: {
-    backgroundColor: '#eef2ff',
     borderRadius: 16,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  chipText: { color: '#1f2937', fontSize: 12, fontWeight: '600' },
-  muted: { color: '#6b7280', marginTop: 6 },
+  chipText: { fontSize: 12, fontWeight: '600' },
+  muted: { marginTop: 6 },
   actionBtn: {
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -531,6 +521,6 @@ const styles = StyleSheet.create({
     minWidth: 120,
     alignItems: 'center',
   },
-  actionBtnText: { color: '#fff', fontWeight: '700' },
+  actionBtnText: { fontWeight: '700' },
 });
 

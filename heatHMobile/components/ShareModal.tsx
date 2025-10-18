@@ -10,7 +10,7 @@ import {
   Share,
   Linking
 } from 'react-native';
-import { colors, textColors } from '../constants/theme';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface ShareableItem {
   id?: number;
@@ -32,6 +32,8 @@ export default function ShareModal({
   item, 
   baseUrl = 'https://heath.app' 
 }: ShareModalProps) {
+  const { colors, textColors, fonts } = useThemeColors();
+  
   if (!item) return null;
 
   // Get the item ID (either id or recipeId)
@@ -151,17 +153,17 @@ export default function ShareModal({
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.shareModal}>
+        <View style={[styles.shareModal, { backgroundColor: colors.white }]}>
           <View style={styles.shareModalHeader}>
-            <Text style={styles.shareModalTitle}>Share Recipe</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>✕</Text>
+            <Text style={[styles.shareModalTitle, { color: textColors.primary, fontFamily: fonts.bold }]}>Share Recipe</Text>
+            <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.gray[200] }]}>
+              <Text style={[styles.closeButtonText, { color: textColors.primary, fontSize: 16 }]}>✕</Text>
             </TouchableOpacity>
           </View>
           
-          <View style={styles.recipePreview}>
+          <View style={[styles.recipePreview, { backgroundColor: colors.gray[50] }]}>
             <Image source={{ uri: item.photo }} style={styles.previewImage} />
-            <Text style={styles.previewTitle} numberOfLines={2}>
+            <Text style={[styles.previewTitle, { color: textColors.primary, fontFamily: fonts.medium }]} numberOfLines={2}>
               {item.title}
             </Text>
           </View>
@@ -169,37 +171,37 @@ export default function ShareModal({
           <View style={styles.shareOptions}>
             <TouchableOpacity style={styles.shareOption} onPress={shareViaNative}>
               <View style={[styles.shareIcon, { backgroundColor: colors.primary }]}>
-                <Text style={styles.shareIconText}>📱</Text>
+                <Text style={[styles.shareIconText, { fontSize: 20 }]}>📱</Text>
               </View>
-              <Text style={styles.shareOptionText}>Share Link</Text>
+              <Text style={[styles.shareOptionText, { color: textColors.primary, fontFamily: fonts.regular }]}>Share Link</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.shareOption} onPress={shareViaFacebook}>
               <View style={[styles.shareIcon, { backgroundColor: '#1877F2' }]}>
-                <Text style={styles.shareIconText}>f</Text>
+                <Text style={[styles.shareIconText, { fontSize: 16, fontFamily: fonts.bold }]}>f</Text>
               </View>
-              <Text style={styles.shareOptionText}>Facebook</Text>
+              <Text style={[styles.shareOptionText, { color: textColors.primary, fontFamily: fonts.regular }]}>Facebook</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.shareOption} onPress={shareViaWhatsApp}>
               <View style={[styles.shareIcon, { backgroundColor: '#25D366' }]}>
-                <Text style={styles.shareIconText}>W</Text>
+                <Text style={[styles.shareIconText, { fontSize: 16, fontFamily: fonts.bold }]}>W</Text>
               </View>
-              <Text style={styles.shareOptionText}>WhatsApp</Text>
+              <Text style={[styles.shareOptionText, { color: textColors.primary, fontFamily: fonts.regular }]}>WhatsApp</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.shareOption} onPress={shareViaInstagram}>
               <View style={[styles.shareIcon, { backgroundColor: '#E4405F' }]}>
-                <Text style={styles.shareIconText}>📷</Text>
+                <Text style={[styles.shareIconText, { fontSize: 20 }]}>📷</Text>
               </View>
-              <Text style={styles.shareOptionText}>Instagram</Text>
+              <Text style={[styles.shareOptionText, { color: textColors.primary, fontFamily: fonts.regular }]}>Instagram</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.shareOption} onPress={copyLink}>
               <View style={[styles.shareIcon, { backgroundColor: colors.gray[600] }]}>
-                <Text style={styles.shareIconText}>📋</Text>
+                <Text style={[styles.shareIconText, { fontSize: 20 }]}>📋</Text>
               </View>
-              <Text style={styles.shareOptionText}>Copy Link</Text>
+              <Text style={[styles.shareOptionText, { color: textColors.primary, fontFamily: fonts.regular }]}>Copy Link</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -215,7 +217,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   shareModal: {
-    backgroundColor: colors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
@@ -232,25 +233,21 @@ const styles = StyleSheet.create({
   shareModalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: textColors.primary,
   },
   closeButton: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: colors.gray[200],
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeButtonText: {
     fontSize: 16,
-    color: textColors.secondary,
     fontWeight: 'bold',
   },
   recipePreview: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.gray[50],
     borderRadius: 12,
     padding: 12,
     marginBottom: 20,
@@ -265,7 +262,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    color: textColors.primary,
     lineHeight: 20,
   },
   shareOptions: {
@@ -288,12 +284,11 @@ const styles = StyleSheet.create({
   },
   shareIconText: {
     fontSize: 24,
-    color: colors.white,
+    color: '#ffffff',
     fontWeight: 'bold',
   },
   shareOptionText: {
     fontSize: 12,
-    color: textColors.primary,
     textAlign: 'center',
     fontWeight: '500',
   },

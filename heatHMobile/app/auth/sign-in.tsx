@@ -12,10 +12,11 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { authService } from '../../services/authService';
-import { colors } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export default function SignInScreen() {
   const router = useRouter();
+  const { colors, textColors, fonts, lineHeights } = useThemeColors();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -58,17 +59,18 @@ export default function SignInScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+      <View style={[styles.content, { backgroundColor: colors.background }]}>
+        <Text style={[styles.title, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>Welcome Back</Text>
+        <Text style={[styles.subtitle, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Sign in to continue</Text>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={[styles.label, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Email</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base, backgroundColor: colors.background, borderColor: colors.gray[300] }]}
             placeholder="Enter your email"
+            placeholderTextColor={textColors.secondary}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -78,10 +80,11 @@ export default function SignInScreen() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Password</Text>
+          <Text style={[styles.label, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Password</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base, backgroundColor: colors.background, borderColor: colors.gray[300] }]}
             placeholder="Enter your password"
+            placeholderTextColor={textColors.secondary}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -94,18 +97,18 @@ export default function SignInScreen() {
           onPress={() => router.push('/auth/reset-password' as any)}
           disabled={loading}
         >
-          <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+          <Text style={[styles.forgotPasswordText, { color: colors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Forgot password?</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[styles.button, { backgroundColor: colors.primary }, loading && styles.buttonDisabled]}
           onPress={handleLogin}
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.primaryContrast} />
           ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
+            <Text style={[styles.buttonText, { color: colors.primaryContrast, fontFamily: fonts.bold, lineHeight: lineHeights.base }]}>Sign In</Text>
           )}
         </TouchableOpacity>
 
@@ -114,7 +117,7 @@ export default function SignInScreen() {
           onPress={() => router.push('/auth/sign-up' as any)}
           disabled={loading}
         >
-          <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
+          <Text style={[styles.linkText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Don't have an account? Sign Up</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -162,14 +165,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   button: {
-    backgroundColor: colors.primary,
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 12,
   },
   buttonDisabled: {
-    backgroundColor: colors.primaryLight,
+    opacity: 0.6,
   },
   buttonText: {
     color: '#fff',
@@ -181,7 +183,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkText: {
-    color: colors.primary,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -190,7 +191,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   forgotPasswordText: {
-    color: colors.primary,
     fontSize: 14,
     fontWeight: '500',
   },

@@ -12,7 +12,7 @@ import {
   Dimensions
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors, textColors } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { recipeService } from '../../services/recipeService';
 import ShareModal from '../../components/ShareModal';
 
@@ -26,6 +26,7 @@ interface SavedRecipe {
 }
 
 export default function SavedRecipesScreen() {
+  const { colors, textColors, fonts, lineHeights } = useThemeColors();
   const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -115,7 +116,7 @@ export default function SavedRecipesScreen() {
 
   // Render recipe card
   const renderRecipeCard = (recipe: SavedRecipe) => (
-    <View key={recipe.recipeId} style={styles.recipeCard}>
+    <View key={recipe.recipeId} style={[styles.recipeCard, { backgroundColor: colors.white }]}>
       <TouchableOpacity 
         style={styles.imageContainer}
         onPress={() => handleRecipePress(recipe)}
@@ -129,30 +130,30 @@ export default function SavedRecipesScreen() {
       </TouchableOpacity>
       
       <View style={styles.recipeContent}>
-        <Text style={styles.recipeTitle} numberOfLines={2}>
+        <Text style={[styles.recipeTitle, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]} numberOfLines={2}>
           {recipe.title}
         </Text>
         
         <View style={styles.recipeActions}>
           <TouchableOpacity 
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: colors.primary }]}
             onPress={() => handleRecipePress(recipe)}
           >
-            <Text style={styles.actionButtonText}>View</Text>
+            <Text style={[styles.actionButtonText, { color: colors.white }]}>View</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={[styles.actionButton, styles.unsaveButton]}
+            style={[styles.actionButton, styles.unsaveButton, { backgroundColor: colors.error }]}
             onPress={() => handleUnsaveRecipe(recipe.recipeId)}
           >
-            <Text style={[styles.actionButtonText, styles.unsaveButtonText]}>Unsave</Text>
+            <Text style={[styles.actionButtonText, styles.unsaveButtonText, { color: colors.white }]}>Unsave</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: colors.primary }]}
             onPress={() => handleShareRecipe(recipe)}
           >
-            <Text style={styles.actionButtonText}>Share</Text>
+            <Text style={[styles.actionButtonText, { color: colors.white }]}>Share</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -162,8 +163,8 @@ export default function SavedRecipesScreen() {
   // Render empty state
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyText}>No saved recipes yet</Text>
-      <Text style={styles.emptyDescription}>
+      <Text style={[styles.emptyText, { color: textColors.disabled, fontFamily: fonts.regular, lineHeight: lineHeights.lg }]}>No saved recipes yet</Text>
+      <Text style={[styles.emptyDescription, { color: textColors.disabled, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
         Recipes you save will appear here
       </Text>
     </View>
@@ -172,9 +173,9 @@ export default function SavedRecipesScreen() {
   // Render loading state
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading saved recipes...</Text>
+        <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Loading saved recipes...</Text>
       </View>
     );
   }
@@ -182,7 +183,7 @@ export default function SavedRecipesScreen() {
   return (
     <>
       <ScrollView 
-        style={styles.container}
+        style={[styles.container, { backgroundColor: colors.background }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -193,14 +194,14 @@ export default function SavedRecipesScreen() {
         }
       >
         <View style={styles.content}>
-          <Text style={styles.title}>Saved Recipes</Text>
-          <Text style={styles.subtitle}>Your Bookmarked Recipes</Text>
+          <Text style={[styles.title, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>Saved Recipes</Text>
+          <Text style={[styles.subtitle, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Your Bookmarked Recipes</Text>
           
           {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={fetchSavedRecipes}>
-                <Text style={styles.retryButtonText}>Retry</Text>
+            <View style={[styles.errorContainer, { backgroundColor: colors.error + '10', borderLeftColor: colors.error }]}>
+              <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+              <TouchableOpacity style={[styles.retryButton, { backgroundColor: colors.error }]} onPress={fetchSavedRecipes}>
+                <Text style={[styles.retryButtonText, { color: colors.white }]}>Retry</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -229,7 +230,6 @@ export default function SavedRecipesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     padding: 20,
@@ -238,46 +238,37 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: textColors.primary,
   },
   subtitle: {
     fontSize: 18,
-    color: textColors.secondary,
     marginBottom: 20,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: textColors.secondary,
   },
   errorContainer: {
-    backgroundColor: colors.error + '10',
     padding: 16,
     borderRadius: 8,
     marginBottom: 20,
     borderLeftWidth: 4,
-    borderLeftColor: colors.error,
   },
   errorText: {
-    color: colors.error,
     fontSize: 14,
     marginBottom: 12,
   },
   retryButton: {
-    backgroundColor: colors.error,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
     alignSelf: 'flex-start',
   },
   retryButtonText: {
-    color: colors.white,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -288,10 +279,8 @@ const styles = StyleSheet.create({
   },
   recipeCard: {
     width: cardWidth,
-    backgroundColor: colors.white,
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -317,7 +306,6 @@ const styles = StyleSheet.create({
   recipeTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: textColors.primary,
     marginBottom: 12,
     lineHeight: 20,
   },
@@ -331,20 +319,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 4,
     borderRadius: 6,
-    backgroundColor: colors.primary,
     marginHorizontal: 2,
   },
   unsaveButton: {
-    backgroundColor: colors.error,
+    // Dynamic styling applied in component
   },
   actionButtonText: {
-    color: colors.white,
     fontSize: 11,
     fontWeight: '600',
     textAlign: 'center',
   },
   unsaveButtonText: {
-    color: colors.white,
+    // Dynamic styling applied in component
   },
   emptyState: {
     alignItems: 'center',
@@ -354,12 +340,10 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: textColors.disabled,
     marginBottom: 10,
   },
   emptyDescription: {
     fontSize: 14,
-    color: textColors.disabled,
     textAlign: 'center',
   },
 });
