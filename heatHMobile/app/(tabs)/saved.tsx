@@ -15,6 +15,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { colors, textColors } from '../../constants/theme';
 import { recipeService } from '../../services/recipeService';
 import ShareModal from '../../components/ShareModal';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 60) / 2; // 2 columns with padding
@@ -32,6 +33,7 @@ export default function SavedRecipesScreen() {
   const [error, setError] = useState<string | null>(null);
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<SavedRecipe | null>(null);
+  const router = useRouter();
 
   // Fetch saved recipes
   const fetchSavedRecipes = async () => {
@@ -68,6 +70,10 @@ export default function SavedRecipesScreen() {
     setRefreshing(true);
     fetchSavedRecipes();
   };
+  const openDetail = (id: string | number) => {
+    router.push({ pathname: '/recipeDetail/recipeDetail', params: { recipeId: String(id) } });
+  };
+
 
   // Handle unsave recipe
   const handleUnsaveRecipe = async (recipeId: number) => {
@@ -97,8 +103,7 @@ export default function SavedRecipesScreen() {
 
   // Handle recipe press (navigation to recipe detail)
   const handleRecipePress = (recipe: SavedRecipe) => {
-    // TODO: Navigate to recipe detail page
-    Alert.alert('Recipe Detail', `Navigate to recipe: ${recipe.title}`);
+    openDetail(recipe.recipeId);
   };
 
   // Handle share recipe - show share modal
