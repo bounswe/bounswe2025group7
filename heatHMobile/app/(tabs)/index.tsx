@@ -9,6 +9,9 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [page, setPage] = useState<number>(0);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [hasMore, setHasMore] = useState<boolean>(true);
 
   const loadInitial = async () => {
     setLoading(true);
@@ -16,6 +19,8 @@ export default function HomeScreen() {
       const data = await feedService.getRecentFeeds(0);
       console.log(`Loaded ${data.length} feeds for initial load.`);
       setFeeds(data);
+      setPage(1);
+      setHasMore(Array.isArray(data) ? data.length > 0 : false);
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || 'Failed to load feeds');
     } finally {
@@ -29,10 +34,32 @@ export default function HomeScreen() {
       console.log(`Refreshing feed page.`);
       const data = await feedService.getRecentFeeds(0);
       setFeeds(data);
+      setPage(1);
+      setHasMore(Array.isArray(data) ? data.length > 0 : false);
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || 'Failed to refresh feeds');
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const data = await feedService.getRecentFeeds(page);
+      console.log(`Loaded ${Array.isArray(data) ? data.length : 0} feeds for page ${page}.`);
+      const nextItems = Array.isArray(data) ? data : [];
+      if (nextItems.length === 0) {
+        setHasMore(false);
+      } else {
+        setFeeds((prev: any) => (Array.isArray(prev) ? [...prev, ...nextItems] : nextItems));
+        setPage((p) => p + 1);
+      }
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.message || 'Failed to load more feeds');
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -77,6 +104,14 @@ export default function HomeScreen() {
         contentContainerStyle={styles.listContent}
         refreshing={refreshing}
         onRefresh={handleRefresh}
+        onEndReachedThreshold={0.5}
+        onEndReached={handleLoadMore}
+        ListFooterComponent={loadingMore ? (
+          <View style={styles.footer}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={styles.footerText}>Loading more...</Text>
+          </View>
+        ) : null}
       />
       <TouchableOpacity
         activeOpacity={0.7}
@@ -124,6 +159,16 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 8,
+  },
+  footer: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerText: {
+    marginTop: 6,
+    color: textColors.secondary,
+    fontSize: 12,
   },
   emptyText: {
     color: textColors.secondary,
