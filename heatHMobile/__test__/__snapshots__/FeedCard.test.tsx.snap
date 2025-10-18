@@ -1,0 +1,263 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`FeedCard shows image for IMAGE_AND_TEXT and recipe photo for RECIPE 1`] = `
+<View
+  style={
+    {
+      "backgroundColor": "#ffffff",
+      "borderColor": "#e5e7eb",
+      "borderRadius": 12,
+      "borderWidth": 1,
+      "marginBottom": 12,
+      "padding": 12,
+    }
+  }
+>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "flexDirection": "row",
+        "marginBottom": 8,
+      }
+    }
+  >
+    <View
+      style={
+        [
+          {
+            "backgroundColor": "#e5e7eb",
+            "borderRadius": 20,
+            "height": 40,
+            "width": 40,
+          },
+          {
+            "borderColor": "#d1d5db",
+            "borderWidth": 1,
+          },
+        ]
+      }
+    />
+    <View
+      style={
+        {
+          "flex": 1,
+          "marginLeft": 10,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "color": "#111827",
+            "fontWeight": "600",
+          }
+        }
+      >
+        Jane Doe
+      </Text>
+    </View>
+  </View>
+  <Text
+    style={
+      {
+        "color": "#111827",
+        "marginBottom": 8,
+      }
+    }
+  >
+    Hello world
+  </Text>
+  <Image
+    resizeMode="cover"
+    source={
+      {
+        "uri": "http://example.com/img.jpg",
+      }
+    }
+    style={
+      {
+        "backgroundColor": "#ffffff",
+        "borderRadius": 8,
+        "height": 200,
+        "marginBottom": 8,
+        "width": "100%",
+      }
+    }
+  />
+  <View
+    style={
+      {
+        "flexDirection": "row",
+        "justifyContent": "space-between",
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "#4b5563",
+          "fontSize": 12,
+        }
+      }
+    >
+      ❤️ 
+      5
+    </Text>
+    <Text
+      style={
+        {
+          "color": "#4b5563",
+          "fontSize": 12,
+        }
+      }
+    >
+      💬 
+      2
+    </Text>
+    <Text
+      style={
+        {
+          "color": "#4b5563",
+          "fontSize": 12,
+        }
+      }
+    >
+      #
+      IMAGE_AND_TEXT
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`FeedCard shows image for IMAGE_AND_TEXT and recipe photo for RECIPE 2`] = `
+<View
+  style={
+    {
+      "backgroundColor": "#ffffff",
+      "borderColor": "#e5e7eb",
+      "borderRadius": 12,
+      "borderWidth": 1,
+      "marginBottom": 12,
+      "padding": 12,
+    }
+  }
+>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "flexDirection": "row",
+        "marginBottom": 8,
+      }
+    }
+  >
+    <View
+      style={
+        [
+          {
+            "backgroundColor": "#e5e7eb",
+            "borderRadius": 20,
+            "height": 40,
+            "width": 40,
+          },
+          {
+            "borderColor": "#d1d5db",
+            "borderWidth": 1,
+          },
+        ]
+      }
+    />
+    <View
+      style={
+        {
+          "flex": 1,
+          "marginLeft": 10,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "color": "#111827",
+            "fontWeight": "600",
+          }
+        }
+      >
+        Jane Doe
+      </Text>
+    </View>
+  </View>
+  <Text
+    style={
+      {
+        "color": "#111827",
+        "marginBottom": 8,
+      }
+    }
+  >
+    Hello world
+  </Text>
+  <Image
+    resizeMode="cover"
+    source={
+      {
+        "uri": "http://example.com/photo.jpg",
+      }
+    }
+    style={
+      {
+        "backgroundColor": "#ffffff",
+        "borderRadius": 8,
+        "height": 200,
+        "marginBottom": 8,
+        "width": "100%",
+      }
+    }
+  />
+  <View
+    style={
+      {
+        "flexDirection": "row",
+        "justifyContent": "space-between",
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "#4b5563",
+          "fontSize": 12,
+        }
+      }
+    >
+      ❤️ 
+      5
+    </Text>
+    <Text
+      style={
+        {
+          "color": "#4b5563",
+          "fontSize": 12,
+        }
+      }
+    >
+      💬 
+      2
+    </Text>
+    <Text
+      style={
+        {
+          "color": "#4b5563",
+          "fontSize": 12,
+        }
+      }
+    >
+      #
+      RECIPE
+    </Text>
+  </View>
+</View>
+`;
+
+
