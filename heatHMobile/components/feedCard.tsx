@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Animated, ActivityIndicator, FlatList, TextInput } from 'react-native';
 import { colors, textColors } from '@/constants/theme';
 import { feedService } from '@/services/feedService';
+import { recipeService } from '@/services/recipeService';
 import { Ionicons } from '@expo/vector-icons';
 import Modal from 'react-native-modal';
 
@@ -35,6 +36,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
 
   const [likedByCurrentUser, setLikedByCurrentUser] = useState<boolean>(!!feed.likedByCurrentUser);
   const [likeCount, setLikeCount] = useState<number>(feed.likeCount ?? 0);
+  const [savedByCurrentUser, setSavedByCurrentUser] = useState<boolean>(false);
   const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
   const [commentsLoading, setCommentsLoading] = useState<boolean>(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -42,6 +44,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
   const [commentSubmitting, setCommentSubmitting] = useState<boolean>(false);
   const [commentCount, setCommentCount] = useState<number>(feed.commentCount ?? 0);
   const likeScale = useRef(new Animated.Value(1)).current;
+  const saveScale = useRef(new Animated.Value(1)).current;
 
   const bumpLike = () => {
     Animated.sequence([
@@ -51,6 +54,22 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
         useNativeDriver: true,
       }),
       Animated.spring(likeScale, {
+        toValue: 1,
+        friction: 5,
+        tension: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const bumpSave = () => {
+    Animated.sequence([
+      Animated.timing(saveScale, {
+        toValue: 1.2,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+      Animated.spring(saveScale, {
         toValue: 1,
         friction: 5,
         tension: 200,
@@ -95,6 +114,49 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
         }
       } else {
         const errorMsg = error?.response?.data?.message || error?.message || 'Failed to toggle like';
+        Alert.alert('Error', errorMsg);
+      }
+    }
+  };
+
+  const handleToggleSave = async () => {
+    if (feed.type !== 'RECIPE' || !feed.recipe?.id) {
+      return;
+    }
+
+    const doSave = async () => {
+      await recipeService.saveRecipe(feed.recipe.id);
+      setSavedByCurrentUser(true);
+      bumpSave();
+    };
+
+    const doUnsave = async () => {
+      await recipeService.unsaveRecipe(feed.recipe.id);
+      setSavedByCurrentUser(false);
+    };
+
+    const primaryIsSave = !savedByCurrentUser;
+    try {
+      if (primaryIsSave) {
+        await doSave();
+      } else {
+        await doUnsave();
+      }
+    } catch (error: any) {
+      if (error?.response?.status === 403) {
+        // Fallback to opposite action on 403
+        try {
+          if (primaryIsSave) {
+            await doUnsave();
+          } else {
+            await doSave();
+          }
+        } catch (err2: any) {
+          const errorMsg = err2?.response?.data?.message || err2?.message || 'Failed to toggle save';
+          Alert.alert('Error', errorMsg);
+        }
+      } else {
+        const errorMsg = error?.response?.data?.message || error?.message || 'Failed to toggle save';
         Alert.alert('Error', errorMsg);
       }
     }
@@ -163,8 +225,14 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
 
       <View style={styles.footer}>
         {feed.type === 'RECIPE' && (
-          <TouchableOpacity activeOpacity={0.7} style={styles.actionContainer}>
-            <Ionicons name="bookmark-outline" size={18} color={textColors.secondary} />
+          <TouchableOpacity activeOpacity={0.7} onPress={handleToggleSave} style={styles.actionContainer}>
+            <Animated.View style={{ transform: [{ scale: saveScale }] }}>
+              <Ionicons 
+                name={savedByCurrentUser ? 'bookmark' : 'bookmark-outline'} 
+                size={18} 
+                color={savedByCurrentUser ? colors.primary : textColors.secondary} 
+              />
+            </Animated.View>
           </TouchableOpacity>
         )}
         <TouchableOpacity activeOpacity={0.7} onPress={handleToggleLike} style={styles.actionContainer}>
