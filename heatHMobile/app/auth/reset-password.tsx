@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors, textColors, borderColors } from '../../constants/theme';
@@ -98,6 +99,7 @@ export default function ResetPasswordScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
+        <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
         <Text style={styles.title}>Reset Password</Text>
         <Text style={styles.subtitle}>
           Enter your new password below. Make sure it's secure and easy to remember.
@@ -177,6 +179,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    alignSelf: 'center',
+    marginBottom: 24,
   },
   content: {
     flex: 1,
