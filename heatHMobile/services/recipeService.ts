@@ -31,4 +31,22 @@ export const recipeService = {
   
   getSavedRecipes: () => 
     apiClient.get<any[]>('/saved-recipes/get').then((r: any) => r.data),
+
+  isRecipeSaved: async (recipeId: number | string): Promise<boolean> => {
+    try {
+      const list = await apiClient.get<any[]>('/saved-recipes/get').then((r: any) => r.data);
+      if (!Array.isArray(list)) return false;
+      return list.some((it: any) => {
+        const rid =
+          it?.id ??
+          it?.recipeId ??
+          it?.recipe?.id ??
+          it?.recipe?.recipeId ??
+          it?.recipe?.recipeID;
+        return String(rid) === String(recipeId);
+      });
+    } catch {
+      return false;
+    }
+  },
 };
