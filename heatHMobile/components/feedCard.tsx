@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Animated, ActivityIndicator, FlatList, TextInput } from 'react-native';
+import { useRouter } from 'expo-router';
 import { colors, textColors } from '@/constants/theme';
 import { feedService } from '@/services/feedService';
 import { recipeService } from '@/services/recipeService';
@@ -27,6 +28,7 @@ type FeedCardProps = {
 };
 
 export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
+  const router = useRouter();
   const fullName = [feed.name, feed.surname].filter(Boolean).join(' ') || 'User';
   const created = feed.createdAt ? new Date(feed.createdAt).toLocaleString() : '';
   const imageUri =
@@ -45,6 +47,22 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
   const [commentCount, setCommentCount] = useState<number>(feed.commentCount ?? 0);
   const likeScale = useRef(new Animated.Value(1)).current;
   const saveScale = useRef(new Animated.Value(1)).current;
+
+  // Check if recipe is saved when component mounts
+  useEffect(() => {
+    const checkSavedStatus = async () => {
+      if (feed.type === 'RECIPE' && feed.recipe?.id) {
+        try {
+          const isSaved = await recipeService.isRecipeSaved(feed.recipe.id);
+          setSavedByCurrentUser(isSaved);
+        } catch (error) {
+          console.error('Error checking saved status:', error);
+        }
+      }
+    };
+
+    checkSavedStatus();
+  }, [feed.type, feed.recipe?.id]);
 
   const bumpLike = () => {
     Animated.sequence([
@@ -203,6 +221,15 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
     return String(value ?? '');
   };
 
+  const handleRecipePress = () => {
+    if (feed.type === 'RECIPE' && feed.recipe?.id) {
+      router.push({ 
+        pathname: '/recipeDetail/recipeDetail', 
+        params: { recipeId: String(feed.recipe.id) } 
+      });
+    }
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -217,11 +244,21 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
         </View>
       </View>
 
-      {!!feed.text && <Text style={styles.text}>{feed.text}</Text>}
-
-      {imageUri ? (
-        <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
-      ) : null}
+      {feed.type === 'RECIPE' ? (
+        <TouchableOpacity activeOpacity={0.7} onPress={handleRecipePress}>
+          {!!feed.text && <Text style={styles.text}>{feed.text}</Text>}
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
+          ) : null}
+        </TouchableOpacity>
+      ) : (
+        <>
+          {!!feed.text && <Text style={styles.text}>{feed.text}</Text>}
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
+          ) : null}
+        </>
+      )}
 
       <View style={styles.footer}>
         {feed.type === 'RECIPE' && (
