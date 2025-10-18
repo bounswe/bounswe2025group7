@@ -114,7 +114,12 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
       ) : null}
 
       <View style={styles.footer}>
-        <TouchableOpacity activeOpacity={0.7} onPress={handleToggleLike} style={styles.likeContainer}>
+        {feed.type === 'RECIPE' && (
+          <TouchableOpacity activeOpacity={0.7} style={styles.actionContainer}>
+            <Ionicons name="bookmark-outline" size={18} color={textColors.secondary} />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity activeOpacity={0.7} onPress={handleToggleLike} style={styles.actionContainer}>
           <Animated.View style={{ transform: [{ scale: likeScale }] }}>
             <Ionicons
               name={likedByCurrentUser ? 'heart' : 'heart-outline'}
@@ -124,8 +129,10 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
           </Animated.View>
           <Text style={styles.meta}>{likeCount}</Text>
         </TouchableOpacity>
-        <Text style={styles.meta}>💬 {feed.commentCount ?? 0}</Text>
-        <Text style={styles.meta}>#{feed.type}</Text>
+        <TouchableOpacity activeOpacity={0.7} style={styles.actionContainer}>
+          <Ionicons name="chatbubble-outline" size={18} color={textColors.secondary} />
+          <Text style={styles.meta}>{feed.commentCount ?? 0}</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -181,9 +188,15 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
+    gap: 16,
   },
   likeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  actionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
