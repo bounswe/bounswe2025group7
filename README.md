@@ -1,4 +1,11 @@
+
+
+
 # HeatH — Affordable & Healthy Eating Hub
+
+
+
+![logo 2627bc3787d5fd14fdbd](https://github.com/user-attachments/assets/f4777439-5604-4c6b-b707-25deb317b015)
 
 > **Course:** CMPE 451 — 2025 Fall
 > **Team:** bounswe2025group7
