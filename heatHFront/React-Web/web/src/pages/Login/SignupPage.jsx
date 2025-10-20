@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Container, Box, Typography, TextField, Button, Link } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -12,31 +12,36 @@ export default function SignupPage() {
   const { t } = useTranslation();
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState(null);
+
+ /* Verification state (disabled)
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState(Array(6).fill(''));
   const [countdown, setCountdown] = useState(0);
   const [message, setMessage] = useState('');
+  */
+
   const [passwordError, setPasswordError] = useState('');
   const [emailError, setEmailError] = useState('');
 
-  // refs for code input fields
+/* refs for code input fields (disabled)
   const inputRefs = useRef([]);
+  */
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+    setForm(f => ({ ...f, [name]: value }));
     if (name === 'password') {
       setPasswordError(
         value.length < 6 ? t('auth.passwordRequired') : ''
       );
-    }
-    else if (name === 'username') {
+    } else if (name === 'username') {
       setEmailError(
         value.length < 1 ? t('auth.emailRequired') : ''
       );
     }
-  }
+  };
 
+  /* Countdown side-effect (disabled)
   useEffect(() => {
     let timer;
     if (codeSent && countdown > 0) {
@@ -44,20 +49,21 @@ export default function SignupPage() {
     }
     return () => clearTimeout(timer);
   }, [codeSent, countdown]);
+  */
 
+  /* Resend handler (disabled)
   const handleResend = () => {
     setError(null);
     setCode(Array(6).fill(''));
-    // Immediately start countdown to disable the button
     setCountdown(15);
     setMessage('');
-    // Send verification code in background
     authService.sendVerificationCode(form.username)
       .then(() => setMessage(t('auth.checkEmail')))
       .catch(() => setError(t('errors.genericError')));
   };
+  */
 
-  // Handler for initial send code click
+  /* Initial send code handler (disabled)
   const handleSendCode = async () => {
     setError(null);
     setCodeSent(true);
@@ -70,24 +76,27 @@ export default function SignupPage() {
       setError(t('errors.genericError'));
     }
   };
+  */
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    // Validate code length
+
+/* Verification step (disabled)
     const codeStr = code.join('');
     if (codeStr.length !== 6) {
       setError(t('auth.emailRequired')); // Using a generic error message for code validation
       return;
     }
+    const valid = await authService.verifyCode(form.username, parseInt(codeStr, 10));
+    if (!valid) {
+      setError('Invalid or expired code.');
+      return;
+    }
+    */
+
     try {
-      // Verify entered code first
-      const valid = await authService.verifyCode(form.username, parseInt(codeStr, 10));
-      if (!valid) {
-        setError(t('auth.invalidCredentials'));
-        return;
-      }
-      // If code valid, register user
+      // Register user directly (verification disabled)
       await authService.register(form);
       authService.logout();
       navigate('/signin', { state: { success: t('auth.passwordResetSuccess') } });
@@ -106,16 +115,27 @@ export default function SignupPage() {
     }
   };
 
-  // Handler for Enter key press to send code or register
+  // NEW: centralize disabled logic
+  const isRegisterDisabled = !!passwordError || !form.password || !form.username;
+
+  // Enter key directly submits only when Register is enabled
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      if (isRegisterDisabled) {
+        return; // block Enter when form is not valid
+      }
       setError(null);
+
+      /* Old flow (disabled)
       if (!codeSent) {
         handleSendCode();
       } else {
         handleSubmit(e);
       }
+      */
+
+      handleSubmit(e);
     }
   };
 
@@ -148,7 +168,8 @@ export default function SignupPage() {
             error={!!passwordError}
             helperText={passwordError}
           />
-          {/* Show code inputs once sent */}
+
+          {/* Verification UI (disabled)
           {codeSent && (
             <>
               <Typography variant="body2" sx={{ mt: 2 }}>
@@ -189,9 +210,23 @@ export default function SignupPage() {
               {!!message && <Typography color="primary" variant="body2" sx={{ mt: 1 }}>{message}</Typography>}
             </>
           )}
+          */}
+
           {/* Show errors */}
           {!!error && <Typography color="error" variant="body2" sx={{ mt: 1 }}>{error}</Typography>}
-          {/* Primary action: send code or register */}
+
+          {/* Primary action: direct Register (verification disabled) */}
+          <Button
+            type="submit"
+            variant="contained"
+            fullWidth
+            sx={{ mt: 3 }}
+            disabled={isRegisterDisabled}
+          >
+            Register
+          </Button>
+
+{/* Send/Resend buttons (disabled)
           {!codeSent && (
             <Button
               type="button"
@@ -219,13 +254,14 @@ export default function SignupPage() {
               </Button>
             </Box>
           )}
-        </Box>
-        <Box textAlign="center" mt={3}>
+          */}
 
+        </Box>
+
+        <Box textAlign="center" mt={3}>
           <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ alignSelf: 'flex-start', mb: 5 }}>
             {t('common.back')}
           </Button>
-
         </Box>
       </Box>
     </Container>
