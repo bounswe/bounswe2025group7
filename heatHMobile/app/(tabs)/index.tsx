@@ -196,7 +196,10 @@ export default function HomeScreen() {
             <View style={styles.composeActions}>
               <TouchableOpacity activeOpacity={0.7} onPress={pickImageFromGallery} style={styles.mediaButton} disabled={creating}>
                 <Ionicons name="image-outline" size={18} color={textColors.secondary} />
-                <Text style={styles.mediaButtonText}>Photo</Text>
+                <Text style={[
+                  styles.mediaButtonText,
+                  { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }
+                ]}>Photo</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 activeOpacity={0.7}
@@ -204,13 +207,17 @@ export default function HomeScreen() {
                 disabled={creating || (newPostText.trim().length === 0 && !selectedImageUri)}
                 style={[
                   styles.postButton,
-                  (creating || (newPostText.trim().length === 0 && !selectedImageUri)) && styles.postButtonDisabled,
+                  { backgroundColor: colors.primary },
+                  (creating || (newPostText.trim().length === 0 && !selectedImageUri)) && { backgroundColor: colors.gray[300] },
                 ]}
               >
                 {creating ? (
                   <ActivityIndicator size="small" color={colors.white} />
                 ) : (
-                  <Text style={styles.postButtonText}>Post</Text>
+                  <Text style={[
+                    styles.postButtonText,
+                    { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base }
+                  ]}>Post</Text>
                 )}
               </TouchableOpacity>
             </View>

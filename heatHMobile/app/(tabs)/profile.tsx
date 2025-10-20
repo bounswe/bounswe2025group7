@@ -543,42 +543,42 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
               };
 
               const FeedContent = () => (
-                <View style={styles.feedCard}>
+                <View style={[styles.feedCard, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
                   <View style={styles.feedHeader}>
-                    <Text style={styles.feedDate}>
+                    <Text style={[styles.feedDate, { color: textColors.secondary, fontFamily: fonts.regular }]}>
                       {feed.createdAt ? new Date(feed.createdAt).toLocaleDateString() : ''}
                     </Text>
                   </View>
                   
                   {feed.text && (
-                    <Text style={styles.feedContent} numberOfLines={3}>
+                    <Text style={[styles.feedContent, { color: textColors.primary, fontFamily: fonts.regular }]} numberOfLines={3}>
                       {feed.text}
                     </Text>
                   )}
                   
                   {feed.type === 'RECIPE' && feed.recipe?.photo ? (
-                    <Image source={{ uri: feed.recipe.photo }} style={styles.feedImage} />
+                    <Image source={{ uri: feed.recipe.photo }} style={[styles.feedImage, { backgroundColor: colors.gray[100] }]} />
                   ) : feed.image && (
-                    <Image source={{ uri: feed.image }} style={styles.feedImage} />
+                    <Image source={{ uri: feed.image }} style={[styles.feedImage, { backgroundColor: colors.gray[100] }]} />
                   )}
                   
                   {feed.type === 'RECIPE' && feed.recipe && (
-                    <View style={styles.recipeContainer}>
-                      <Text style={styles.recipeTitle}>Recipe</Text>
-                      <Text style={styles.recipeName}>{feed.recipe.title || 'Untitled Recipe'}</Text>
+                    <View style={[styles.recipeContainer, { borderColor: borderColors.light }]}>
+                      <Text style={[styles.recipeTitle, { color: textColors.secondary, fontFamily: fonts.medium }]}>Recipe</Text>
+                      <Text style={[styles.recipeName, { color: textColors.primary, fontFamily: fonts.medium }]}>{feed.recipe.title || 'Untitled Recipe'}</Text>
                       {feed.recipe.description && (
-                        <Text style={styles.recipeDescription} numberOfLines={2}>
+                        <Text style={[styles.recipeDescription, { color: textColors.secondary, fontFamily: fonts.regular }]} numberOfLines={2}>
                           {feed.recipe.description}
                         </Text>
                       )}
                     </View>
                   )}
                   
-                  <View style={styles.feedStats}>
-                    <Text style={[styles.feedStat, feed.likedByCurrentUser && styles.likedStat]}>
+                  <View style={[styles.feedStats, { borderTopColor: borderColors.light }]}>
+                    <Text style={[styles.feedStat, { color: textColors.secondary, fontFamily: fonts.regular }, feed.likedByCurrentUser && { color: colors.error }]}>
                       {feed.likedByCurrentUser ? '❤️' : '🤍'} {feed.likeCount || 0} likes
                     </Text>
-                    <Text style={styles.feedStat}>
+                    <Text style={[styles.feedStat, { color: textColors.secondary, fontFamily: fonts.regular }]}>
                       💬 {feed.commentCount || 0} comments
                     </Text>
                   </View>

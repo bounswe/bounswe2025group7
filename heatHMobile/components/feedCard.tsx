@@ -248,14 +248,22 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
 
       {feed.type === 'RECIPE' ? (
         <TouchableOpacity activeOpacity={0.7} onPress={handleRecipePress}>
-          {!!feed.text && <Text style={styles.text}>{feed.text}</Text>}
+          {!!feed.text && (
+            <Text style={[styles.text, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
+              {feed.text}
+            </Text>
+          )}
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
           ) : null}
         </TouchableOpacity>
       ) : (
         <>
-          {!!feed.text && <Text style={styles.text}>{feed.text}</Text>}
+          {!!feed.text && (
+            <Text style={[styles.text, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
+              {feed.text}
+            </Text>
+          )}
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
           ) : null}
