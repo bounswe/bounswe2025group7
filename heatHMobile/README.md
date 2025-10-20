@@ -35,6 +35,41 @@ npm run reset-project
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
+## Unit testing
+
+This app uses Jest (with `jest-expo`) and React Native Testing Library.
+
+- Where tests live: `__test__/` (snapshots live in `__test__/__snapshots__/`).
+- Aliases: `@/` maps to the project root (see `jest.config.js`).
+
+Run tests:
+
+```bash
+npm test                 # run once
+npm run test:watch       # watch mode
+npm run test:ci          # CI-friendly + coverage
+
+# target a single file or test name
+npm test -- __test__/signIn.screen.test.tsx
+npm test -- -t "registers successfully"
+
+# update saved snapshots (e.g., FeedCard)
+npm test -- -u
+```
+
+What’s covered (examples):
+- Utils: storage read/write/remove/clear (AsyncStorage mocked)
+- Services: auth, feed, recipe, interest form, semantic search
+- HTTP: `apiClient` request interceptor adds Authorization header
+- Components: `FeedCard` (includes 2 snapshots)
+- Screens: sign-in, sign-up, recipe detail, profile (auth redirect)
+
+Common mocks and tips:
+- Preconfigured in `jest.setup.ts`: Reanimated, Gesture Handler, AsyncStorage, expo-router.
+- Screen tests also mock: safe area (`react-native-safe-area-context`), `@expo/vector-icons`, DateTimePicker, `expo-image-picker` where needed.
+- If you see ESM/transform errors from Expo/RN libs, check `transformIgnorePatterns` in `jest.config.js` and keep `jest-expo` as the preset.
+- If you see “No safe area value available”, mock `react-native-safe-area-context` in your test.
+
 ## Learn more
 
 To learn more about developing your project with Expo, look at the following resources:
