@@ -1,24 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Container, Box, Typography, TextField, Button } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import authService from '../services/authService';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
+/* Disabled imports for OTP functionality
+import { useEffect, useRef } from 'react';
+*/
+
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+
+  /* OTP verification state (disabled)
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState(Array(6).fill(''));
   const [countdown, setCountdown] = useState(0);
   const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  // refs for OTP input fields
   const inputRefs = useRef([]);
+  */
 
   const handleChangeEmail = (e) => setEmail(e.target.value);
 
+  /* Countdown effect (disabled)
   useEffect(() => {
     let timer;
     if (codeSent && countdown > 0) {
@@ -26,7 +33,9 @@ export default function ForgotPasswordPage() {
     }
     return () => clearTimeout(timer);
   }, [codeSent, countdown]);
+  */
 
+  /* Send code handler (disabled)
   const handleSendCode = async () => {
     setError('');
     setMessage('');
@@ -51,7 +60,9 @@ export default function ForgotPasswordPage() {
       setError(t('errors.genericError'));
     }
   };
+  */
 
+  /* Resend handler (disabled)
   const handleResend = () => {
     setError('');
     setMessage('');
@@ -61,23 +72,27 @@ export default function ForgotPasswordPage() {
       .then(() => setMessage(t('auth.checkEmail')))
       .catch(() => setError(t('errors.genericError')));
   };
+  */
 
-  // Handler for Enter key press to send verification code
+  /* Handler for Enter key press to send verification code (disabled)
   const handleKeyDownInitial = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleSendCode();
     }
   };
+  */
 
-  // Handler for Enter key press to verify the code
+  /* Handler for Enter key press to verify the code (disabled)
   const handleKeyDownVerify = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleVerify(e);
     }
   };
+  */
 
+  /* Verify handler (disabled)
   const handleVerify = async (e) => {
     e.preventDefault();
     setError('');
@@ -97,6 +112,34 @@ export default function ForgotPasswordPage() {
       setError(t('errors.genericError'));
     }
   };
+  */
+
+  // Direct navigation to reset password (OTP verification disabled)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    
+    try {
+      const exists = await authService.exists(email);
+      if (!exists) {
+        setError(t('auth.emailRequired'));
+        return;
+      }
+      // Navigate directly to reset password page
+      navigate('/reset-password', { state: { email } });
+    } catch {
+      setError(t('errors.genericError'));
+    }
+  };
+
+  // Enter key submits when email is valid
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!email) return;
+      handleSubmit(e);
+    }
+  };
 
   return (
     <Container maxWidth="sm">
@@ -107,8 +150,10 @@ export default function ForgotPasswordPage() {
         <Typography variant="h4" component="h1" gutterBottom>
           {t('auth.forgotPasswordTitle')}
         </Typography>
-        {!codeSent ? (
-          <form onKeyDown={handleKeyDownInitial}>
+
+        {/* Conditional rendering based on codeSent (disabled) */}
+        {/* {!codeSent ? ( */}
+          <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
             <TextField
               label={t('common.email')}
               variant="outlined"
@@ -125,15 +170,17 @@ export default function ForgotPasswordPage() {
               </Typography>
             )}
             <Button
-              type="button"
+              type="submit"
               variant="contained"
               fullWidth
-              onClick={handleSendCode}
+              disabled={!email}
             >
               {t('auth.sendResetLink')}
             </Button>
           </form>
-        ) : (
+        {/* ) : ( */}
+
+        {/* OTP verification UI (disabled)
           <Box component="form" onSubmit={handleVerify} onKeyDown={handleKeyDownVerify}>
             <Typography variant="body1" gutterBottom>
               {t('auth.checkEmail')} <strong>{email}</strong>
@@ -197,7 +244,8 @@ export default function ForgotPasswordPage() {
               </Button>
             </Box>
           </Box>
-        )}
+        )} */}
+
         <Button component={RouterLink} to="/signin" sx={{ mt: 3 }} fullWidth>
           {t('common.back')} {t('common.signIn')}
         </Button>
