@@ -3,13 +3,36 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput,
 import { feedService } from '@/services/feedService';
 import { interestFormService } from '@/services/interestFormService';
 import { recipeService } from '@/services/recipeService';
-import { colors, textColors, borderColors } from '@/constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export default function TestScreen() {
+  const { colors, textColors, borderColors, fonts, fontSizes, lineHeights } = useThemeColors();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [commentIdInput, setCommentIdInput] = useState('5');
   const [deleteRecipeModalVisible, setDeleteRecipeModalVisible] = useState(false);
   const [recipeIdInput, setRecipeIdInput] = useState('1');
+
+  // Helper function for button text styling
+  const getButtonTextStyle = () => ({
+    color: colors.primaryContrast,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.base,
+    lineHeight: lineHeights.base,
+  });
+
+  // Helper function for button styling
+  const getButtonStyle = (isDelete = false) => ({
+    backgroundColor: isDelete ? colors.error : colors.primary,
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  });
 
   // FeedService methods START ---------------------------------------------------------------------
   const handleFeedByUser = async () => {
@@ -499,178 +522,178 @@ export default function TestScreen() {
   // ------------------------------------------------------------------------------------------------
 
   return (
-    <ScrollView style={styles.scrollView}>
+    <ScrollView style={[styles.scrollView, { backgroundColor: colors.backgroundPaper }]}>
       <View style={styles.container}>
-        <Text style={styles.title}>Test Page</Text>
+        <Text style={[styles.title, { color: textColors.primary, fontFamily: fonts.bold, fontSize: fontSizes['3xl'], lineHeight: lineHeights['3xl'] }]}>Test Page</Text>
         {/* Feed Service Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Feed Service</Text>
-          <View style={styles.divider} />
+        <View style={[styles.section, { backgroundColor: colors.background }]}>
+          <Text style={[styles.sectionHeader, { color: textColors.primary, fontFamily: fonts.bold, fontSize: fontSizes.xl, lineHeight: lineHeights.xl }]}>Feed Service</Text>
+          <View style={[styles.divider, { backgroundColor: borderColors.light }]} />
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleFeedByUser}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>feed-by-user</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>feed-by-user</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={() => handleGetRecentFeeds(0)}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>get-recent-feeds (Page: 0)</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>get-recent-feeds (Page: 0)</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={() => handleGetRecentFeeds(1)}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>get-recent-feeds (Page: 1)</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>get-recent-feeds (Page: 1)</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={() => handleGetRecentFeeds(2)}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>get-recent-feeds (Page: 2)</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>get-recent-feeds (Page: 2)</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleCreateFeed}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>create-feed</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>create-feed</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleLikeFeed}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>like-feed (ID: 1)</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>like-feed (ID: 1)</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleUnlikeFeed}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>unlike-feed (ID: 1)</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>unlike-feed (ID: 1)</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleGetFeedOtherUser}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>get-feed-other-user (User ID: 1)</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>get-feed-other-user (User ID: 1)</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleCommentFeed}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>comment-feed (ID: 12, Message: "This is a test comment")</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>comment-feed (ID: 12, Message: "This is a test comment")</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleGetFeedComments}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>get-feed-comments (Feed ID: 12)</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>get-feed-comments (Feed ID: 12)</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.button, styles.deleteButton]}
+            style={getButtonStyle(true)}
             onPress={() => setDeleteModalVisible(true)}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>delete-comment (Feed ID: 12)</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>delete-comment (Feed ID: 12)</Text>
           </TouchableOpacity>
         </View>
 
         {/* Interest Form Service Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Interest Form Service</Text>
-          <View style={styles.divider} />
+        <View style={[styles.section, { backgroundColor: colors.background }]}>
+          <Text style={[styles.sectionHeader, { color: textColors.primary, fontFamily: fonts.bold, fontSize: fontSizes.xl, lineHeight: lineHeights.xl }]}>Interest Form Service</Text>
+          <View style={[styles.divider, { backgroundColor: borderColors.light }]} />
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleCheckFirstLogin}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>check-first-login</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>check-first-login</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleCreateInterestForm}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>create-interest-form</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>create-interest-form</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleGetInterestForm}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>get-interest-form</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>get-interest-form</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleUpdateInterestForm}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>update-interest-form</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>update-interest-form</Text>
           </TouchableOpacity>
         </View>
 
         {/* Recipe Service Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Recipe Service</Text>
-          <View style={styles.divider} />
+        <View style={[styles.section, { backgroundColor: colors.background }]}>
+          <Text style={[styles.sectionHeader, { color: textColors.primary, fontFamily: fonts.bold, fontSize: fontSizes.xl, lineHeight: lineHeights.xl }]}>Recipe Service</Text>
+          <View style={[styles.divider, { backgroundColor: borderColors.light }]} />
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleCreateRecipe}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>create-recipe</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>create-recipe</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleGetRecipe}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>get-recipe (ID: 1)</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>get-recipe (ID: 1)</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleGetAllRecipes}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>get-all-recipes</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>get-all-recipes</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.button, styles.deleteButton]}
+            style={getButtonStyle(true)}
             onPress={() => setDeleteRecipeModalVisible(true)}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>delete-recipe</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>delete-recipe</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleSaveRecipe}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>save-recipe (ID: 4)</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>save-recipe (ID: 4)</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleUnsaveRecipe}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>unsave-recipe (ID: 4)</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>unsave-recipe (ID: 4)</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.button}
+            style={getButtonStyle()}
             onPress={handleGetSavedRecipes}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>get-saved-recipes</Text>
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>get-saved-recipes</Text>
           </TouchableOpacity>
         </View>
 
@@ -682,13 +705,13 @@ export default function TestScreen() {
           onRequestClose={() => setDeleteModalVisible(false)}
         >
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Delete Comment</Text>
-              <Text style={styles.modalSubtitle}>Feed ID: 12</Text>
+            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+              <Text style={[styles.modalTitle, { color: textColors.primary, fontFamily: fonts.bold, fontSize: fontSizes['2xl'], lineHeight: lineHeights['2xl'] }]}>Delete Comment</Text>
+              <Text style={[styles.modalSubtitle, { color: textColors.secondary, fontFamily: fonts.regular, fontSize: fontSizes.base, lineHeight: lineHeights.base }]}>Feed ID: 12</Text>
 
-              <Text style={styles.inputLabel}>Enter Comment ID:</Text>
+              <Text style={[styles.inputLabel, { color: textColors.primary, fontFamily: fonts.medium, fontSize: fontSizes.base, lineHeight: lineHeights.base }]}>Enter Comment ID:</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.backgroundPaper, borderColor: colors.primary, color: textColors.primary, fontFamily: fonts.regular, fontSize: fontSizes.lg, lineHeight: lineHeights.lg }]}
                 value={commentIdInput}
                 onChangeText={setCommentIdInput}
                 keyboardType="numeric"
@@ -699,18 +722,18 @@ export default function TestScreen() {
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
+                  style={[styles.modalButton, { backgroundColor: colors.secondary }]}
                   onPress={() => setDeleteModalVisible(false)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
+                  <Text style={[styles.modalButtonText, { color: colors.primaryContrast, fontFamily: fonts.medium, fontSize: fontSizes.base, lineHeight: lineHeights.base }]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.confirmButton]}
+                  style={[styles.modalButton, { backgroundColor: colors.error }]}
                   onPress={handleDeleteComment}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.modalButtonText}>Delete</Text>
+                  <Text style={[styles.modalButtonText, { color: colors.primaryContrast, fontFamily: fonts.medium, fontSize: fontSizes.base, lineHeight: lineHeights.base }]}>Delete</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -725,12 +748,12 @@ export default function TestScreen() {
           onRequestClose={() => setDeleteRecipeModalVisible(false)}
         >
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Delete Recipe</Text>
+            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+              <Text style={[styles.modalTitle, { color: textColors.primary, fontFamily: fonts.bold, fontSize: fontSizes['2xl'], lineHeight: lineHeights['2xl'] }]}>Delete Recipe</Text>
 
-              <Text style={styles.inputLabel}>Enter Recipe ID:</Text>
+              <Text style={[styles.inputLabel, { color: textColors.primary, fontFamily: fonts.medium, fontSize: fontSizes.base, lineHeight: lineHeights.base }]}>Enter Recipe ID:</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.backgroundPaper, borderColor: colors.primary, color: textColors.primary, fontFamily: fonts.regular, fontSize: fontSizes.lg, lineHeight: lineHeights.lg }]}
                 value={recipeIdInput}
                 onChangeText={setRecipeIdInput}
                 keyboardType="numeric"
@@ -741,18 +764,18 @@ export default function TestScreen() {
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
+                  style={[styles.modalButton, { backgroundColor: colors.secondary }]}
                   onPress={() => setDeleteRecipeModalVisible(false)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
+                  <Text style={[styles.modalButtonText, { color: colors.primaryContrast, fontFamily: fonts.medium, fontSize: fontSizes.base, lineHeight: lineHeights.base }]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.confirmButton]}
+                  style={[styles.modalButton, { backgroundColor: colors.error }]}
                   onPress={handleDeleteRecipe}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.modalButtonText}>Delete</Text>
+                  <Text style={[styles.modalButtonText, { color: colors.primaryContrast, fontFamily: fonts.medium, fontSize: fontSizes.base, lineHeight: lineHeights.base }]}>Delete</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -767,7 +790,6 @@ export default function TestScreen() {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
-    backgroundColor: colors.backgroundPaper,
   },
   container: {
     flex: 1,
@@ -777,16 +799,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: textColors.primary,
     textAlign: 'center',
     marginBottom: 30,
   },
   section: {
-    backgroundColor: colors.background,
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
-    shadowColor: colors.black,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -798,21 +818,18 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 20,
     fontWeight: '700',
-    color: textColors.primary,
     marginBottom: 10,
   },
   divider: {
     height: 1,
-    backgroundColor: borderColors.light,
     marginBottom: 15,
   },
   button: {
-    backgroundColor: colors.primary,
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 8,
     marginVertical: 8,
-    shadowColor: colors.black,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -822,13 +839,12 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   buttonText: {
-    color: colors.primaryContrast,
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
   },
   deleteButton: {
-    backgroundColor: colors.error,
+    // Will be set dynamically
   },
   modalOverlay: {
     flex: 1,
@@ -837,12 +853,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: colors.background,
     borderRadius: 16,
     padding: 24,
     width: '85%',
     maxWidth: 400,
-    shadowColor: colors.black,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -854,31 +869,25 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: textColors.primary,
     marginBottom: 8,
     textAlign: 'center',
   },
   modalSubtitle: {
     fontSize: 16,
-    color: textColors.secondary,
     marginBottom: 20,
     textAlign: 'center',
   },
   inputLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: textColors.primary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.backgroundPaper,
     borderWidth: 2,
-    borderColor: colors.primary,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 18,
-    color: textColors.primary,
     marginBottom: 24,
     textAlign: 'center',
   },
@@ -893,14 +902,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  cancelButton: {
-    backgroundColor: colors.secondary,
-  },
-  confirmButton: {
-    backgroundColor: colors.error,
-  },
   modalButtonText: {
-    color: colors.primaryContrast,
     fontSize: 16,
     fontWeight: '600',
   },
