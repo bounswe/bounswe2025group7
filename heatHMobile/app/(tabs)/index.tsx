@@ -235,17 +235,6 @@ export default function HomeScreen() {
           </View>
         ) : null}
       />
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => {
-          const jsonString = JSON.stringify(feeds, null, 2);
-          Alert.alert('Recent Feeds - Raw JSON', jsonString, [{ text: 'OK' }], {
-            cancelable: true,
-          });
-        }}
-      >
-        <Text style={[styles.subTitle, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Raw JSON (debug) - Tap to open</Text>
-      </TouchableOpacity>
       <ScrollView style={[styles.scroll, { borderColor: colors.gray[200], backgroundColor: colors.white }]} contentContainerStyle={styles.scrollContent}>
         <Text selectable style={[styles.jsonText, { color: colors.gray[800] }]}>{JSON.stringify(feeds, null, 2)}</Text>
       </ScrollView>
