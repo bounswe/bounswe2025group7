@@ -9,10 +9,13 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { authService } from '../../services/authService';
 import { useThemeColors } from '../../hooks/useThemeColors';
+import { interestFormService } from '../../services/interestFormService';
+import { colors } from '../../constants/theme';
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -30,8 +33,20 @@ export default function SignInScreen() {
     setLoading(true);
     try {
       await authService.login({ username: email, password: password });
-      Alert.alert('Success', 'Login successful!');
-      router.replace('/(tabs)' as any);
+      
+      // Check if this is the user's first login
+      try {
+        const isFirstLogged = await interestFormService.checkFirstLogin();
+        
+        if (isFirstLogged) {
+          router.replace('/(tabs)' as any);
+        } else {
+          router.replace('/first-login-profile' as any);
+
+        }
+      } catch (firstLoginError) {
+        router.replace('/(tabs)' as any);
+      }
     } catch (error: any) {
       let errorMessage = 'An unexpected error occurred. Please try again.';
       
@@ -128,6 +143,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    alignSelf: 'center',
+    marginBottom: 24,
   },
   content: {
     flex: 1,

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, textColors, borderColors } from '../../constants/theme';
@@ -84,6 +85,7 @@ export default function ForgotPasswordScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
+        <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
         <Text style={styles.title}>Forgot Password?</Text>
         <Text style={styles.subtitle}>
           Enter your email address and we'll send you a verification code to reset your password.
@@ -131,6 +133,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    alignSelf: 'center',
+    marginBottom: 24,
   },
   content: {
     flex: 1,

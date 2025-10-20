@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../../services/apiClient';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { recipeService } from '../../services/recipeService';
@@ -44,6 +45,7 @@ export default function MyRecipeScreen() {
   const [recipes, setRecipes] = useState<RecipeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
 
   // Form state
   const [openForm, setOpenForm] = useState(false);
@@ -216,10 +218,13 @@ export default function MyRecipeScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
+            setDeletingId(id);
             await recipeService.deleteRecipe(Number(id));
             await fetchMyRecipes();
           } catch {
             Alert.alert('Error', 'Failed to delete recipe.');
+          } finally {
+            setDeletingId(null);
           }
         },
       },
@@ -240,6 +245,22 @@ export default function MyRecipeScreen() {
           ) : (
             <View style={[styles.image, styles.imagePlaceholder]}>
               <Text style={[styles.placeholderText, { color: colors.gray[400] }]}>No Image</Text>
+            </View>
+          )}
+
+          {/* Delete button overlay */}
+          <TouchableOpacity
+            style={styles.deleteBtn}
+            onPress={() => confirmDelete(item.id)}
+            accessibilityLabel="Delete recipe"
+          >
+            <Ionicons name="trash" size={18} color="#fff" />
+          </TouchableOpacity>
+
+          {/* Per-card deleting overlay */}
+          {deletingId === item.id && (
+            <View style={styles.deletingOverlay}>
+              <ActivityIndicator color="#fff" />
             </View>
           )}
         </View>
@@ -521,6 +542,23 @@ const styles = StyleSheet.create({
     minWidth: 120,
     alignItems: 'center',
   },
-  actionBtnText: { fontWeight: '700' },
+  actionBtnText: { color: '#fff', fontWeight: '700' },
+  deleteBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(239, 68, 68, 0.95)', // red-500
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deletingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
 
