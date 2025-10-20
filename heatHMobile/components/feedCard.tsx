@@ -290,11 +290,11 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
               color={colors.error}
             />
           </Animated.View>
-          <Text style={styles.meta}>{likeCount}</Text>
+          <Text style={[styles.meta, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{likeCount}</Text>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.7} onPress={handleShowComments} style={styles.actionContainer}>
           <Ionicons name="chatbubble-outline" size={18} color={textColors.secondary} />
-          <Text style={styles.meta}>{commentCount}</Text>
+          <Text style={[styles.meta, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{commentCount}</Text>
         </TouchableOpacity>
       </View>
 
