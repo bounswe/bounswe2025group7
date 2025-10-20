@@ -6,7 +6,8 @@ import { useRouter } from 'expo-router';
 import { authService } from '../../services/authService';
 import { interestFormService } from '../../services/interestFormService';
 import { feedService } from '../../services/feedService';
-import { colors, textColors, borderColors } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
+import { useTheme } from '../../context/ThemeContext';
 
 interface InterestFormData {
   name: string;
@@ -36,6 +37,8 @@ interface FeedResponse {
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { colors, textColors, borderColors, fonts, lineHeights } = useThemeColors();
+  const { isDark, toggleTheme, isDyslexic, toggleFont, isColorBlind, toggleColorBlind } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<InterestFormData>({
@@ -59,6 +62,7 @@ export default function ProfileScreen() {
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
   const [isImageUpdated, setIsImageUpdated] = useState(false);
   const [userFeeds, setUserFeeds] = useState<FeedResponse[]>([]);
@@ -184,7 +188,7 @@ export default function ProfileScreen() {
       setProfileData(dataToSend); // Use the successfully sent data
       setIsImageUpdated(false); 
       setIsEditing(false);
-      Alert.alert('Success', 'Profile saved successfully');
+      setShowSuccessModal(true);
 
     } catch (error: any) {
       if (error.response?.status === 403) {
@@ -359,106 +363,115 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading profile...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular }]}>Loading profile...</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Profile</Text>
-          <View style={styles.headerButtons}>
-            {!isEditing && (
-              <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-                <Text style={styles.editButtonText}>Edit</Text>
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <Text style={styles.logoutButtonText}>Logout</Text>
+        <View style={[styles.header, { borderBottomColor: borderColors.light }]}>
+          <View>
+            <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>Profile</Text>
+            <Text style={[styles.fontModeIndicator, { color: textColors.secondary, fontFamily: fonts.regular }]}>
+              Font: {isDyslexic ? 'Dyslexic (OpenDyslexic)' : 'Normal (System)'}
+            </Text>
+            <Text style={[styles.colorBlindIndicator, { color: textColors.secondary, fontFamily: fonts.regular }]}>
+              Colors: {isColorBlind ? 'Color Blind Mode' : 'Standard'}
+            </Text>
+          </View>
+          <View style={[styles.headerButtons, isDyslexic && styles.headerButtonsDyslexic]}>
+            <TouchableOpacity style={styles.themeToggleButton} onPress={toggleTheme}>
+              <Text style={[styles.themeToggleIcon, { fontSize: 20 }]}>{isDark ? '☀️' : '🌙'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.fontToggleButton, isDyslexic && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]} onPress={toggleFont}>
+              <Text style={[styles.fontToggleIcon, { fontFamily: fonts.regular, color: isDyslexic ? colors.primary : textColors.primary, fontSize: 16 }]}>{isDyslexic ? '🔤' : '📝'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.colorBlindToggleButton, isColorBlind && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]} onPress={toggleColorBlind}>
+              <Text style={[styles.colorBlindToggleIcon, { fontFamily: fonts.regular, color: isColorBlind ? colors.primary : textColors.primary, fontSize: 16 }]}>{isColorBlind ? '👓' : '🎨'}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Profile Image Section */}
         <View style={styles.profileImageContainer}>
-          <View style={styles.profileImageWrapper}>
+          <View style={[styles.profileImageWrapper, { borderColor: colors.primary }]}>
             {profileImageUri ? (
               <Image 
                 source={{ uri: profileImageUri }} 
                 style={styles.profileImage}
               />
             ) : (
-              <View style={styles.placeholderImage}>
-                <Text style={styles.placeholderText}>📷</Text>
+              <View style={[styles.placeholderImage, { backgroundColor: colors.gray[100] }]}>
+                <Text style={[styles.placeholderText, { color: colors.gray[400], fontSize: 24 }]}>📷</Text>
               </View>
             )}
           </View>
           {isEditing && (
             <View style={styles.imageActions}>
-              <TouchableOpacity style={styles.imageActionButton} onPress={pickImage}>
-                <Text style={styles.imageActionText}>Change Photo</Text>
+              <TouchableOpacity style={[styles.imageActionButton, { backgroundColor: colors.primary }]} onPress={pickImage}>
+                <Text style={[styles.imageActionText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Change Photo</Text>
               </TouchableOpacity>
               {profileImageUri && (
-                <TouchableOpacity style={styles.removeImageButton} onPress={removeImage}>
-                  <Text style={styles.removeImageText}>Remove</Text>
+                <TouchableOpacity style={[styles.removeImageButton, { backgroundColor: colors.error }]} onPress={removeImage}>
+                  <Text style={[styles.removeImageText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Remove</Text>
                 </TouchableOpacity>
               )}
             </View>
           )}
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Name</Text>
+        <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Name</Text>
           {isEditing ? (
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: textColors.primary, backgroundColor: colors.white, borderColor: borderColors.medium, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
               value={editData.name}
               onChangeText={(text) => setEditData({ ...editData, name: text })}
               placeholder="Enter your name"
               placeholderTextColor={textColors.hint}
             />
           ) : (
-            <Text style={styles.value}>{profileData.name || 'Not set'}</Text>
+            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.name || 'Not set'}</Text>
           )}
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Surname</Text>
+        <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Surname</Text>
           {isEditing ? (
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: textColors.primary, backgroundColor: colors.white, borderColor: borderColors.medium, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
               value={editData.surname}
               onChangeText={(text) => setEditData({ ...editData, surname: text })}
               placeholder="Enter your surname"
               placeholderTextColor={textColors.hint}
             />
           ) : (
-            <Text style={styles.value}>{profileData.surname || 'Not set'}</Text>
+            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.surname || 'Not set'}</Text>
           )}
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Date of Birth</Text>
+        <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium }]}>Date of Birth</Text>
           {isEditing ? (
-            <TouchableOpacity style={styles.dateSelector} onPress={openDatePicker}>
-              <Text style={styles.dateSelectorText}>
+            <TouchableOpacity style={[styles.dateSelector, { backgroundColor: colors.white, borderColor: borderColors.medium }]} onPress={openDatePicker}>
+              <Text style={[styles.dateSelectorText, { color: textColors.primary, fontFamily: fonts.regular }]}>
                 {editData.dateOfBirth ? formatDisplayDate(editData.dateOfBirth) : 'Select date of birth'}
               </Text>
               <Text style={styles.calendarIcon}>📅</Text>
             </TouchableOpacity>
           ) : (
-            <Text style={styles.value}>{formatDisplayDate(profileData.dateOfBirth)}</Text>
+            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{formatDisplayDate(profileData.dateOfBirth)}</Text>
           )}
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Height (cm)</Text>
+        <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Height (cm)</Text>
           {isEditing ? (
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: textColors.primary, backgroundColor: colors.white, borderColor: borderColors.medium, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
               value={editData.height.toString()}
               onChangeText={(text) => setEditData({ ...editData, height: parseInt(text) || 0 })}
               placeholder="Enter height in cm"
@@ -466,15 +479,15 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
               keyboardType="numeric"
             />
           ) : (
-            <Text style={styles.value}>{profileData.height ? `${profileData.height} cm` : 'Not set'}</Text>
+            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.height ? `${profileData.height} cm` : 'Not set'}</Text>
           )}
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Weight (kg)</Text>
+        <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Weight (kg)</Text>
           {isEditing ? (
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: textColors.primary, backgroundColor: colors.white, borderColor: borderColors.medium, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
               value={editData.weight.toString()}
               onChangeText={(text) => setEditData({ ...editData, weight: parseInt(text) || 0 })}
               placeholder="Enter weight in kg"
@@ -482,44 +495,44 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
               keyboardType="numeric"
             />
           ) : (
-            <Text style={styles.value}>{profileData.weight ? `${profileData.weight} kg` : 'Not set'}</Text>
+            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.weight ? `${profileData.weight} kg` : 'Not set'}</Text>
           )}
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Gender</Text>
+        <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium }]}>Gender</Text>
           {isEditing ? (
             <TouchableOpacity
-              style={styles.genderSelector}
+              style={[styles.genderSelector, { backgroundColor: colors.white, borderColor: borderColors.medium }]}
               onPress={() => setShowGenderModal(true)}
             >
-              <Text style={styles.genderSelectorText}>
+              <Text style={[styles.genderSelectorText, { color: textColors.primary, fontFamily: fonts.regular }]}>
                 {editData.gender || 'Select gender'}
               </Text>
-              <Text style={styles.dropdownArrow}>▼</Text>
+              <Text style={[styles.dropdownArrow, { color: textColors.secondary, fontFamily: fonts.regular }]}>▼</Text>
             </TouchableOpacity>
           ) : (
-            <Text style={styles.value}>{profileData.gender || 'Not set'}</Text>
+            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.gender || 'Not set'}</Text>
           )}
         </View>
 
         {isEditing && (
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.saveButtonText}>Save Changes</Text>
+            <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary }]} onPress={handleSave}>
+              <Text style={[styles.saveButtonText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base, textAlign: 'center' }]}>Save Changes</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+            <TouchableOpacity style={[styles.cancelButton, { backgroundColor: colors.white, borderColor: borderColors.medium }]} onPress={handleCancel}>
+              <Text style={[styles.cancelButtonText, { color: textColors.secondary, fontFamily: fonts.medium }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {/* User Feeds Section */}
-        <View style={styles.feedsSection}>
-          <Text style={styles.feedsSectionTitle}>My Posts</Text>
+        <View style={[styles.feedsSection, { borderTopColor: borderColors.light }]}>
+          <Text style={[styles.feedsSectionTitle, { color: colors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>My Posts</Text>
           {feedsLoading ? (
-            <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>Loading posts...</Text>
+            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+              <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular }]}>Loading posts...</Text>
             </View>
           ) : userFeeds.length > 0 ? (
             userFeeds.map((feed, index) => {
@@ -530,42 +543,42 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
               };
 
               const FeedContent = () => (
-                <View style={styles.feedCard}>
+                <View style={[styles.feedCard, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
                   <View style={styles.feedHeader}>
-                    <Text style={styles.feedDate}>
+                    <Text style={[styles.feedDate, { color: textColors.secondary, fontFamily: fonts.regular }]}>
                       {feed.createdAt ? new Date(feed.createdAt).toLocaleDateString() : ''}
                     </Text>
                   </View>
                   
                   {feed.text && (
-                    <Text style={styles.feedContent} numberOfLines={3}>
+                    <Text style={[styles.feedContent, { color: textColors.primary, fontFamily: fonts.regular }]} numberOfLines={3}>
                       {feed.text}
                     </Text>
                   )}
                   
                   {feed.type === 'RECIPE' && feed.recipe?.photo ? (
-                    <Image source={{ uri: feed.recipe.photo }} style={styles.feedImage} />
+                    <Image source={{ uri: feed.recipe.photo }} style={[styles.feedImage, { backgroundColor: colors.gray[100] }]} />
                   ) : feed.image && (
-                    <Image source={{ uri: feed.image }} style={styles.feedImage} />
+                    <Image source={{ uri: feed.image }} style={[styles.feedImage, { backgroundColor: colors.gray[100] }]} />
                   )}
                   
                   {feed.type === 'RECIPE' && feed.recipe && (
-                    <View style={styles.recipeContainer}>
-                      <Text style={styles.recipeTitle}>Recipe</Text>
-                      <Text style={styles.recipeName}>{feed.recipe.title || 'Untitled Recipe'}</Text>
+                    <View style={[styles.recipeContainer, { borderColor: borderColors.light }]}>
+                      <Text style={[styles.recipeTitle, { color: textColors.secondary, fontFamily: fonts.medium }]}>Recipe</Text>
+                      <Text style={[styles.recipeName, { color: textColors.primary, fontFamily: fonts.medium }]}>{feed.recipe.title || 'Untitled Recipe'}</Text>
                       {feed.recipe.description && (
-                        <Text style={styles.recipeDescription} numberOfLines={2}>
+                        <Text style={[styles.recipeDescription, { color: textColors.secondary, fontFamily: fonts.regular }]} numberOfLines={2}>
                           {feed.recipe.description}
                         </Text>
                       )}
                     </View>
                   )}
                   
-                  <View style={styles.feedStats}>
-                    <Text style={[styles.feedStat, feed.likedByCurrentUser && styles.likedStat]}>
+                  <View style={[styles.feedStats, { borderTopColor: borderColors.light }]}>
+                    <Text style={[styles.feedStat, { color: textColors.secondary, fontFamily: fonts.regular }, feed.likedByCurrentUser && { color: colors.error }]}>
                       {feed.likedByCurrentUser ? '❤️' : '🤍'} {feed.likeCount || 0} likes
                     </Text>
-                    <Text style={styles.feedStat}>
+                    <Text style={[styles.feedStat, { color: textColors.secondary, fontFamily: fonts.regular }]}>
                       💬 {feed.commentCount || 0} comments
                     </Text>
                   </View>
@@ -589,10 +602,52 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
             })
           ) : (
             <View style={styles.emptyFeedsContainer}>
-              <Text style={styles.emptyFeedsText}>No posts yet</Text>
-              <Text style={styles.emptyFeedsSubtext}>Start sharing your recipes and experiences!</Text>
+              <Text style={[styles.emptyFeedsText, { color: textColors.secondary, fontFamily: fonts.regular }]}>No posts yet</Text>
+              <Text style={[styles.emptyFeedsSubtext, { color: textColors.hint, fontFamily: fonts.regular }]}>Start sharing your recipes and experiences!</Text>
             </View>
           )}
+        </View>
+
+        {/* Font Test Section */}
+        <View style={[styles.fontTestSection, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
+          <Text style={[styles.fontTestTitle, { color: textColors.primary, fontFamily: fonts.bold }]}>Font Preview</Text>
+          <Text style={[styles.fontTestText, { color: textColors.secondary, fontFamily: fonts.regular }]}>
+            This text shows how the current font looks. {isDyslexic ? 'Dyslexic-friendly OpenDyslexic font is active.' : 'Normal system font is active.'}
+          </Text>
+        </View>
+
+        {/* Color Blind Demonstration Section */}
+        <View style={[styles.colorDemoSection, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
+          <Text style={[styles.colorDemoTitle, { color: textColors.primary, fontFamily: fonts.bold }]}>Color Demonstration</Text>
+          <View style={styles.colorDemoGrid}>
+            <View style={[styles.colorDemoItem, { backgroundColor: colors.success }]}>
+              <Text style={[styles.colorDemoLabel, { color: colors.white, fontFamily: fonts.medium }]}>Success</Text>
+            </View>
+            <View style={[styles.colorDemoItem, { backgroundColor: colors.error }]}>
+              <Text style={[styles.colorDemoLabel, { color: colors.white, fontFamily: fonts.medium }]}>Error</Text>
+            </View>
+            <View style={[styles.colorDemoItem, { backgroundColor: colors.warning }]}>
+              <Text style={[styles.colorDemoLabel, { color: colors.white, fontFamily: fonts.medium }]}>Warning</Text>
+            </View>
+            <View style={[styles.colorDemoItem, { backgroundColor: colors.primary }]}>
+              <Text style={[styles.colorDemoLabel, { color: colors.white, fontFamily: fonts.medium }]}>Primary</Text>
+            </View>
+          </View>
+          <Text style={[styles.colorDemoText, { color: textColors.secondary, fontFamily: fonts.regular }]}>
+            {isColorBlind ? 'Color blind mode active - all green colors have been changed to blue for better distinction!' : 'Standard colors are currently active - greens are green.'}
+          </Text>
+        </View>
+
+        {/* Action Buttons at Bottom */}
+        <View style={styles.bottomActions}>
+          {!isEditing && (
+            <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.secondary }]} onPress={handleEdit}>
+              <Text style={[styles.editButtonText, { color: colors.white, fontFamily: fonts.medium }]}>Edit Profile</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.error }]} onPress={handleLogout}>
+            <Text style={[styles.logoutButtonText, { color: colors.white, fontFamily: fonts.medium }]}>Logout</Text>
+          </TouchableOpacity>
         </View>
 
       </View>
@@ -605,21 +660,23 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
         onRequestClose={() => setShowGenderModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Gender</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.white }]}>
+            <Text style={[styles.modalTitle, { color: textColors.primary, fontFamily: fonts.bold }]}>Select Gender</Text>
             {genderOptions.map((gender) => (
               <TouchableOpacity
                 key={gender}
                 style={[
                   styles.genderOption,
-                  editData.gender === gender && styles.selectedGenderOption
+                  { borderColor: borderColors.light },
+                  editData.gender === gender && [styles.selectedGenderOption, { backgroundColor: colors.primary, borderColor: colors.primary }]
                 ]}
                 onPress={() => handleGenderSelect(gender)}
               >
                 <Text
                   style={[
                     styles.genderOptionText,
-                    editData.gender === gender && styles.selectedGenderOptionText
+                    { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base },
+                    editData.gender === gender && [styles.selectedGenderOptionText, { color: colors.white }]
                   ]}
                 >
                   {gender}
@@ -627,10 +684,10 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
               </TouchableOpacity>
             ))}
             <TouchableOpacity
-              style={styles.cancelModalButton}
+              style={[styles.cancelModalButton, { borderColor: borderColors.medium }]}
               onPress={() => setShowGenderModal(false)}
             >
-              <Text style={styles.cancelModalButtonText}>Cancel</Text>
+              <Text style={[styles.cancelModalButtonText, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -644,14 +701,14 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
         onRequestClose={() => setShowDateModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.datePickerModal}>
-            <View style={styles.datePickerHeader}>
-              <Text style={styles.datePickerTitle}>Select Date of Birth</Text>
+          <View style={[styles.datePickerModal, { backgroundColor: colors.white }]}>
+            <View style={[styles.datePickerHeader, { borderBottomColor: borderColors.light }]}>
+              <Text style={[styles.datePickerTitle, { color: textColors.primary, fontFamily: fonts.bold }]}>Select Date of Birth</Text>
               <TouchableOpacity
-                style={styles.datePickerCloseButton}
+                style={[styles.datePickerCloseButton, { backgroundColor: colors.gray[100] }]}
                 onPress={() => setShowDateModal(false)}
               >
-                <Text style={styles.datePickerCloseText}>✕</Text>
+                <Text style={[styles.datePickerCloseText, { color: textColors.secondary, fontFamily: fonts.regular }]}>✕</Text>
               </TouchableOpacity>
             </View>
             <DateTimePicker
@@ -664,21 +721,42 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
               style={styles.datePickerComponent}
             />
             {Platform.OS === 'ios' && (
-              <View style={styles.datePickerActions}>
+              <View style={[styles.datePickerActions, { borderTopColor: borderColors.light }]}>
                 <TouchableOpacity
-                  style={styles.datePickerCancelButton}
+                  style={[styles.datePickerCancelButton, { borderColor: borderColors.medium }]}
                   onPress={() => setShowDateModal(false)}
                 >
-                  <Text style={styles.datePickerCancelText}>Cancel</Text>
+                  <Text style={[styles.datePickerCancelText, { color: textColors.secondary, fontFamily: fonts.medium }]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.datePickerConfirmButton}
+                  style={[styles.datePickerConfirmButton, { backgroundColor: colors.primary }]}
                   onPress={() => setShowDateModal(false)}
                 >
-                  <Text style={styles.datePickerConfirmText}>Confirm</Text>
+                  <Text style={[styles.datePickerConfirmText, { color: colors.white }]}>Confirm</Text>
                 </TouchableOpacity>
               </View>
             )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal visible={showSuccessModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.successModalContent, { backgroundColor: colors.white }]}>
+            <Text style={[styles.successIcon, { color: colors.success }]}>✓</Text>
+            <Text style={[styles.successTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>Success!</Text>
+            <Text style={[styles.successMessage, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
+              Profile saved successfully
+            </Text>
+            <TouchableOpacity 
+              style={[styles.successButton, { backgroundColor: colors.primary }]} 
+              onPress={() => setShowSuccessModal(false)}
+            >
+              <Text style={[styles.successButtonText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base, textAlign: 'center' }]}>
+                OK
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -689,7 +767,6 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     padding: 20,
@@ -698,11 +775,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
   },
   loadingText: {
     fontSize: 16,
-    color: textColors.secondary,
   },
   header: {
     flexDirection: 'row',
@@ -711,24 +786,78 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: borderColors.light,
   },
   headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    marginLeft: -20,
+    marginTop: -40,
+  },
+  headerButtonsDyslexic: {
+    marginLeft: -80, // Move further left for dyslexic version
+    marginTop: -65,  // Move upward for dyslexic version
+  },
+  themeToggleButton: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  themeToggleIcon: {
+    fontSize: 20,
+  },
+  fontToggleButton: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  fontToggleIcon: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  colorBlindToggleButton: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  colorBlindToggleIcon: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: colors.primary,
+    minHeight: 40,
+    paddingVertical: 4,
+  },
+  fontModeIndicator: {
+    fontSize: 12,
+    marginTop: 4,
+    minHeight: 20,
+    paddingVertical: 2,
+  },
+  colorBlindIndicator: {
+    fontSize: 12,
+    marginTop: 2,
+    minHeight: 20,
+    paddingVertical: 2,
   },
   editButton: {
-    backgroundColor: colors.secondary,
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 20,
     borderRadius: 10,
-    shadowColor: colors.black,
+    minHeight: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -738,9 +867,11 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   editButtonText: {
-    color: colors.white,
     fontSize: 14,
     fontWeight: '600',
+    minHeight: 24,
+    paddingVertical: 4,
+    textAlign: 'center',
   },
   profileImageContainer: {
     alignItems: 'center',
@@ -753,7 +884,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 16,
     borderWidth: 3,
-    borderColor: colors.primary,
   },
   profileImage: {
     width: '100%',
@@ -762,48 +892,39 @@ const styles = StyleSheet.create({
   placeholderImage: {
     width: '100%',
     height: '100%',
-    backgroundColor: colors.gray[100],
     justifyContent: 'center',
     alignItems: 'center',
   },
   placeholderText: {
     fontSize: 48,
-    color: colors.gray[400],
   },
   imageActions: {
     flexDirection: 'row',
     gap: 12,
   },
   imageActionButton: {
-    backgroundColor: colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
   },
   imageActionText: {
-    color: colors.white,
     fontSize: 14,
     fontWeight: '600',
   },
   removeImageButton: {
-    backgroundColor: colors.error,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
   },
   removeImageText: {
-    color: colors.white,
     fontSize: 14,
     fontWeight: '600',
   },
   card: {
-    backgroundColor: colors.backgroundPaper,
     padding: 20,
     borderRadius: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: borderColors.light,
-    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -815,39 +936,37 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: textColors.secondary,
     marginBottom: 8,
+    minHeight: 28,
+    paddingVertical: 6,
   },
   value: {
     fontSize: 16,
-    color: textColors.primary,
+    minHeight: 32,
+    paddingVertical: 6,
   },
   input: {
     fontSize: 16,
-    color: textColors.primary,
-    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: borderColors.medium,
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 18,
     marginTop: 4,
+    minHeight: 60,
   },
   dateSelector: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: borderColors.medium,
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 18,
     marginTop: 4,
+    minHeight: 60,
   },
   dateSelectorText: {
     fontSize: 16,
-    color: textColors.primary,
     flex: 1,
   },
   calendarIcon: {
@@ -858,9 +977,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: borderColors.medium,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -868,11 +985,9 @@ const styles = StyleSheet.create({
   },
   genderSelectorText: {
     fontSize: 16,
-    color: textColors.primary,
   },
   dropdownArrow: {
     fontSize: 12,
-    color: textColors.secondary,
   },
   modalOverlay: {
     flex: 1,
@@ -881,18 +996,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 20,
     width: '80%',
     maxWidth: 300,
   },
   datePickerModal: {
-    backgroundColor: colors.white,
     borderRadius: 16,
     width: '90%',
     maxWidth: 350,
-    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 10,
@@ -908,24 +1020,20 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: borderColors.light,
   },
   datePickerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: textColors.primary,
   },
   datePickerCloseButton: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: colors.gray[100],
     justifyContent: 'center',
     alignItems: 'center',
   },
   datePickerCloseText: {
     fontSize: 16,
-    color: textColors.secondary,
     fontWeight: '600',
   },
   datePickerComponent: {
@@ -937,7 +1045,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: borderColors.light,
   },
   datePickerCancelButton: {
     flex: 1,
@@ -945,12 +1052,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: borderColors.medium,
     alignItems: 'center',
     marginRight: 8,
   },
   datePickerCancelText: {
-    color: textColors.secondary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -959,19 +1064,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     marginLeft: 8,
   },
   datePickerConfirmText: {
-    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: textColors.primary,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -981,19 +1083,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: borderColors.light,
   },
   selectedGenderOption: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    // Dynamic styling applied in component
   },
   genderOptionText: {
     fontSize: 16,
-    color: textColors.primary,
     textAlign: 'center',
   },
   selectedGenderOptionText: {
-    color: colors.white,
     fontWeight: '600',
   },
   cancelModalButton: {
@@ -1001,11 +1099,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: borderColors.medium,
   },
   cancelModalButtonText: {
     fontSize: 16,
-    color: textColors.secondary,
     textAlign: 'center',
     fontWeight: '600',
   },
@@ -1017,11 +1113,10 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flex: 1,
-    backgroundColor: colors.primary,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: colors.black,
+    justifyContent: 'center',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -1031,19 +1126,15 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   saveButtonText: {
-    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: colors.white,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: borderColors.medium,
-    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 1,
@@ -1053,17 +1144,16 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   cancelButtonText: {
-    color: textColors.secondary,
     fontSize: 16,
     fontWeight: '600',
   },
   logoutButton: {
-    backgroundColor: colors.error,
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 20,
     borderRadius: 8,
     alignItems: 'center',
-    shadowColor: colors.black,
+    justifyContent: 'center',
+    minHeight: 64,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -1073,30 +1163,29 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   logoutButtonText: {
-    color: colors.white,
     fontSize: 14,
     fontWeight: '600',
+    minHeight: 24,
+    paddingVertical: 4,
+    textAlign: 'center',
   },
   feedsSection: {
     marginTop: 24,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: borderColors.light,
   },
   feedsSectionTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.primary,
     marginBottom: 16,
+    minHeight: 36,
+    paddingVertical: 6,
   },
   feedCard: {
-    backgroundColor: colors.backgroundPaper,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: borderColors.light,
-    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -1117,17 +1206,14 @@ const styles = StyleSheet.create({
   feedTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: textColors.primary,
     flex: 1,
     marginRight: 8,
   },
   feedDate: {
     fontSize: 12,
-    color: textColors.secondary,
   },
   feedContent: {
     fontSize: 14,
-    color: textColors.primary,
     lineHeight: 20,
     marginBottom: 8,
   },
@@ -1136,7 +1222,6 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 8,
     marginBottom: 8,
-    backgroundColor: colors.gray[100],
   },
   feedStats: {
     flexDirection: 'row',
@@ -1144,38 +1229,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: borderColors.light,
   },
   feedStat: {
     fontSize: 12,
-    color: textColors.secondary,
   },
   likedStat: {
-    color: colors.error,
+    // Dynamic styling applied in component
   },
   recipeContainer: {
-    backgroundColor: colors.gray[50],
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: borderColors.light,
   },
   recipeTitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: textColors.secondary,
     marginBottom: 4,
   },
   recipeName: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.primary,
     marginBottom: 4,
   },
   recipeDescription: {
     fontSize: 12,
-    color: textColors.primary,
     lineHeight: 16,
   },
   emptyFeedsContainer: {
@@ -1185,13 +1263,114 @@ const styles = StyleSheet.create({
   emptyFeedsText: {
     fontSize: 18,
     fontWeight: '600',
-    color: textColors.secondary,
     marginBottom: 8,
   },
   emptyFeedsSubtext: {
     fontSize: 14,
-    color: textColors.hint,
     textAlign: 'center',
+  },
+  bottomActions: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    gap: 12,
+  },
+  fontTestSection: {
+    margin: 20,
+    padding: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    minHeight: 90,
+  },
+  fontTestTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    minHeight: 28,
+    paddingVertical: 4,
+  },
+  fontTestText: {
+    fontSize: 14,
+    lineHeight: 20,
+    minHeight: 44,
+    paddingVertical: 6,
+  },
+  colorDemoSection: {
+    margin: 16,
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    minHeight: 120,
+  },
+  colorDemoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    minHeight: 24,
+    paddingVertical: 2,
+  },
+  colorDemoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  colorDemoItem: {
+    flex: 1,
+    minWidth: 70,
+    height: 40,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  colorDemoLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  colorDemoText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  successModalContent: {
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    width: '80%',
+    maxWidth: 300,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  successIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  successTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  successMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  successButton: {
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: 100,
+  },
+  successButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

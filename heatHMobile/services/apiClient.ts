@@ -12,6 +12,9 @@ const apiClient = axios.create({
 
 // Attach token to each request
 apiClient.interceptors.request.use(async (cfg: any) => {
+  if (cfg.url?.startsWith('/auth')) {
+    return cfg;
+  }
   const token = await storage.getItem('accessToken');
   cfg.headers = cfg.headers ?? {};
   if (token) {

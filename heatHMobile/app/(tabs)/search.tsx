@@ -12,9 +12,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { semanticSearchService } from '@/services/semanticSearchService';
-import { colors, textColors, borderColors } from '@/constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export default function SearchScreen() {
+  const { colors, textColors, borderColors, fonts, lineHeights } = useThemeColors();
   const MIN_QUERY_LENGTH = 3;
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -89,26 +90,26 @@ export default function SearchScreen() {
         router.push({ pathname: '/recipeDetail/recipeDetail', params: { recipeId: String(item.id) } });
       }}
     >
-      <View style={styles.recipeCard}>
+      <View style={[styles.recipeCard, { backgroundColor: colors.white }]}>
         {item.photo && (
           <Image 
             source={{ uri: item.photo }} 
-            style={styles.recipeImage}
+            style={[styles.recipeImage, { backgroundColor: colors.gray[100] }]}
             resizeMode="cover"
           />
         )}
         <View style={styles.recipeInfo}>
-          <Text style={styles.recipeTitle}>{item.title || 'Untitled Recipe'}</Text>
-          {item.tag && <Text style={styles.recipeTag}>Tag: {item.tag}</Text>}
-          {item.type && <Text style={styles.recipeType}>Type: {item.type}</Text>}
+          <Text style={[styles.recipeTitle, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{item.title || 'Untitled Recipe'}</Text>
+          {item.tag && <Text style={[styles.recipeTag, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>Tag: {item.tag}</Text>}
+          {item.type && <Text style={[styles.recipeType, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>Type: {item.type}</Text>}
           {item.totalCalorie !== undefined && (
-            <Text style={styles.recipeCalories}>Calories: {item.totalCalorie}</Text>
+            <Text style={[styles.recipeCalories, { color: colors.warning }]}>Calories: {item.totalCalorie}</Text>
           )}
           {item.price !== undefined && (
-            <Text style={styles.recipePrice}>Price: ${item.price.toFixed(2)}</Text>
+            <Text style={[styles.recipePrice, { color: colors.success }]}>Price: ${item.price.toFixed(2)}</Text>
           )}
           {item.similarity !== undefined && (
-            <Text style={styles.recipeSimilarity}>
+            <Text style={[styles.recipeSimilarity, { color: colors.info }]}>
               Match: {(item.similarity * 100).toFixed(1)}%
             </Text>
           )}
@@ -120,10 +121,10 @@ export default function SearchScreen() {
   const trimmed = query.trim();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.searchContainer}>
+    <View style={[styles.container, { backgroundColor: colors.backgroundPaper }]}>
+      <View style={[styles.searchContainer, { backgroundColor: colors.white, borderBottomColor: borderColors.light }]}>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { borderColor: borderColors.medium, backgroundColor: colors.white, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
           placeholder="Search for recipes..."
           value={query}
           onChangeText={setQuery}
@@ -134,21 +135,21 @@ export default function SearchScreen() {
       </View>
 
       {error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
+        <View style={[styles.errorContainer, { backgroundColor: colors.gray[50], borderLeftColor: colors.error }]}>
+          <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
         </View>
       )}
 
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Searching recipes...</Text>
+          <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Searching recipes...</Text>
         </View>
       )}
 
       {!loading && results.length === 0 && trimmed.length >= MIN_QUERY_LENGTH && !error && (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No recipes found. Try a different search.</Text>
+          <Text style={[styles.emptyText, { color: textColors.disabled, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No recipes found. Try a different search.</Text>
         </View>
       )}
 
@@ -164,7 +165,7 @@ export default function SearchScreen() {
 
       {!trimmed && !loading && results.length === 0 && (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyText, { color: textColors.disabled, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
             Enter a search query to find recipes using semantic search
           </Text>
         </View>
@@ -172,7 +173,7 @@ export default function SearchScreen() {
 
       {trimmed.length > 0 && trimmed.length < MIN_QUERY_LENGTH && !loading && (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyText, { color: textColors.disabled, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
             Type at least {MIN_QUERY_LENGTH} characters to search
           </Text>
         </View>
@@ -185,24 +186,19 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundPaper,
   },
   searchContainer: {
     flexDirection: 'row',
     padding: 16,
-    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: borderColors.light,
   },
   searchInput: {
     flex: 1,
     height: 48,
     borderWidth: 1,
-    borderColor: borderColors.medium,
     borderRadius: 8,
     paddingHorizontal: 16,
     fontSize: 16,
-    backgroundColor: colors.white,
   },
   loadingContainer: {
     flex: 1,
@@ -212,18 +208,14 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: textColors.secondary,
   },
   errorContainer: {
-    backgroundColor: colors.gray[50],
     padding: 16,
     margin: 16,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: colors.error,
   },
   errorText: {
-    color: colors.error,
     fontSize: 14,
   },
   emptyContainer: {
@@ -234,19 +226,16 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: textColors.disabled,
     textAlign: 'center',
   },
   listContainer: {
     padding: 16,
   },
   recipeCard: {
-    backgroundColor: colors.white,
     borderRadius: 12,
     marginBottom: 16,
     overflow: 'hidden',
     elevation: 2,
-    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -254,7 +243,6 @@ const styles = StyleSheet.create({
   recipeImage: {
     width: '100%',
     height: 200,
-    backgroundColor: colors.gray[100],
   },
   recipeInfo: {
     padding: 16,
@@ -262,34 +250,28 @@ const styles = StyleSheet.create({
   recipeTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: textColors.primary,
     marginBottom: 8,
   },
   recipeTag: {
     fontSize: 14,
-    color: textColors.secondary,
     marginBottom: 4,
   },
   recipeType: {
     fontSize: 14,
-    color: textColors.secondary,
     marginBottom: 4,
   },
   recipeCalories: {
     fontSize: 14,
-    color: colors.warning,
     marginBottom: 4,
     fontWeight: '500',
   },
   recipePrice: {
     fontSize: 14,
-    color: colors.success,
     marginBottom: 4,
     fontWeight: '500',
   },
   recipeSimilarity: {
     fontSize: 14,
-    color: colors.info,
     fontWeight: '600',
     marginTop: 4,
   },

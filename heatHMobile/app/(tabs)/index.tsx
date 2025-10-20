@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView, FlatList, Alert, TouchableOpacity, TextInput, Image } from 'react-native';
 import { colors, textColors } from '../../constants/theme';
 import { feedService } from '../../services/feedService';
@@ -7,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
+  const { colors, textColors, fonts, lineHeights } = useThemeColors();
   const [feeds, setFeeds] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -146,17 +148,17 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading recent feeds...</Text>
+        <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Loading recent feeds...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>{error}</Text>
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
       </View>
     );
   }
@@ -165,13 +167,13 @@ export default function HomeScreen() {
   const feedArray = Array.isArray(feeds) ? feeds : [];
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Recent Feeds</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>Recent Feeds</Text>
       <FlatList
         data={feedArray}
         keyExtractor={(item: any) => String(item.id ?? Math.random())}
         renderItem={({ item }) => <FeedCard feed={item} />}
-        ListEmptyComponent={<Text style={styles.emptyText}>No feeds found.</Text>}
+        ListEmptyComponent={<Text style={[styles.emptyText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No feeds found.</Text>}
         ListHeaderComponent={(
           <View style={styles.composeCard}>
             <TextInput
@@ -194,7 +196,10 @@ export default function HomeScreen() {
             <View style={styles.composeActions}>
               <TouchableOpacity activeOpacity={0.7} onPress={pickImageFromGallery} style={styles.mediaButton} disabled={creating}>
                 <Ionicons name="image-outline" size={18} color={textColors.secondary} />
-                <Text style={styles.mediaButtonText}>Photo</Text>
+                <Text style={[
+                  styles.mediaButtonText,
+                  { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }
+                ]}>Photo</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 activeOpacity={0.7}
@@ -202,13 +207,17 @@ export default function HomeScreen() {
                 disabled={creating || (newPostText.trim().length === 0 && !selectedImageUri)}
                 style={[
                   styles.postButton,
-                  (creating || (newPostText.trim().length === 0 && !selectedImageUri)) && styles.postButtonDisabled,
+                  { backgroundColor: colors.primary },
+                  (creating || (newPostText.trim().length === 0 && !selectedImageUri)) && { backgroundColor: colors.gray[300] },
                 ]}
               >
                 {creating ? (
                   <ActivityIndicator size="small" color={colors.white} />
                 ) : (
-                  <Text style={styles.postButtonText}>Post</Text>
+                  <Text style={[
+                    styles.postButtonText,
+                    { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base }
+                  ]}>Post</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -222,13 +231,23 @@ export default function HomeScreen() {
         ListFooterComponent={loadingMore ? (
           <View style={styles.footer}>
             <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.footerText}>Loading more...</Text>
+            <Text style={[styles.footerText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Loading more...</Text>
           </View>
         ) : null}
       />
-      
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <Text selectable style={styles.jsonText}>{JSON.stringify(feeds, null, 2)}</Text>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => {
+          const jsonString = JSON.stringify(feeds, null, 2);
+          Alert.alert('Recent Feeds - Raw JSON', jsonString, [{ text: 'OK' }], {
+            cancelable: true,
+          });
+        }}
+      >
+        <Text style={[styles.subTitle, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Raw JSON (debug) - Tap to open</Text>
+      </TouchableOpacity>
+      <ScrollView style={[styles.scroll, { borderColor: colors.gray[200], backgroundColor: colors.white }]} contentContainerStyle={styles.scrollContent}>
+        <Text selectable style={[styles.jsonText, { color: colors.gray[800] }]}>{JSON.stringify(feeds, null, 2)}</Text>
       </ScrollView>
     </View>
   );
@@ -237,26 +256,22 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     padding: 16,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
     padding: 16,
   },
   title: {
     fontSize: 20,
     fontWeight: '600',
-    color: textColors.primary,
     marginBottom: 12,
   },
   subTitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: textColors.secondary,
     marginTop: 12,
     marginBottom: 8,
   },
@@ -270,20 +285,17 @@ const styles = StyleSheet.create({
   },
   footerText: {
     marginTop: 6,
-    color: textColors.secondary,
     fontSize: 12,
   },
   emptyText: {
-    color: textColors.secondary,
     textAlign: 'center',
     paddingVertical: 16,
   },
   loadingText: {
     marginTop: 8,
-    color: textColors.secondary,
   },
   errorText: {
-    color: colors.error,
+    // Dynamic styling applied in component
   },
   composeCard: {
     backgroundColor: colors.white,
@@ -351,15 +363,12 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
     borderWidth: 1,
-    borderColor: colors.gray[200],
     borderRadius: 8,
-    backgroundColor: colors.white,
   },
   scrollContent: {
     padding: 12,
   },
   jsonText: {
-    color: colors.gray[800],
     fontSize: 12,
   },
 });
