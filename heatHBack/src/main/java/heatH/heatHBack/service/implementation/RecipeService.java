@@ -39,11 +39,28 @@ public class RecipeService {
         recipe.setType(request.getType());
         //recipe.setTotalCalorie(request.getTotalCalorie());
         recipe.setTotalCalorie(calorieService.calculateCalorie(request.getIngredients()));
+
+        // Besin verilerini hesapla
         Map<String, Double> macros = calorieService.calculateMacronutrients(request.getIngredients());
+
         NutritionData nutritionData = new NutritionData();
+        // Orijinal makroları ayarla
         nutritionData.setCarbs(macros.getOrDefault("carbs", 0.0));
         nutritionData.setFat(macros.getOrDefault("fat", 0.0));
         nutritionData.setProtein(macros.getOrDefault("protein", 0.0));
+
+        // --- YENİ EKLENEN BÖLÜM ---
+        // Yeni mikroları ayarla
+        nutritionData.setVitaminA(macros.getOrDefault("vitamin_a", 0.0));
+        nutritionData.setVitaminC(macros.getOrDefault("vitamin_c", 0.0));
+        nutritionData.setSodium(macros.getOrDefault("sodium", 0.0));
+        nutritionData.setSaturatedFat(macros.getOrDefault("saturated_fat", 0.0));
+        nutritionData.setPotassium(macros.getOrDefault("potassium", 0.0));
+        nutritionData.setCholesterol(macros.getOrDefault("cholesterol", 0.0));
+        nutritionData.setCalcium(macros.getOrDefault("calcium", 0.0));
+        nutritionData.setIron(macros.getOrDefault("iron", 0.0));
+        // --- YENİ BÖLÜMÜN SONU ---
+
         recipe.setNutritionData(nutritionData);
         recipe.setPrice(request.getPrice());
 
@@ -67,7 +84,7 @@ public class RecipeService {
         double[] emb = openAIService.createEmbedding(savedRecipe.getTitle() + " " + ingredientsText);
         semanticSearchService.saveEmbeddingForRecipe(savedRecipe.getId(), emb);
         return savedRecipe;
-        
+
     }
 
     public Optional<Recipe> getRecipeById(Long id) {
