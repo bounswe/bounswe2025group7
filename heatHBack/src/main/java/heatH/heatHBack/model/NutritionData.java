@@ -7,16 +7,16 @@ import lombok.Data;
 @Data
 public class NutritionData {
 
-    private double carbs;
-    private double fat;
-    private double protein;
+    private Double carbs;
+    private Double fat;
+    private Double protein;
 
-    private double vitaminA;
-    private double vitaminC;
-    private double sodium;
-    private double saturatedFat;
-    private double potassium;
-    private double cholesterol;
-    private double calcium;
-    private double iron;
+    private Double vitaminA;
+    private Double vitaminC;
+    private Double sodium;
+    private Double saturatedFat;
+    private Double potassium;
+    private Double cholesterol;
+    private Double calcium;
+    private Double iron;
 }
