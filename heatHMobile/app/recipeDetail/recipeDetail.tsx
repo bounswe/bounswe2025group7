@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { recipeService } from '../../services/recipeService';
 import ShareModal from '../../components/ShareModal';
+import { translateRecipeContent } from '../../services/translationService';
 import { useFocusEffect } from '@react-navigation/native';
 
 type Ingredient = string | { name: string; amount?: string | number; quantity?: number };
@@ -83,6 +84,9 @@ const RecipeDetail = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [lang, setLang] = useState<'en' | 'tr' | 'zh'>('en');
+  const [translating, setTranslating] = useState(false);
+  const [translated, setTranslated] = useState<Recipe | null>(null);
 
   const onBack = () => {
     if ((router as any).canGoBack?.()) router.back();
@@ -220,6 +224,62 @@ const RecipeDetail = () => {
     <ScrollView contentContainerStyle={[styles.screen, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <Hero />
 
+      {/* Language selector */}
+      <View style={[styles.cardRow, { paddingHorizontal: 12, marginBottom: 8 }]}>
+        {([
+          { code: 'en', label: 'English' },
+          { code: 'tr', label: 'Türkçe' },
+          { code: 'zh', label: '中文' },
+        ] as const).map(({ code, label }) => {
+          const active = lang === code;
+          return (
+            <TouchableOpacity
+              key={code}
+              onPress={async () => {
+                if (code === lang) return;
+                setLang(code);
+                if (!recipe) return;
+                setTranslating(true);
+                try {
+                  const t = await translateRecipeContent(
+                    String(recipe.id ?? effectiveId),
+                    {
+                      title: recipe.title,
+                      description: recipe.description,
+                      ingredients: recipe.ingredients,
+                      instructions: recipe.instructions,
+                    },
+                    code
+                  );
+                  setTranslated({
+                    ...recipe,
+                    title: t.title ?? recipe.title,
+                    description: t.description ?? recipe.description,
+                    ingredients: t.ingredients ?? recipe.ingredients,
+                    instructions: t.instructions ?? recipe.instructions,
+                  });
+                } catch {
+                  Alert.alert('Translation Error', 'Could not translate content. Please try again.');
+                } finally {
+                  setTranslating(false);
+                }
+              }}
+              style={[
+                styles.langChip,
+                { borderColor: colors.gray[200], backgroundColor: active ? colors.primary : colors.white },
+              ]}
+            >
+              <Text style={[styles.langChipText, { color: active ? colors.primaryContrast : textColors.primary }]}>{label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+      {translating ? (
+        <View style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
+          <Text style={{ color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }}>Translating...</Text>
+        </View>
+      ) : null}
+
       {/* Summary row like MyRecipe cards */}
       <View style={styles.cardRow}>
         <View style={[styles.miniCard, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
@@ -236,17 +296,17 @@ const RecipeDetail = () => {
         </View>
       </View>
 
-      {!!recipe.description && (
+      {!!(translated?.description ?? recipe.description) && (
         <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
           <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>Description</Text>
-          <Text style={[styles.bodyText, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{recipe.description}</Text>
+          <Text style={[styles.bodyText, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{translated?.description ?? recipe.description}</Text>
         </View>
       )}
 
       <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
         <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>Ingredients</Text>
-        {recipe.ingredients?.length ? (
-          recipe.ingredients.map((ing, i) => (
+        {(translated?.ingredients ?? recipe.ingredients)?.length ? (
+          (translated?.ingredients ?? recipe.ingredients)!.map((ing, i) => (
             <Text key={`ing-${i}`} style={[styles.listItem, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>• {displayIngredient(ing)}</Text>
           ))
         ) : (
@@ -256,8 +316,8 @@ const RecipeDetail = () => {
 
       <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
         <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>Instructions</Text>
-        {recipe.instructions?.length ? (
-          recipe.instructions.map((ins, i) => (
+        {(translated?.instructions ?? recipe.instructions)?.length ? (
+          (translated?.instructions ?? recipe.instructions)!.map((ins, i) => (
             <Text key={`ins-${i}`} style={[styles.listItem, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{i + 1}. {String(ins)}</Text>
           ))
         ) : (
@@ -360,6 +420,13 @@ const styles = StyleSheet.create({
 
   // Cards
   cardRow: { paddingHorizontal: 12, flexDirection: 'row', gap: 12, marginBottom: 4 },
+  langChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  langChipText: { fontSize: 13, fontWeight: '600' },
   miniCard: {
     flex: 1,
     backgroundColor: '#fff',
