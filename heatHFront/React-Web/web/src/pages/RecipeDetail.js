@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Grid, Box, IconButton, useTheme, Button, Rating,
-  Chip, Divider, List, ListItem, ListItemText, Paper, Avatar
+  Chip, Divider, List, ListItem, ListItemText, Paper, Avatar,
+  Table, TableBody, TableRow, TableCell
 } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -53,6 +54,50 @@ const RecipeInfoBox = styled(Box)(({ theme }) => ({
   background: alpha(theme.palette.primary.light, 0.05)
 }));
 
+// Simple table row component for nutrition
+const NutrientRow = ({ label, value, unit = '', indent = 0, isSub = false, IconComponent = null }) => (
+  <TableRow>
+    <TableCell
+      sx={{
+        borderBottom: 'none',
+        py: 0.5,
+        pl: 2 + indent,
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {IconComponent && (
+          <IconComponent
+            fontSize="small"
+            color={isSub ? 'disabled' : 'primary'}
+          />
+        )}
+        <Typography
+          variant="body2"
+          color={isSub ? 'text.secondary' : 'text.primary'}
+        >
+          {label}
+        </Typography>
+      </Box>
+    </TableCell>
+    <TableCell
+      align="right"
+      sx={{
+        borderBottom: 'none',
+        py: 0.5,
+        pr: 2,
+      }}
+    >
+      <Typography
+        variant="body2"
+        fontWeight={isSub ? 'normal' : 'medium'}
+        color={isSub ? 'text.secondary' : 'text.primary'}
+      >
+        {value != null && value !== '' ? `${value} ${unit}`.trim() : '-'}
+      </Typography>
+    </TableCell>
+  </TableRow>
+);
+
 const RecipeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -72,6 +117,7 @@ const RecipeDetail = () => {
   // Add these states inside your RecipeDetail component
   const [isSaved, setIsSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  const nutrition = recipe && recipe["nutritionData"] ? recipe["nutritionData"] : null;
 
   // Fetch recipe data
   useEffect(() => {
@@ -79,6 +125,7 @@ const RecipeDetail = () => {
       try {
         const response = await apiClient.get(`/recipe/get?recipeId=${id}`);
         setRecipe(response.data);
+        console.log('Fetched recipe:', response.data);
       } catch (error) {
         console.error("Error fetching recipe:", error);
       } finally {
@@ -382,15 +429,22 @@ const RecipeDetail = () => {
             fullwidth
               elevation={1}
               sx={{
-                p: 3,
+                p: 2.5,
                 width: '100%',
-                bgcolor: alpha(theme.palette.background.default, 0.7)
+                maxWidth: 720,
+                mx: 'auto',
+                bgcolor: alpha(theme.palette.background.default, 0.7),
               }}
             >
               <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
                 Recipe Details
               </Typography>
-              <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid
+                container
+                spacing={2}
+                direction="column"
+                sx={{ mt: 1 }}
+              >
                 {recipe["type"] && (
                   <Grid item xs={12}>
                     <Box sx={{
@@ -444,56 +498,186 @@ const RecipeDetail = () => {
                   </Grid>
                 )}
 
-                {recipe["nutritionData"]["carbs"] >= 0 && (
+                {nutrition && (
                   <Grid item xs={12}>
-                    <Box sx={{
-                      display: 'flex', alignItems: 'center', gap: 1,
-                      p: 1.5,
-                      height: '100%',
-                      bgcolor: alpha(theme.palette.background.paper, 0.4),
-                      borderRadius: 1,
-                    }}>
-                      <GrainIcon color="primary" />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Carbohydrates</Typography>
-                        <Typography variant="body2" fontWeight="medium">{recipe["nutritionData"]["carbs"]}g</Typography>
-                      </Box>
-                    </Box>
-                  </Grid>
-                )}
+                    <Box
+                      sx={{
+                        p: 1.5,
+                        bgcolor: alpha(theme.palette.background.paper, 0.4),
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        color="text.secondary"
+                        sx={{ mb: 1, fontWeight: 'bold' }}
+                      >
+                        Nutrition (per serving)
+                      </Typography>
+                      <Table size="small">
+                        <TableBody>
+                          {/* Carbs */}
+                          {nutrition["carbs"] >= 0 && (
+                            <NutrientRow
+                              label="Carbohydrates"
+                              value={nutrition["carbs"]}
+                              unit="g"
+                              IconComponent={GrainIcon}
+                            />
+                          )}
 
-                {recipe["nutritionData"]["protein"] >= 0 && (
-                  <Grid item xs={12}>
-                    <Box sx={{
-                      display: 'flex', alignItems: 'center', gap: 1,
-                      p: 1.5,
-                      height: '100%',
-                      bgcolor: alpha(theme.palette.background.paper, 0.4),
-                      borderRadius: 1,
-                    }}>
-                      <FitnessCenterIcon color="primary" />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Protein</Typography>
-                        <Typography variant="body2" fontWeight="medium">{recipe["nutritionData"]["protein"]}g</Typography>
-                      </Box>
-                    </Box>
-                  </Grid>
-                )}
+                          {/* Protein */}
+                          {nutrition["protein"] >= 0 && (
+                            <NutrientRow
+                              label="Protein"
+                              value={nutrition["protein"]}
+                              unit="g"
+                              IconComponent={FitnessCenterIcon}
+                            />
+                          )}
 
-                {recipe["nutritionData"]["fat"] >= 0 && (
-                  <Grid item xs={12}>
-                    <Box sx={{
-                      display: 'flex', alignItems: 'center', gap: 1,
-                      p: 1.5,
-                      height: '100%',
-                      bgcolor: alpha(theme.palette.background.paper, 0.4),
-                      borderRadius: 1,
-                    }}>
-                      <WaterDropIcon color="primary" />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Fat</Typography>
-                        <Typography variant="body2" fontWeight="medium">{recipe["nutritionData"]["fat"]}g</Typography>
-                      </Box>
+                          {/* Fat + sub-rows */}
+                          {nutrition["fat"] >= 0 && (
+                            <>
+                              <NutrientRow
+                                label="Fat"
+                                value={nutrition["fat"]}
+                                unit="g"
+                                IconComponent={WaterDropIcon}
+                              />
+
+                              {nutrition["cholesterol"] >= 0 && (
+                                <NutrientRow
+                                  label="Cholesterol"
+                                  value={nutrition["cholesterol"]}
+                                  unit="mg"
+                                  indent={8}
+                                  isSub
+                                  IconComponent={WaterDropIcon}
+                                />
+                              )}
+
+                              {nutrition["saturatedFat"] >= 0 && (
+                                <NutrientRow
+                                  label="Saturated fat"
+                                  value={nutrition["saturatedFat"]}
+                                  unit="g"
+                                  indent={8}
+                                  isSub
+                                  IconComponent={WaterDropIcon}
+                                />
+                              )}
+
+                              {(nutrition["monounsaturated_fat"] >= 0 ||
+                                nutrition["polyunsaturated_fat"] >= 0) && (
+                                <NutrientRow
+                                  label="Unsaturated fat"
+                                  value={[
+                                    nutrition["monounsaturated_fat"] >= 0
+                                      ? `${nutrition["monounsaturated_fat"]} g mono`
+                                      : null,
+                                    nutrition["polyunsaturated_fat"] >= 0
+                                      ? `${nutrition["polyunsaturated_fat"]} g poly`
+                                      : null,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' + ')}
+                                  unit=""
+                                  indent={8}
+                                  isSub
+                                  IconComponent={WaterDropIcon}
+                                />
+                              )}
+                            </>
+                          )}
+
+                          {/* Vitamins group */}
+                          {(nutrition["vitamin_a"] >= 0 || nutrition["vitamin_c"] >= 0) && (
+                            <>
+                              <NutrientRow label="Vitamins" value="" unit="" />
+
+                              {nutrition["vitamin_a"] >= 0 && (
+                                <NutrientRow
+                                  label="Vitamin A"
+                                  value={nutrition["vitamin_a"]}
+                                  unit="% DV"
+                                  indent={8}
+                                  isSub
+                                  IconComponent={GrainIcon}
+                                />
+                              )}
+
+                              {nutrition["vitamin_c"] >= 0 && (
+                                <NutrientRow
+                                  label="Vitamin C"
+                                  value={nutrition["vitamin_c"]}
+                                  unit="% DV"
+                                  indent={8}
+                                  isSub
+                                  IconComponent={GrainIcon}
+                                />
+                              )}
+                            </>
+                          )}
+
+                          {/* Iron */}
+                          {nutrition["iron"] >= 0 && (
+                            <NutrientRow
+                              label="Iron"
+                              value={nutrition["iron"]}
+                              unit="mg"
+                              IconComponent={FitnessCenterIcon}
+                            />
+                          )}
+
+                          {/* Calcium */}
+                          {nutrition["calcium"] >= 0 && (
+                            <NutrientRow
+                              label="Calcium"
+                              value={nutrition["calcium"]}
+                              unit="mg"
+                              IconComponent={FitnessCenterIcon}
+                            />
+                          )}
+
+                          {/* The rest */}
+                          {nutrition["fiber"] >= 0 && (
+                            <NutrientRow
+                              label="Fiber"
+                              value={nutrition["fiber"]}
+                              unit="g"
+                              IconComponent={GrainIcon}
+                            />
+                          )}
+
+                          {nutrition["sugar"] >= 0 && (
+                            <NutrientRow
+                              label="Sugar"
+                              value={nutrition["sugar"]}
+                              unit="g"
+                              IconComponent={GrainIcon}
+                            />
+                          )}
+
+                          {nutrition["potassium"] >= 0 && (
+                            <NutrientRow
+                              label="Potassium"
+                              value={nutrition["potassium"]}
+                              unit="mg"
+                              IconComponent={FitnessCenterIcon}
+                            />
+                          )}
+
+                          {nutrition["sodium"] >= 0 && (
+                            <NutrientRow
+                              label="Sodium"
+                              value={nutrition["sodium"]}
+                              unit="mg"
+                              IconComponent={FitnessCenterIcon}
+                            />
+                          )}
+                        </TableBody>
+                      </Table>
                     </Box>
                   </Grid>
                 )}
