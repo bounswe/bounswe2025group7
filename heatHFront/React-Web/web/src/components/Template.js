@@ -13,6 +13,7 @@ import authService from '../services/authService';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import LanguageSwitcher from './LanguageSwitcher';
 import SearchIcon from '@mui/icons-material/Search';
+import MonitorWeightIcon from '@mui/icons-material/MonitorWeight';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
@@ -130,6 +131,15 @@ const Template = ({ children }) => {
               startIcon={<BookmarkIcon />}
             >
               {t('recipes.savedRecipes')}
+            </NavButton>
+
+            <NavButton
+              component={Link}
+              to="/calorie-tracking"
+              color={location.pathname === '/calorie-tracking' ? 'secondary' : 'inherit'}
+              startIcon={<MonitorWeightIcon />}
+            >
+              Calorie Tracking
             </NavButton>
 
             <LanguageSwitcher variant="icon" />
