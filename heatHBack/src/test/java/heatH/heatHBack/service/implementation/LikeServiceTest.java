@@ -13,6 +13,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -43,6 +44,67 @@ class LikeServiceTest {
     @AfterEach
     void clearSecurityContext() {
         SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void likeFeed_savesLikeAndIncrementsFeedLikeCount() {
+        // arrange
+        long feedId = 7L;
+        String username = "likeuser@example.com";
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn(username);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        User user = new User();
+        Feed feed = new Feed();
+        feed.setId(feedId);
+        feed.setLikeCount(2);
+
+        LikeRequest request = new LikeRequest();
+        request.setFeedId(feedId);
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(feedRepository.findById(feedId)).thenReturn(Optional.of(feed));
+
+        // act
+        likeService.likeFeed(request);
+
+        // assert
+        ArgumentCaptor<Like> likeCaptor = ArgumentCaptor.forClass(Like.class);
+        verify(likeRepository).save(likeCaptor.capture());
+        Like savedLike = likeCaptor.getValue();
+        assertEquals(user, savedLike.getUser());
+        assertEquals(feed, savedLike.getFeed());
+
+        assertEquals(3, feed.getLikeCount());
+        verify(feedRepository).save(feed);
+    }
+
+    @Test
+    void likeFeed_throwsWhenUserNotFound() {
+        // arrange
+        long feedId = 15L;
+        String username = "missing@example.com";
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn(username);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        LikeRequest request = new LikeRequest();
+        request.setFeedId(feedId);
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        // act + assert
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> likeService.likeFeed(request));
+        assertEquals("User not found", ex.getMessage());
+        verify(likeRepository, never()).save(any());
+        verify(feedRepository, never()).save(any());
     }
 
     @Test
