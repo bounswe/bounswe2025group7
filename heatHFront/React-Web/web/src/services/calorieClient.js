@@ -20,6 +20,17 @@ const calorieService = {
       }
     });
     return response.data;
+  },
+
+  updateCalorieTracking: async (eatenDate, recipeId, portion) => {
+    const response = await apiClient.put('/calorie/update-calorie-tracking', null, {
+      params: {
+        eatenDate,
+        recipeId,
+        portion
+      }
+    });
+    return response.data;
   }
 
 }
