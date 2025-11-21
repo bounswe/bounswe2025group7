@@ -29,4 +29,10 @@ public class CalorieTrackingController {
         calorieTrackingService.toggleCalorieTracking(recipeId, eatenDate, portion);
         return ResponseEntity.ok("Calorie tracking status toggled successfully.");
     }
+
+    @PutMapping("/update-calorie-tracking")
+    public ResponseEntity<String> updateCalorieTracking(@RequestParam String recipeId, @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date eatenDate, @RequestParam Double portion) {
+        calorieTrackingService.updateCalorieTracking(recipeId, eatenDate, portion);
+        return ResponseEntity.ok("Calorie tracking status updated successfully.");
+    }
 }
