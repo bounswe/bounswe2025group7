@@ -31,6 +31,12 @@ const NavIconButton = styled(IconButton)({
   },
 });
 
+const languages = [
+  { code: 'en', labelKey: 'common.english', flag: '🇺🇸' },
+  { code: 'tr', labelKey: 'common.turkish', flag: '🇹🇷' },
+  { code: 'ja', labelKey: 'common.japanese', flag: '🇯🇵' },
+];
+
 const LanguageSwitcher = ({ variant = 'text', size = 'medium' }) => {
   const { i18n, t } = useTranslation();
   const theme = useTheme();
@@ -51,13 +57,9 @@ const LanguageSwitcher = ({ variant = 'text', size = 'medium' }) => {
     handleClose();
   };
 
-  const getCurrentLanguageName = () => {
-    return i18n.language === 'tr' ? t('common.turkish') : t('common.english');
-  };
-
-  const getCurrentLanguageFlag = () => {
-    return i18n.language === 'tr' ? '🇹🇷' : '🇺🇸';
-  };
+  const currentLanguage = React.useMemo(() => {
+    return languages.find((lang) => i18n.language?.startsWith(lang.code)) || languages[0];
+  }, [i18n.language]);
 
   if (variant === 'icon') {
     return (
@@ -89,20 +91,16 @@ const LanguageSwitcher = ({ variant = 'text', size = 'medium' }) => {
             horizontal: 'right',
           }}
         >
-          <MenuItem 
-            onClick={() => handleLanguageChange('en')}
-            selected={i18n.language === 'en'}
-          >
-            <ListItemIcon>🇺🇸</ListItemIcon>
-            <ListItemText>{t('common.english')}</ListItemText>
-          </MenuItem>
-          <MenuItem 
-            onClick={() => handleLanguageChange('tr')}
-            selected={i18n.language === 'tr'}
-          >
-            <ListItemIcon>🇹🇷</ListItemIcon>
-            <ListItemText>{t('common.turkish')}</ListItemText>
-          </MenuItem>
+          {languages.map((lang) => (
+            <MenuItem 
+              key={lang.code}
+              onClick={() => handleLanguageChange(lang.code)}
+              selected={i18n.language?.startsWith(lang.code)}
+            >
+              <ListItemIcon>{lang.flag}</ListItemIcon>
+              <ListItemText>{t(lang.labelKey)}</ListItemText>
+            </MenuItem>
+          ))}
         </Menu>
       </Box>
     );
@@ -120,7 +118,7 @@ const LanguageSwitcher = ({ variant = 'text', size = 'medium' }) => {
         startIcon={<LanguageIcon />}
       >
         <Typography variant="body2">
-          {getCurrentLanguageFlag()} {getCurrentLanguageName()}
+          {currentLanguage.flag} {t(currentLanguage.labelKey)}
         </Typography>
       </StyledButton>
       <Menu
@@ -140,20 +138,16 @@ const LanguageSwitcher = ({ variant = 'text', size = 'medium' }) => {
           horizontal: 'right',
         }}
       >
-        <MenuItem 
-          onClick={() => handleLanguageChange('en')}
-          selected={i18n.language === 'en'}
-        >
-          <ListItemIcon>🇺🇸</ListItemIcon>
-          <ListItemText>{t('common.english')}</ListItemText>
-        </MenuItem>
-        <MenuItem 
-          onClick={() => handleLanguageChange('tr')}
-          selected={i18n.language === 'tr'}
-        >
-          <ListItemIcon>🇹🇷</ListItemIcon>
-          <ListItemText>{t('common.turkish')}</ListItemText>
-        </MenuItem>
+        {languages.map((lang) => (
+          <MenuItem 
+            key={lang.code}
+            onClick={() => handleLanguageChange(lang.code)}
+            selected={i18n.language?.startsWith(lang.code)}
+          >
+            <ListItemIcon>{lang.flag}</ListItemIcon>
+            <ListItemText>{t(lang.labelKey)}</ListItemText>
+          </MenuItem>
+        ))}
       </Menu>
     </Box>
   );
