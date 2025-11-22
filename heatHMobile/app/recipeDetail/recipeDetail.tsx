@@ -6,8 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { recipeService } from '../../services/recipeService';
 import ShareModal from '../../components/ShareModal';
-import { translateRecipeContent } from '../../services/translationService';
 import { useFocusEffect } from '@react-navigation/native';
+import { translateRecipeContent } from '../../services/translationService';
 
 type Ingredient = string | { name: string; amount?: string | number; quantity?: number };
 
@@ -425,6 +425,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 16,
     borderWidth: 1,
+    marginRight: 8,
   },
   langChipText: { fontSize: 13, fontWeight: '600' },
   miniCard: {
