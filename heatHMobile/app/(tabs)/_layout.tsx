@@ -72,6 +72,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="calorie"
+        options={{
+          title: 'Calorie Tracking',
+          tabBarLabel: 'Calories',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="nutrition" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
