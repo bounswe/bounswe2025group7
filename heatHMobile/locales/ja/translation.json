@@ -27,7 +27,37 @@
     "translationError": "翻訳エラー",
     "translationErrorMsg": "コンテンツを翻訳できませんでした。もう一度お試しください。",
     "translating": "翻訳中...",
-    "saveError": "保存状態を更新できませんでした。もう一度お試しください。"
+    "saveError": "保存状態を更新できませんでした。もう一度お試しください。",
+    "nutritionLabels": {
+      "calories": "カロリー",
+      "calorie": "カロリー",
+      "energy": "エネルギー",
+      "protein": "タンパク質",
+      "fat": "脂質",
+      "fats": "脂質",
+      "carbs": "炭水化物",
+      "carbohydrate": "炭水化物",
+      "carbohydrates": "炭水化物",
+      "sugar": "糖質",
+      "sugars": "糖質",
+      "fiber": "食物繊維",
+      "sodium": "ナトリウム",
+      "salt": "塩",
+      "vitamina": "ビタミンA",
+      "vitaminA": "ビタミンA",
+      "vitamin_a": "ビタミンA",
+      "vitaminc": "ビタミンC",
+      "vitaminC": "ビタミンC",
+      "vitamin_c": "ビタミンC",
+      "saturatedfat": "飽和脂肪",
+      "saturatedFat": "飽和脂肪",
+      "saturated_fat": "飽和脂肪",
+      "potassium": "カリウム",
+      "cholesterol": "コレステロール",
+      "cholestrol": "コレステロール",
+      "calcium": "カルシウム",
+      "iron": "鉄"
+    }
   }
 }
 

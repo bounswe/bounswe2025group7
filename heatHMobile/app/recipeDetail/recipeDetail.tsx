@@ -28,43 +28,16 @@ type Recipe = {
   nutritionData?: Record<string, any>;
 };
 
-// Pretty labels and units for nutrition keys
-const labelMap: Record<string, string> = {
-  calories: 'Calories',
-  calorie: 'Calories',
-  energy: 'Energy',
-  protein: 'Protein',
-  fat: 'Fat',
-  fats: 'Fat',
-  carbs: 'Carbs',
-  carbohydrate: 'Carbs',
-  carbohydrates: 'Carbs',
-  sugar: 'Sugar',
-  sugars: 'Sugar',
-  fiber: 'Fiber',
-  sodium: 'Sodium',
-  salt: 'Salt',
-};
+// Helper functions for nutrition formatting
 const unitFor = (key: string) => {
   const k = key.toLowerCase();
   if (k.includes('cal')) return 'kcal';
   if (k.includes('sodium') || k.includes('salt')) return 'mg';
   return 'g';
 };
-const prettyLabel = (key: string) => labelMap[key.toLowerCase()] ?? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 const formatNum = (n: number) => {
   const fixed = Number.isInteger(n) ? String(n) : n.toFixed(2);
   return fixed.replace(/\.00$/, '');
-};
-const normalizeNutrition = (data: any) => {
-  const pairs: [string, any][] = Array.isArray(data) ? data.map((v: any, i: number) => [String(i + 1), v]) : Object.entries(data ?? {});
-  return pairs.map(([k, v]) => {
-    if (typeof v === 'number') return { label: prettyLabel(k), value: `${formatNum(v)} ${unitFor(k)}` };
-    const parsed = typeof v === 'string' && !isNaN(Number(v)) ? Number(v) : null;
-    return parsed !== null
-      ? { label: prettyLabel(k), value: `${formatNum(parsed)} ${unitFor(k)}` }
-      : { label: prettyLabel(k), value: String(v) };
-  });
 };
 
 const displayIngredient = (ing: Ingredient) => {
@@ -91,6 +64,40 @@ const RecipeDetail = () => {
 
   // Get target language from i18n
   const targetLanguage = mapLanguageToRecipeTarget(i18n.language || 'en');
+
+  // Nutrition label translation helper
+  const getNutritionLabel = (key: string): string => {
+    // Try different key variations
+    const variations = [
+      key.toLowerCase(), // lowercase: "vitamina"
+      key, // original: "VitaminA"
+      key.replace(/([A-Z])/g, '_$1').toLowerCase(), // camelCase to snake_case: "vitamin_a"
+      key.replace(/_/g, '').toLowerCase(), // snake_case to lowercase: "vitamin_a" -> "vitamina"
+    ];
+
+    for (const variation of variations) {
+      const translationKey = `recipes.nutritionLabels.${variation}`;
+      const translated = t(translationKey, { defaultValue: '' });
+      if (translated && translated !== translationKey) {
+        return translated;
+      }
+    }
+
+    // Fallback to formatted key name
+    return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
+
+  // Normalize nutrition data with translations
+  const normalizeNutrition = (data: any) => {
+    const pairs: [string, any][] = Array.isArray(data) ? data.map((v: any, i: number) => [String(i + 1), v]) : Object.entries(data ?? {});
+    return pairs.map(([k, v]) => {
+      if (typeof v === 'number') return { label: getNutritionLabel(k), value: `${formatNum(v)} ${unitFor(k)}` };
+      const parsed = typeof v === 'string' && !isNaN(Number(v)) ? Number(v) : null;
+      return parsed !== null
+        ? { label: getNutritionLabel(k), value: `${formatNum(parsed)} ${unitFor(k)}` }
+        : { label: getNutritionLabel(k), value: String(v) };
+    });
+  };
 
   const onBack = () => {
     if ((router as any).canGoBack?.()) router.back();
