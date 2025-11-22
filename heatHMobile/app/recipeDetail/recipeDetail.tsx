@@ -61,9 +61,23 @@ const RecipeDetail = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [translated, setTranslated] = useState<Recipe | null>(null);
+  const [activeLang, setActiveLang] = useState<'en' | 'tr' | 'ja'>('en');
 
-  // Get target language from i18n
-  const targetLanguage = mapLanguageToRecipeTarget(i18n.language || 'en');
+  // Keep i18n language in sync with local selection
+  useEffect(() => {
+    const target = mapLanguageToRecipeTarget(activeLang);
+    if (i18n.language !== target) {
+      i18n.changeLanguage(target);
+    }
+  }, [activeLang, i18n]);
+
+  // Reset language to English whenever recipe changes
+  useEffect(() => {
+    setActiveLang('en');
+  }, [effectiveId]);
+
+  // Get target language from local state
+  const targetLanguage = activeLang;
 
   // Nutrition label translation helper
   const getNutritionLabel = (key: string): string => {
@@ -291,12 +305,12 @@ const RecipeDetail = () => {
           { code: 'tr', labelKey: 'common.turkish' },
           { code: 'ja', labelKey: 'common.japanese' },
         ] as const).map(({ code, labelKey }) => {
-          const active = i18n.language?.startsWith(code) || (code === 'en' && !i18n.language);
+          const active = activeLang === code;
           return (
             <TouchableOpacity
               key={code}
               onPress={() => {
-                i18n.changeLanguage(code);
+                setActiveLang(code);
               }}
               style={[
                 styles.langChip,
