@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Container, Typography, Box, Card, CardContent, CardMedia, 
+import {
+  Container, Typography, Box, Card, CardContent, CardMedia, CardActions,
   TextField, Button, Grid, CircularProgress, Alert, 
-  FormControl, InputLabel, Select, MenuItem, Paper, Chip
+  FormControl, InputLabel, Select, MenuItem, Paper, Chip,
+  Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
@@ -39,6 +40,11 @@ const CalorieTracking = () => {
   });
   const [addingTracking, setAddingTracking] = useState(false);
   const [loadingRecipes, setLoadingRecipes] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState(null);
+  const [editPortion, setEditPortion] = useState('');
+  const [updatingTracking, setUpdatingTracking] = useState(false);
+  const [deletingEntryId, setDeletingEntryId] = useState(null);
   
   // Fetch recipes for selection
   useEffect(() => {
@@ -128,6 +134,79 @@ const CalorieTracking = () => {
   
   const handleRecipeClick = (recipeId) => {
     navigate(`/recipe/${recipeId}`);
+  };
+
+  const handleOpenEditDialog = (entry) => {
+    setEditingEntry(entry);
+    setEditPortion(entry?.portion ? String(entry.portion) : '');
+    setEditDialogOpen(true);
+    setError(null);
+    setSuccess(null);
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditDialogOpen(false);
+    setEditingEntry(null);
+    setEditPortion('');
+  };
+
+  const handleUpdateTracking = async () => {
+    if (!editingEntry) return;
+    
+    const portionValue = parseFloat(editPortion);
+    if (isNaN(portionValue) || portionValue <= 0) {
+      setError('Portion must be a positive number.');
+      return;
+    }
+
+    try {
+      setUpdatingTracking(true);
+      setError(null);
+      setSuccess(null);
+
+      await calorieService.updateCalorieTracking(
+        editingEntry.eatenDate || selectedDate,
+        editingEntry.recipeId,
+        portionValue
+      );
+
+      setSuccess('Calorie tracking entry updated successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+
+      await fetchTrackingData();
+      handleCloseEditDialog();
+    } catch (err) {
+      console.error('Failed to update tracking entry:', err);
+      setError('Failed to update calorie tracking entry. Please try again.');
+    } finally {
+      setUpdatingTracking(false);
+    }
+  };
+
+  const handleDeleteTracking = async (entry) => {
+    if (!entry) return;
+
+    try {
+      setDeletingEntryId(entry.recipeId);
+      setError(null);
+      setSuccess(null);
+
+      await calorieService.toggleCalorieTracking(
+        entry.eatenDate || selectedDate,
+        entry.recipeId,
+        entry.portion ?? 1
+      );
+
+      setSuccess('Calorie tracking entry removed successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+
+      await fetchTrackingData();
+    } catch (err) {
+      console.error('Failed to delete tracking entry:', err);
+      setError('Failed to delete calorie tracking entry. Please try again.');
+    } finally {
+      setDeletingEntryId(null);
+    }
   };
   
   return (
@@ -292,48 +371,126 @@ const CalorieTracking = () => {
               <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
                 Tracked Recipes ({trackingData.length})
               </Typography>
-              <Grid container spacing={2}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {trackingData.map((item, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={index}>
-                    <Card 
-                      sx={{ 
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        cursor: 'pointer',
-                        '&:hover': {
-                          boxShadow: 6,
-                        },
-                      }}
-                      onClick={() => handleRecipeClick(item.recipeId)}
-                    >
-                      {item.image && (
-                        <CardMedia
-                          component="img"
-                          height="200"
-                          image={item.image}
-                          alt={item.name}
-                          sx={{ objectFit: 'cover' }}
-                        />
-                      )}
-                      <CardContent sx={{ flexGrow: 1 }}>
-                        <Typography variant="h6" gutterBottom noWrap>
-                          {item.name || 'Untitled Recipe'}
+                  <Card 
+                    key={index}
+                    sx={{ 
+                      width: '100%',
+                      minHeight: 260,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        boxShadow: 6,
+                      },
+                    }}
+                    onClick={() => handleRecipeClick(item.recipeId)}
+                  >
+                    {item.image ? (
+                      <CardMedia
+                        component="img"
+                        height="160"
+                        image={item.image}
+                        alt={item.name}
+                        sx={{ objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          height: 160,
+                          bgcolor: 'grey.100',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          No image available
                         </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
-                          <Chip 
-                            label={`${item.calorie?.toFixed(0) || 0} cal`} 
-                            color="primary" 
-                            size="small"
-                          />
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
+                      </Box>
+                    )}
+                    <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <Typography variant="h6" gutterBottom noWrap>
+                        {item.name || 'Untitled Recipe'}
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
+                        <Chip 
+                          label={`${item.calorie?.toFixed(0) || 0} cal`} 
+                          color="primary" 
+                          size="small"
+                        />
+                      </Box>
+                    </CardContent>
+                    <CardActions sx={{ justifyContent: 'flex-end', gap: 1, pt: 0, pb: 2, px: 2 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenEditDialog(item);
+                        }}
+                        disabled={deletingEntryId === item.recipeId}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTracking(item);
+                        }}
+                        disabled={deletingEntryId === item.recipeId}
+                      >
+                        {deletingEntryId === item.recipeId ? (
+                          <CircularProgress size={18} color="inherit" />
+                        ) : (
+                          'Delete'
+                        )}
+                      </Button>
+                    </CardActions>
+                  </Card>
                 ))}
-              </Grid>
+              </Box>
             </Box>
           )}
+          
+          <Dialog open={editDialogOpen} onClose={handleCloseEditDialog} fullWidth maxWidth="xs">
+            <DialogTitle>Edit Tracking Entry</DialogTitle>
+            <DialogContent>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                {editingEntry?.name || 'Selected recipe'}
+              </Typography>
+              <TextField
+                label="Portion"
+                type="number"
+                value={editPortion}
+                onChange={(e) => setEditPortion(e.target.value)}
+                fullWidth
+                inputProps={{
+                  step: '0.5',
+                  min: '0.5',
+                  max: '10'
+                }}
+                helperText="Adjust the portion size for this entry"
+                autoFocus
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseEditDialog} disabled={updatingTracking}>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleUpdateTracking}
+                disabled={updatingTracking || !editPortion}
+              >
+                {updatingTracking ? <CircularProgress size={20} color="inherit" /> : 'Save'}
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Container>
       </Box>
     </Template>

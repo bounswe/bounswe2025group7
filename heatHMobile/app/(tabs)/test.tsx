@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput,
 import { feedService } from '@/services/feedService';
 import { interestFormService } from '@/services/interestFormService';
 import { recipeService } from '@/services/recipeService';
+import { calorieService } from '@/services/calorieService';
 import { useThemeColors } from '../../hooks/useThemeColors';
 
 export default function TestScreen() {
@@ -520,6 +521,84 @@ export default function TestScreen() {
   };
   // RecipeService methods END ----------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------
+  // CalorieService methods START -------------------------------------------------------------------
+  const handleToggleCalorieTracking = async () => {
+    const recipeId = parseInt(recipeIdInput);
+    if (isNaN(recipeId) || recipeId <= 0) {
+      Alert.alert('Invalid Input', 'Please enter a valid recipe ID (positive number)');
+      return;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const portion = 1;
+
+    try {
+      console.log(`Toggling calorie tracking for recipe ${recipeId} on ${today} with portion ${portion}...`);
+      const data = await calorieService.toggleCalorieTracking(today, recipeId, portion);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Toggle calorie tracking response:', jsonString);
+      Alert.alert(
+        'Calorie Tracking Toggled',
+        jsonString,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      console.error('Error toggling calorie tracking:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to toggle calorie tracking';
+      Alert.alert('Error', errorMsg);
+    }
+  };
+
+  const handleUpdateCalorieTracking = async () => {
+    const recipeId = parseInt(recipeIdInput);
+    if (isNaN(recipeId) || recipeId <= 0) {
+      Alert.alert('Invalid Input', 'Please enter a valid recipe ID (positive number)');
+      return;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const portion = 2;
+
+    try {
+      console.log(`Updating calorie tracking for recipe ${recipeId} on ${today} with portion ${portion}...`);
+      const data = await calorieService.updateCalorieTracking(today, recipeId, portion);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Update calorie tracking response:', jsonString);
+      Alert.alert(
+        'Calorie Tracking Updated',
+        jsonString,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      console.error('Error updating calorie tracking:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to update calorie tracking';
+      Alert.alert('Error', errorMsg);
+    }
+  };
+
+  const handleGetUserTracking = async () => {
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+      console.log(`Fetching user tracking for ${today}...`);
+      const data = await calorieService.getUserTracking(today);
+      const jsonString = JSON.stringify(data, null, 2);
+      console.log('Get user tracking response:', jsonString);
+      Alert.alert(
+        'User Tracking Data',
+        jsonString,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
+    } catch (error: any) {
+      console.error('Error fetching user tracking:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to fetch user tracking';
+      Alert.alert('Error', errorMsg);
+    }
+  };
+  // CalorieService methods END ---------------------------------------------------------------------
 
   return (
     <ScrollView style={[styles.scrollView, { backgroundColor: colors.backgroundPaper }]}>
@@ -694,6 +773,44 @@ export default function TestScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.buttonText, getButtonTextStyle()]}>get-saved-recipes</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Calorie Service Section */}
+        <View style={[styles.section, { backgroundColor: colors.background }]}>
+          <Text style={[styles.sectionHeader, { color: textColors.primary, fontFamily: fonts.bold, fontSize: fontSizes.xl, lineHeight: lineHeights.xl }]}>Calorie Service</Text>
+          <View style={[styles.divider, { backgroundColor: borderColors.light }]} />
+          
+          <Text style={[styles.inputLabel, { color: textColors.primary, fontFamily: fonts.medium, fontSize: fontSizes.base, lineHeight: lineHeights.base }]}>Recipe ID for Tracking:</Text>
+          <TextInput
+            style={[styles.input, { backgroundColor: colors.backgroundPaper, borderColor: colors.primary, color: textColors.primary, fontFamily: fonts.regular, fontSize: fontSizes.lg, lineHeight: lineHeights.lg }]}
+            value={recipeIdInput}
+            onChangeText={setRecipeIdInput}
+            keyboardType="numeric"
+            placeholder="Enter recipe ID"
+            placeholderTextColor={colors.gray[400]}
+          />
+
+          <TouchableOpacity
+            style={getButtonStyle()}
+            onPress={handleToggleCalorieTracking}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>toggle-calorie-tracking (Today, Portion: 1)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={getButtonStyle()}
+            onPress={handleUpdateCalorieTracking}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>update-calorie-tracking (Today, Portion: 2)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={getButtonStyle()}
+            onPress={handleGetUserTracking}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.buttonText, getButtonTextStyle()]}>get-user-tracking (Today)</Text>
           </TouchableOpacity>
         </View>
 
