@@ -1,0 +1,33 @@
+{
+  "common": {
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "back": "Geri",
+    "save": "Kaydet",
+    "share": "Paylaş",
+    "english": "English",
+    "turkish": "Türkçe",
+    "japanese": "日本語"
+  },
+  "recipes": {
+    "description": "Açıklama",
+    "ingredients": "Malzemeler",
+    "instructions": "Talimatlar",
+    "calories": "Kalori",
+    "type": "Tür",
+    "price": "Fiyat",
+    "scores": "Puanlar",
+    "healthiness": "Sağlıklılık",
+    "easiness": "Kolaylık",
+    "nutrition": "Beslenme",
+    "noIngredients": "Malzeme listelenmedi.",
+    "noInstructions": "Talimat bulunamadı.",
+    "noNutritionData": "Beslenme verisi yok.",
+    "recipeNotFound": "Tarif bulunamadı.",
+    "translationError": "Çeviri Hatası",
+    "translationErrorMsg": "İçerik çevrilemedi. Lütfen tekrar deneyin.",
+    "translating": "Çevriliyor...",
+    "saveError": "Kayıt durumu güncellenemedi. Lütfen tekrar deneyin."
+  }
+}
+

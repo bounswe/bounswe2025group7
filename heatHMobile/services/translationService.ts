@@ -1,5 +1,7 @@
 type RecipeContent = {
   title?: string;
+  tag?: string;
+  type?: string;
   ingredients?: Array<string | { name: string; amount?: string | number; quantity?: number }>;
   instructions?: string[];
   description?: string;
@@ -8,15 +10,25 @@ type RecipeContent = {
 // Simple in-memory cache per session
 const cache = new Map<string, RecipeContent>();
 
-function detectSource(text: string): 'en' | 'tr' | 'zh-CN' {
-  if (/[一-龯\u3400-\u9FBF\uF900-\uFAFF]/.test(text)) return 'zh-CN';
+function detectSource(text: string): 'en' | 'tr' | 'ja' {
+  if (!text) return 'en';
+  // Japanese detection (Hiragana, Katakana, Kanji)
+  if (/[ぁ-んァ-ン]/.test(text)) return 'ja';
+  if (/[一-龯\u3400-\u9FBF\uF900-\uFAFF]/.test(text)) return 'ja';
+  // Turkish detection
   if (/[ğüşöçıİĞÜŞÖÇ]/i.test(text)) return 'tr';
   return 'en';
 }
 
-async function translateText(text: string, target: 'en' | 'tr' | 'zh'): Promise<string> {
+function toApiTarget(targetLang: 'en' | 'tr' | 'ja'): 'en' | 'tr' | 'ja' {
+  if (targetLang === 'ja') return 'ja';
+  if (targetLang === 'tr') return 'tr';
+  return 'en';
+}
+
+async function translateText(text: string, target: 'en' | 'tr' | 'ja'): Promise<string> {
   if (!text) return text;
-  const mappedTarget = target === 'zh' ? 'zh-CN' : target;
+  const mappedTarget = toApiTarget(target);
   const source = detectSource(text);
   // If source and target are the same, no translation needed
   if (source === mappedTarget) {
@@ -36,13 +48,15 @@ async function translateText(text: string, target: 'en' | 'tr' | 'zh'): Promise<
 export async function translateRecipeContent(
   key: string,
   content: RecipeContent,
-  target: 'en' | 'tr' | 'zh'
+  target: 'en' | 'tr' | 'ja'
 ): Promise<RecipeContent> {
   const k = `${key}:${target}`;
   if (cache.has(k)) return cache.get(k)!;
 
   const title = content.title ? await translateText(content.title, target) : undefined;
   const description = content.description ? await translateText(content.description, target) : undefined;
+  const tag = content.tag ? await translateText(content.tag, target) : undefined;
+  const type = content.type ? await translateText(content.type, target) : undefined;
 
   const ingredients = content.ingredients
     ? await Promise.all(
@@ -58,9 +72,21 @@ export async function translateRecipeContent(
     ? await Promise.all(content.instructions.map((i) => translateText(i, target)))
     : undefined;
 
-  const result = { title, description, ingredients, instructions };
+  const result = { title, description, tag, type, ingredients, instructions };
   cache.set(k, result);
   return result;
 }
+
+/**
+ * Map i18next language codes to the supported translation languages.
+ */
+export function mapLanguageToRecipeTarget(lng: string): 'en' | 'tr' | 'ja' {
+  if (!lng) return 'en';
+  if (lng.startsWith('tr')) return 'tr';
+  if (lng.startsWith('ja')) return 'ja';
+  return 'en';
+}
+
+export const SUPPORTED_RECIPE_LANGUAGES = ['en', 'tr', 'ja'] as const;
 
 
