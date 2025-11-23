@@ -3,11 +3,11 @@
  * Converts between USD (base currency) and local currencies based on language
  */
 
-// Approximate exchange rates (these should be updated with real-time rates in production)
+// Exchange rates (updated with current rates)
 const EXCHANGE_RATES = {
   USD: 1,
-  TRY: 32, // Turkish Lira per USD
-  JPY: 150, // Japanese Yen per USD
+  TRY: 42.3, // Turkish Lira per USD
+  JPY: 157.12, // Japanese Yen per USD
 } as const;
 
 export type Currency = 'USD' | 'TRY' | 'JPY';
