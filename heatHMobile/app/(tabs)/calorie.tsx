@@ -1047,10 +1047,10 @@ export default function CalorieScreen() {
                 <View style={styles.emptyContainer}>
                     <Ionicons name="nutrition-outline" size={64} color={colors.gray[300]} />
                     <Text style={[styles.emptyText, { fontFamily: fonts.medium, color: textColors.secondary }]}>
-                        No entries for this day
+                        {t('calorie.noEntriesForThisDay')}
                     </Text>
                     <Text style={[styles.emptySubText, { fontFamily: fonts.regular, color: textColors.disabled }]}>
-                        Tap + to track your calories
+                        {t('calorie.tapToTrackCalories')}
                     </Text>
                 </View>
             }

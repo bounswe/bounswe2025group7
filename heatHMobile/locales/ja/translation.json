@@ -279,6 +279,8 @@
     "calories": "カロリー",
     "protein": "タンパク質",
     "fat": "脂質",
-    "carbs": "炭水化物"
+    "carbs": "炭水化物",
+    "noEntriesForThisDay": "この日のエントリはありません",
+    "tapToTrackCalories": "カロリーを追跡するには + をタップしてください"
   }
 }

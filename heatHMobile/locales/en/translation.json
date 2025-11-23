@@ -279,6 +279,8 @@
     "calories": "Calories",
     "protein": "Protein",
     "fat": "Fat",
-    "carbs": "Carbs"
+    "carbs": "Carbs",
+    "noEntriesForThisDay": "No entries for this day",
+    "tapToTrackCalories": "Tap + to track your calories"
   }
 }
