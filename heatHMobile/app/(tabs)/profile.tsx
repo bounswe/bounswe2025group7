@@ -79,7 +79,49 @@ export default function ProfileScreen() {
   const [feedsLoading, setFeedsLoading] = useState(false);
   const [translatedFeeds, setTranslatedFeeds] = useState<Map<number, { text?: string; recipeTitle?: string; recipeDescription?: string }>>(new Map());
 
-  const genderOptions = [t('personalInfo.male'), t('personalInfo.female'), t('personalInfo.other')];
+  const genderOptions = ['male', 'female', 'other'] as const;
+  type GenderOption = typeof genderOptions[number];
+
+  const normalizeGenderValue = (value?: string): GenderOption | '' => {
+    if (!value) return '';
+    const normalized = value.trim().toLowerCase();
+    if (
+      normalized === 'male' ||
+      normalized === t('personalInfo.male').trim().toLowerCase()
+    ) {
+      return 'male';
+    }
+    if (
+      normalized === 'female' ||
+      normalized === t('personalInfo.female').trim().toLowerCase()
+    ) {
+      return 'female';
+    }
+    if (
+      normalized === 'other' ||
+      normalized === t('personalInfo.other').trim().toLowerCase()
+    ) {
+      return 'other';
+    }
+    return '';
+  };
+
+  const getGenderLabel = (value?: string) => {
+    const normalized = normalizeGenderValue(value);
+    if (!value && !normalized) {
+      return t('common.notSet');
+    }
+    switch (normalized) {
+      case 'male':
+        return t('personalInfo.male');
+      case 'female':
+        return t('personalInfo.female');
+      case 'other':
+        return t('personalInfo.other');
+      default:
+        return value ?? t('common.notSet');
+    }
+  };
 
   // Load profile data on component mount
   useEffect(() => {
@@ -235,6 +277,12 @@ export default function ProfileScreen() {
       
       // Create a copy of the data to be sent
       const dataToSend = { ...editData };
+      if (dataToSend.gender) {
+        const normalizedGender = normalizeGenderValue(dataToSend.gender);
+        if (normalizedGender) {
+          dataToSend.gender = normalizedGender.charAt(0).toUpperCase() + normalizedGender.slice(1);
+        }
+      }
       
       // If the image was changed, process it
       if (isImageUpdated) {
@@ -287,7 +335,7 @@ export default function ProfileScreen() {
     setIsImageUpdated(false);
   };
 
-  const handleGenderSelect = (gender: string) => {
+  const handleGenderSelect = (gender: GenderOption) => {
     setEditData({ ...editData, gender });
     setShowGenderModal(false);
   };
@@ -582,19 +630,19 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
-          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium }]}>{t('profile.gender')}</Text>
+            <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium }]}>{t('profile.gender')}</Text>
           {isEditing ? (
             <TouchableOpacity
               style={[styles.genderSelector, { backgroundColor: colors.white, borderColor: borderColors.medium }]}
               onPress={() => setShowGenderModal(true)}
             >
-              <Text style={[styles.genderSelectorText, { color: textColors.primary, fontFamily: fonts.regular }]}>
-                {editData.gender || t('profile.selectGender')}
+                <Text style={[styles.genderSelectorText, { color: textColors.primary, fontFamily: fonts.regular }]}>
+                {editData.gender ? getGenderLabel(editData.gender) : t('profile.selectGender')}
               </Text>
               <Text style={[styles.dropdownArrow, { color: textColors.secondary, fontFamily: fonts.regular }]}>▼</Text>
             </TouchableOpacity>
           ) : (
-            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.gender || t('common.notSet')}</Text>
+            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{getGenderLabel(profileData.gender)}</Text>
           )}
         </View>
 
@@ -788,7 +836,7 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
                 style={[
                   styles.genderOption,
                   { borderColor: borderColors.light },
-                  editData.gender === gender && [styles.selectedGenderOption, { backgroundColor: colors.primary, borderColor: colors.primary }]
+                  normalizeGenderValue(editData.gender) === gender && [styles.selectedGenderOption, { backgroundColor: colors.primary, borderColor: colors.primary }]
                 ]}
                 onPress={() => handleGenderSelect(gender)}
               >
@@ -796,10 +844,10 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
                   style={[
                     styles.genderOptionText,
                     { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base },
-                    editData.gender === gender && [styles.selectedGenderOptionText, { color: colors.white }]
+                    normalizeGenderValue(editData.gender) === gender && [styles.selectedGenderOptionText, { color: colors.white }]
                   ]}
                 >
-                  {gender}
+                  {getGenderLabel(gender)}
                 </Text>
               </TouchableOpacity>
             ))}
