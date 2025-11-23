@@ -32,6 +32,7 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import GrainIcon from '@mui/icons-material/Grain';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import ScienceIcon from '@mui/icons-material/Science';
+import HealingIcon from '@mui/icons-material/Healing';
 
 // Recipe section styling
 const RecipeDetailSection = styled(Box)(({ theme }) => ({
@@ -503,9 +504,9 @@ const RecipeDetail = () => {
                   <Grid item xs={12}>
                     <Box
                       sx={{
-                        p: 1.5,
-                        bgcolor: alpha(theme.palette.background.paper, 0.4),
-                        borderRadius: 1,
+                      p: 1.5,
+                      bgcolor: alpha(theme.palette.background.paper, 0.4),
+                      borderRadius: 1,
                       }}
                     >
                       <Typography
@@ -593,29 +594,29 @@ const RecipeDetail = () => {
                           )}
 
                           {/* Vitamins group */}
-                          {(nutrition["vitamin_a"] >= 0 || nutrition["vitamin_c"] >= 0) && (
+                          {(nutrition["vitaminA"] >= 0 || nutrition["vitaminC"] >= 0) && (
                             <>
-                              <NutrientRow label="Vitamins" value="" unit="" />
+                              <NutrientRow label="Vitamins" value="" unit="" IconComponent={HealingIcon} />
 
-                              {nutrition["vitamin_a"] >= 0 && (
+                              {nutrition["vitaminA"] >= 0 && (
                                 <NutrientRow
                                   label="Vitamin A"
-                                  value={nutrition["vitamin_a"]}
+                                  value={nutrition["vitaminA"]}
                                   unit="% DV"
                                   indent={8}
                                   isSub
-                                  IconComponent={GrainIcon}
+                                  IconComponent={HealingIcon}
                                 />
                               )}
 
-                              {nutrition["vitamin_c"] >= 0 && (
+                              {nutrition["vitaminC"] >= 0 && (
                                 <NutrientRow
                                   label="Vitamin C"
-                                  value={nutrition["vitamin_c"]}
+                                  value={nutrition["vitaminC"]}
                                   unit="% DV"
                                   indent={8}
                                   isSub
-                                  IconComponent={GrainIcon}
+                                  IconComponent={HealingIcon}
                                 />
                               )}
                             </>
@@ -686,29 +687,29 @@ const RecipeDetail = () => {
               <Box>
                 {recipe["instructions"].map((instruction) => (
                   <Box sx={{ display: 'flex', mb: 3 }}>
-                    <Box
-                      sx={{
-                        minWidth: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        bgcolor: theme.palette.primary.main,
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mr: 2,
-                        mt:1,
-                        fontWeight: 'bold',
-                        flexShrink: 0,
-                        fontSize: '5.75rem'
-                      }}
-                    >
+                      <Box
+                        sx={{
+                          minWidth: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          bgcolor: theme.palette.primary.main,
+                          color: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mr: 2,
+                          mt:1,
+                          fontWeight: 'bold',
+                          flexShrink: 0,
+                          fontSize: '5.75rem'
+                        }}
+                      >
 
+                      </Box>
+                      <Typography variant="body1">
+                        {instruction}
+                      </Typography>
                     </Box>
-                    <Typography variant="body1">
-                      {instruction}
-                    </Typography>
-                  </Box>
                 ))}
               </Box>
             </Paper>
