@@ -51,11 +51,11 @@ const CalorieTracking = () => {
     const fetchRecipes = async () => {
       try {
         setLoadingRecipes(true);
-        const response = await apiClient.get('/recipe/get-all');
+        const response = await apiClient.get('/recipe/get-all-for-all');
         setRecipes(response.data || []);
       } catch (err) {
         console.error('Failed to fetch recipes:', err);
-        setError('Failed to load recipes. Please try again.');
+        setError(t('calorieTracking.loadRecipesError'));
       } finally {
         setLoadingRecipes(false);
       }
@@ -73,7 +73,7 @@ const CalorieTracking = () => {
       setHasFetched(true);
     } catch (err) {
       console.error('Failed to fetch tracking data:', err);
-      setError('Failed to load calorie tracking data. Please try again.');
+      setError(t('calorieTracking.loadTrackingError'));
       setTrackingData([]);
       setHasFetched(true);
     } finally {
@@ -83,13 +83,13 @@ const CalorieTracking = () => {
   
   const handleToggleTracking = async () => {
     if (!selectedRecipeId || !portion || !eatenDate) {
-      setError('Please select a recipe, enter a portion, and select a date.');
+      setError(t('calorieTracking.missingFieldsError'));
       return;
     }
     
     const portionNum = parseFloat(portion);
     if (isNaN(portionNum) || portionNum <= 0) {
-      setError('Portion must be a positive number.');
+      setError(t('calorieTracking.invalidPortionError'));
       return;
     }
     
@@ -100,7 +100,7 @@ const CalorieTracking = () => {
       
       await calorieService.toggleCalorieTracking(eatenDate, selectedRecipeId, portionNum);
       
-      setSuccess('Calorie tracking updated successfully!');
+      setSuccess(t('calorieTracking.toggleSuccess'));
       
       // Reset form
       setSelectedRecipeId('');
@@ -115,7 +115,7 @@ const CalorieTracking = () => {
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Failed to toggle tracking:', err);
-      setError('Failed to update calorie tracking. Please try again.');
+      setError(t('calorieTracking.toggleError'));
     } finally {
       setAddingTracking(false);
     }
@@ -155,7 +155,7 @@ const CalorieTracking = () => {
     
     const portionValue = parseFloat(editPortion);
     if (isNaN(portionValue) || portionValue <= 0) {
-      setError('Portion must be a positive number.');
+      setError(t('calorieTracking.invalidPortionError'));
       return;
     }
 
@@ -170,14 +170,14 @@ const CalorieTracking = () => {
         portionValue
       );
 
-      setSuccess('Calorie tracking entry updated successfully!');
+      setSuccess(t('calorieTracking.updateSuccess'));
       setTimeout(() => setSuccess(null), 3000);
 
       await fetchTrackingData();
       handleCloseEditDialog();
     } catch (err) {
       console.error('Failed to update tracking entry:', err);
-      setError('Failed to update calorie tracking entry. Please try again.');
+      setError(t('calorieTracking.updateError'));
     } finally {
       setUpdatingTracking(false);
     }
@@ -197,13 +197,13 @@ const CalorieTracking = () => {
         entry.portion ?? 1
       );
 
-      setSuccess('Calorie tracking entry removed successfully!');
+      setSuccess(t('calorieTracking.deleteSuccess'));
       setTimeout(() => setSuccess(null), 3000);
 
       await fetchTrackingData();
     } catch (err) {
       console.error('Failed to delete tracking entry:', err);
-      setError('Failed to delete calorie tracking entry. Please try again.');
+      setError(t('calorieTracking.deleteError'));
     } finally {
       setDeletingEntryId(null);
     }
@@ -214,7 +214,7 @@ const CalorieTracking = () => {
       <Box>
         <div style={{ textAlign: 'center' }}> 
           <Typography variant="h3" sx={{ color: 'primary.main', backgroundColor: 'white', mb: 3 }}>
-            Calorie Tracking
+            {t('calorieTracking.title')}
           </Typography>
         </div>
 
@@ -223,13 +223,13 @@ const CalorieTracking = () => {
           {/* Add Tracking Form */}
           <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
             <Typography variant="h6" gutterBottom>
-              Add/Remove Calorie Tracking
+              {t('calorieTracking.addRemoveTitle')}
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6} md={1}>
                 <TextField
                   type="date"
-                  label="Eaten Date"
+                  label={t('calorieTracking.eatenDate')}
                   value={eatenDate}
                   onChange={(e) => setEatenDate(e.target.value)}
                   
@@ -241,11 +241,11 @@ const CalorieTracking = () => {
               </Grid>
               <Grid item size={5} xs={12} sm={6} md={7}>
                 <FormControl fullWidth>
-                  <InputLabel>Select Recipe</InputLabel>
+                  <InputLabel>{t('calorieTracking.selectRecipe')}</InputLabel>
                   <Select
                     value={selectedRecipeId}
                     onChange={(e) => setSelectedRecipeId(e.target.value)}
-                    label="Select Recipe"
+                    label={t('calorieTracking.selectRecipe')}
                     fullWidth
                     disabled={loadingRecipes || addingTracking}
                   >
@@ -259,7 +259,7 @@ const CalorieTracking = () => {
               </Grid>
               <Grid item xs={12} sm={6} md={2}>
                 <TextField
-                  label="Portion"
+                  label={t('calorieTracking.portion')}
                   type="number"
                   value={portion}
                   onChange={(e) => setPortion(e.target.value)}
@@ -269,7 +269,7 @@ const CalorieTracking = () => {
                     min: '0.5',
                     max: '10'
                   }}
-                  helperText="e.g., 0.5, 1, 1.5, 2"
+                  helperText={t('calorieTracking.portionHelper')}
                   disabled={addingTracking}
                 />
               </Grid>
@@ -282,7 +282,7 @@ const CalorieTracking = () => {
                   disabled={!selectedRecipeId || !portion || !eatenDate || addingTracking || loadingRecipes}
                   sx={{ height: '56px' }}
                 >
-                  {addingTracking ? <CircularProgress size={24} /> : 'Add Tracking'}
+                  {addingTracking ? <CircularProgress size={24} /> : t('calorieTracking.addTracking')}
                 </Button>
               </Grid>
             </Grid>
@@ -291,13 +291,13 @@ const CalorieTracking = () => {
           {/* View Calorie Tracking */}
           <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
             <Typography variant="h6" gutterBottom>
-              View Calorie Tracking
+              {t('calorieTracking.viewTitle')}
             </Typography>
             <Grid container spacing={2} alignItems="center">
               <Grid item size={6} xs={12} sm={6} md={7}>
                 <TextField
                   type="date"
-                  label="Select Date"
+                  label={t('calorieTracking.selectDate')}
                   value={selectedDate}
                   onChange={handleDateChange}
                   fullWidth
@@ -317,7 +317,7 @@ const CalorieTracking = () => {
                   startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
                   sx={{ height: '56px' }}
                 >
-                  {loading ? 'Loading...' : 'Get Tracking'}
+                  {loading ? t('calorieTracking.loading') : t('calorieTracking.getTracking')}
                 </Button>
               </Grid>
             </Grid>
@@ -325,7 +325,7 @@ const CalorieTracking = () => {
             {trackingData.length > 0 && (
               <Box sx={{ mt: 3, p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
                 <Typography variant="h6" color="primary.contrastText">
-                  Total Calories: {calculateTotalCalories().toFixed(0)}
+                  {t('calorieTracking.totalCalories', { value: calculateTotalCalories().toFixed(0) })}
                 </Typography>
               </Box>
             )}
@@ -351,25 +351,25 @@ const CalorieTracking = () => {
           ) : !hasFetched ? (
             <Paper elevation={2} sx={{ p: 4, textAlign: 'center' }}>
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                Select a date and click "Get Tracking" to view your calorie data
+                {t('calorieTracking.selectDateInstruction')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Or add a recipe above to start tracking your calories
+                {t('calorieTracking.addRecipeInstruction')}
               </Typography>
             </Paper>
           ) : trackingData.length === 0 ? (
             <Paper elevation={2} sx={{ p: 4, textAlign: 'center' }}>
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                No calorie tracking found for this date
+                {t('calorieTracking.noDataTitle')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Add a recipe above to start tracking your calories
+                {t('calorieTracking.addRecipeInstruction')}
               </Typography>
             </Paper>
           ) : (
             <Box>
               <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-                Tracked Recipes ({trackingData.length})
+                {t('calorieTracking.trackedRecipes', { count: trackingData.length })}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {trackingData.map((item, index) => (
@@ -406,13 +406,13 @@ const CalorieTracking = () => {
                         }}
                       >
                         <Typography variant="body2" color="text.secondary">
-                          No image available
+                          {t('calorieTracking.noImage')}
                         </Typography>
                       </Box>
                     )}
                     <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <Typography variant="h6" gutterBottom noWrap>
-                        {item.name || 'Untitled Recipe'}
+                        {item.name || t('calorieTracking.untitledRecipe')}
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
                         <Chip 
@@ -432,7 +432,7 @@ const CalorieTracking = () => {
                         }}
                         disabled={deletingEntryId === item.recipeId}
                       >
-                        Edit
+                        {t('calorieTracking.edit')}
                       </Button>
                       <Button
                         size="small"
@@ -447,7 +447,7 @@ const CalorieTracking = () => {
                         {deletingEntryId === item.recipeId ? (
                           <CircularProgress size={18} color="inherit" />
                         ) : (
-                          'Delete'
+                          t('calorieTracking.delete')
                         )}
                       </Button>
                     </CardActions>
@@ -458,13 +458,13 @@ const CalorieTracking = () => {
           )}
           
           <Dialog open={editDialogOpen} onClose={handleCloseEditDialog} fullWidth maxWidth="xs">
-            <DialogTitle>Edit Tracking Entry</DialogTitle>
+            <DialogTitle>{t('calorieTracking.editDialogTitle')}</DialogTitle>
             <DialogContent>
               <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                {editingEntry?.name || 'Selected recipe'}
+                {editingEntry?.name || t('calorieTracking.selectedRecipe')}
               </Typography>
               <TextField
-                label="Portion"
+                label={t('calorieTracking.portion')}
                 type="number"
                 value={editPortion}
                 onChange={(e) => setEditPortion(e.target.value)}
@@ -474,20 +474,20 @@ const CalorieTracking = () => {
                   min: '0.5',
                   max: '10'
                 }}
-                helperText="Adjust the portion size for this entry"
+                helperText={t('calorieTracking.editPortionHelper')}
                 autoFocus
               />
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseEditDialog} disabled={updatingTracking}>
-                Cancel
+                {t('calorieTracking.cancel')}
               </Button>
               <Button
                 variant="contained"
                 onClick={handleUpdateTracking}
                 disabled={updatingTracking || !editPortion}
               >
-                {updatingTracking ? <CircularProgress size={20} color="inherit" /> : 'Save'}
+                {updatingTracking ? <CircularProgress size={20} color="inherit" /> : t('calorieTracking.save')}
               </Button>
             </DialogActions>
           </Dialog>
@@ -498,4 +498,3 @@ const CalorieTracking = () => {
 };
 
 export default CalorieTracking;
-
