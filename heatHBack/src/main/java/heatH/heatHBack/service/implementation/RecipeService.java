@@ -109,4 +109,8 @@ public class RecipeService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return recipeRepository.findAllByUser(user);
     }
+
+    public List<Recipe> getAllRecipesForAll() {
+        return recipeRepository.findAll();
+    }
 }
