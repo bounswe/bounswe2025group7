@@ -18,6 +18,8 @@ export const recipeService = {
   getRecipe: (recipeId: number) => apiClient.get<any>(`/recipe/get?recipeId=${recipeId}`).then((r: any) => r.data),
   
   getAllRecipes: () => apiClient.get<any[]>('/recipe/get-all').then((r: any) => r.data),
+
+  getAllRecipesForAll: () => apiClient.get<any[]>('/recipe/get-all-for-all').then((r: any) => r.data),
   
   
   deleteRecipe: (recipeId: number) => 

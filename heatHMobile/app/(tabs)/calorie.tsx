@@ -43,6 +43,7 @@ export default function CalorieScreen() {
   const [showEatenDatePicker, setShowEatenDatePicker] = useState(false);
   const [addingTracking, setAddingTracking] = useState(false);
   const [loadingRecipes, setLoadingRecipes] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -204,7 +205,7 @@ export default function CalorieScreen() {
       setLoadingRecipes(true);
       
       const [myRecipes, savedRecipes] = await Promise.all([
-        recipeService.getAllRecipes().catch(() => []),
+        recipeService.getAllRecipesForAll().catch(() => []),
         recipeService.getSavedRecipes().catch(() => [])
       ]);
       
@@ -395,6 +396,7 @@ export default function CalorieScreen() {
     setEatenDate(selectedDate); // Default to currently viewed date
     setSelectedRecipe(null);
     setPortion('1');
+    setSearchQuery('');
     setShowRecipeSelector(false); // Reset selector state
     setShowAddModal(true);
   };
@@ -784,7 +786,12 @@ export default function CalorieScreen() {
     );
   };
 
-  const renderRecipeSelectorContent = () => (
+  const renderRecipeSelectorContent = () => {
+    const filteredRecipes = recipes.filter(item => 
+        item.title?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    return (
       <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
          <View style={[styles.modalHeader, { borderBottomColor: colors.gray[200] }]}>
             <TouchableOpacity onPress={() => setShowRecipeSelector(false)}>
@@ -793,19 +800,45 @@ export default function CalorieScreen() {
             <Text style={[styles.modalTitle, { fontFamily: fonts.bold, color: textColors.primary }]}>Select Recipe</Text>
             <View style={{width: 24}} />
         </View>
+        
+        <View style={{paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.gray[100]}}>
+            <View style={{flexDirection: 'row', alignItems: 'center', backgroundColor: colors.gray[100], borderRadius: 8, paddingHorizontal: 12}}>
+                <Ionicons name="search" size={20} color={colors.gray[400]} />
+                <TextInput
+                    style={{flex: 1, paddingVertical: 10, paddingHorizontal: 8, fontFamily: fonts.regular, color: textColors.primary}}
+                    placeholder="Search recipes..."
+                    placeholderTextColor={colors.gray[400]}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    autoCorrect={false}
+                />
+                {searchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setSearchQuery('')}>
+                        <Ionicons name="close-circle" size={18} color={colors.gray[400]} />
+                    </TouchableOpacity>
+                )}
+            </View>
+        </View>
+
          {loadingRecipes ? (
              <ActivityIndicator style={{marginTop: 40}} color={colors.primary} />
          ) : (
              <FlatList
-                data={recipes}
+                data={filteredRecipes}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={renderRecipeItem}
                 contentContainerStyle={{ padding: 16 }}
                 ItemSeparatorComponent={() => <View style={{height: 1}} />}
+                ListEmptyComponent={
+                    <Text style={{textAlign: 'center', marginTop: 20, color: textColors.secondary, fontFamily: fonts.regular}}>
+                        No recipes found
+                    </Text>
+                }
              />
          )}
     </View>
   );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
