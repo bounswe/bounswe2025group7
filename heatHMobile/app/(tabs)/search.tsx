@@ -13,15 +13,21 @@ import {
 import { useRouter } from 'expo-router';
 import { semanticSearchService } from '@/services/semanticSearchService';
 import { useThemeColors } from '../../hooks/useThemeColors';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
+import { translateTextContent, mapLanguageToRecipeTarget } from '../../services/translationService';
+import { formatPrice } from '../../services/currencyService';
 
 export default function SearchScreen() {
   const { colors, textColors, borderColors, fonts, lineHeights } = useThemeColors();
+  const { t } = useTranslation();
   const MIN_QUERY_LENGTH = 3;
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [translatedTitles, setTranslatedTitles] = useState<Map<number, string>>(new Map());
 
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const requestId = useRef(0);
@@ -65,7 +71,7 @@ export default function SearchScreen() {
           setResults(data.results || data || []);
         } catch (err: any) {
           if (currentRequest !== requestId.current) return;
-          setError(err?.response?.data?.message || 'Failed to search recipes');
+          setError(err?.response?.data?.message || t('search.failedToSearch'));
           console.error('Search error:', err);
         } finally {
           if (currentRequest !== requestId.current) return;
@@ -81,6 +87,44 @@ export default function SearchScreen() {
       }
     };
   }, [query]);
+
+  // Translate recipe titles when results or language changes
+  useEffect(() => {
+    if (results.length === 0) {
+      setTranslatedTitles(new Map());
+      return;
+    }
+
+    let cancelled = false;
+    const translateTitles = async () => {
+      const targetLang = mapLanguageToRecipeTarget(i18n.language);
+      const translations = new Map<number, string>();
+
+      await Promise.all(
+        results.map(async (recipe) => {
+          try {
+            if (recipe.title) {
+              const translated = await translateTextContent(recipe.title, targetLang);
+              if (!cancelled) {
+                translations.set(recipe.id, translated);
+              }
+            }
+          } catch (error) {
+            // Ignore translation errors
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setTranslatedTitles(translations);
+      }
+    };
+
+    translateTitles();
+    return () => {
+      cancelled = true;
+    };
+  }, [results, i18n.language]);
 
   const renderRecipeItem = ({ item }: { item: any }) => (
     <TouchableOpacity
@@ -99,18 +143,18 @@ export default function SearchScreen() {
           />
         )}
         <View style={styles.recipeInfo}>
-          <Text style={[styles.recipeTitle, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{item.title || 'Untitled Recipe'}</Text>
-          {item.tag && <Text style={[styles.recipeTag, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>Tag: {item.tag}</Text>}
-          {item.type && <Text style={[styles.recipeType, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>Type: {item.type}</Text>}
+          <Text style={[styles.recipeTitle, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{translatedTitles.get(item.id) ?? item.title ?? t('recipes.untitledRecipe')}</Text>
+          {item.tag && <Text style={[styles.recipeTag, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{t('search.tag')}: {item.tag}</Text>}
+          {item.type && <Text style={[styles.recipeType, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{t('search.type')}: {item.type}</Text>}
           {item.totalCalorie !== undefined && (
-            <Text style={[styles.recipeCalories, { color: colors.warning }]}>Calories: {item.totalCalorie}</Text>
+            <Text style={[styles.recipeCalories, { color: colors.warning }]}>{t('search.calories')}: {item.totalCalorie}</Text>
           )}
           {item.price !== undefined && (
-            <Text style={[styles.recipePrice, { color: colors.success }]}>Price: ${item.price.toFixed(2)}</Text>
+            <Text style={[styles.recipePrice, { color: colors.success }]}>{t('search.price')}: {formatPrice(item.price, i18n.language)}</Text>
           )}
           {item.similarity !== undefined && (
             <Text style={[styles.recipeSimilarity, { color: colors.info }]}>
-              Match: {(item.similarity * 100).toFixed(1)}%
+              {t('search.match')}: {(item.similarity * 100).toFixed(1)}%
             </Text>
           )}
         </View>
@@ -125,7 +169,7 @@ export default function SearchScreen() {
       <View style={[styles.searchContainer, { backgroundColor: colors.white, borderBottomColor: borderColors.light }]}>
         <TextInput
           style={[styles.searchInput, { borderColor: borderColors.medium, backgroundColor: colors.white, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
-          placeholder="Search for recipes..."
+          placeholder={t('search.placeholder')}
           value={query}
           onChangeText={setQuery}
           returnKeyType="search"
@@ -143,13 +187,13 @@ export default function SearchScreen() {
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Searching recipes...</Text>
+          <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('search.searching')}</Text>
         </View>
       )}
 
       {!loading && results.length === 0 && trimmed.length >= MIN_QUERY_LENGTH && !error && (
         <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyText, { color: textColors.disabled, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No recipes found. Try a different search.</Text>
+          <Text style={[styles.emptyText, { color: textColors.disabled, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('search.noResults')}</Text>
         </View>
       )}
 
@@ -166,7 +210,7 @@ export default function SearchScreen() {
       {!trimmed && !loading && results.length === 0 && (
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyText, { color: textColors.disabled, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
-            Enter a search query to find recipes using semantic search
+            {t('search.enterQuery')}
           </Text>
         </View>
       )}
@@ -174,7 +218,7 @@ export default function SearchScreen() {
       {trimmed.length > 0 && trimmed.length < MIN_QUERY_LENGTH && !loading && (
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyText, { color: textColors.disabled, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
-            Type at least {MIN_QUERY_LENGTH} characters to search
+            {t('search.minCharacters', { count: MIN_QUERY_LENGTH })}
           </Text>
         </View>
       )}

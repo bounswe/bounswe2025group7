@@ -6,6 +6,8 @@ import { useRouter } from 'expo-router';
 import { authService } from '../services/authService';
 import { interestFormService } from '../services/interestFormService';
 import { colors, textColors, borderColors } from '../constants/theme';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 
 interface InterestFormData {
   name: string;
@@ -19,6 +21,7 @@ interface InterestFormData {
 
 export default function FirstLoginProfileScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<InterestFormData>({
     name: '',
@@ -72,10 +75,16 @@ export default function FirstLoginProfileScreen() {
   };
 
   const formatDisplayDate = (dateString: string) => {
-    if (!dateString) return 'Select date of birth';
+    if (!dateString) return t('profile.selectDateOfBirth');
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
+      const lang = i18n.language || 'en';
+      // Map i18n language codes to locale codes
+      let locale = 'en-US';
+      if (lang.startsWith('tr')) locale = 'tr-TR';
+      else if (lang.startsWith('ja')) locale = 'ja-JP';
+      
+      return date.toLocaleDateString(locale, {
         year: 'numeric',
         month: 'long',
         day: 'numeric'

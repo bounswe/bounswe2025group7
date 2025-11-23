@@ -2,9 +2,11 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '../../hooks/useThemeColors';
+import { useTranslation } from 'react-i18next';
 
 export default function TabLayout() {
   const { colors, fonts, lineHeights } = useThemeColors();
+  const { t } = useTranslation();
   
   return (
     <Tabs
@@ -35,7 +37,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'HeatH',
-          tabBarLabel: 'Home',
+          tabBarLabel: t('tabs.home'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
@@ -44,8 +46,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="search"
         options={{
-          title: 'Search',
-          tabBarLabel: 'Search',
+          title: t('tabs.search'),
+          tabBarLabel: t('tabs.search'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search" size={size} color={color} />
           ),
@@ -54,8 +56,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="saved"
         options={{
-          title: 'Saved Recipes',
-          tabBarLabel: 'Saved',
+          title: t('recipes.savedRecipes'),
+          tabBarLabel: t('tabs.saved'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bookmark" size={size} color={color} />
           ),
@@ -64,8 +66,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="myRecipe"
         options={{
-          title: 'My Recipes',
-          tabBarLabel: 'My Recipes',
+          title: t('recipes.myRecipes'),
+          tabBarLabel: t('tabs.myRecipe'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="restaurant" size={size} color={color} />
           ),
@@ -74,8 +76,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="calorie"
         options={{
-          title: 'Calorie Tracking',
-          tabBarLabel: 'Calories',
+          title: t('tabs.calorie'),
+          tabBarLabel: t('tabs.calorie'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="nutrition" size={size} color={color} />
           ),
@@ -84,8 +86,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
-          tabBarLabel: 'Profile',
+          title: t('profile.title'),
+          tabBarLabel: t('tabs.profile'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),

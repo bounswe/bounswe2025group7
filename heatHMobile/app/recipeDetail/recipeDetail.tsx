@@ -9,6 +9,7 @@ import { recipeService } from '../../services/recipeService';
 import ShareModal from '../../components/ShareModal';
 import { useFocusEffect } from '@react-navigation/native';
 import { translateRecipeContent, mapLanguageToRecipeTarget } from '../../services/translationService';
+import { formatPrice } from '../../services/currencyService';
 
 type Ingredient = string | { name: string; amount?: string | number; quantity?: number };
 
@@ -61,23 +62,9 @@ const RecipeDetail = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [translated, setTranslated] = useState<Recipe | null>(null);
-  const [activeLang, setActiveLang] = useState<'en' | 'tr' | 'ja'>('en');
 
-  // Keep i18n language in sync with local selection
-  useEffect(() => {
-    const target = mapLanguageToRecipeTarget(activeLang);
-    if (i18n.language !== target) {
-      i18n.changeLanguage(target);
-    }
-  }, [activeLang, i18n]);
-
-  // Reset language to English whenever recipe changes
-  useEffect(() => {
-    setActiveLang('en');
-  }, [effectiveId]);
-
-  // Get target language from local state
-  const targetLanguage = activeLang;
+  // Get target language from global i18n setting
+  const targetLanguage = mapLanguageToRecipeTarget(i18n.language);
 
   // Nutrition label translation helper
   const getNutritionLabel = (key: string): string => {
@@ -183,12 +170,13 @@ const RecipeDetail = () => {
     }
   };
 
-  // Auto-translate when recipe or language changes
+  // Auto-translate when recipe or global language changes
   useEffect(() => {
     if (!recipe) return;
 
     let cancelled = false;
     const translateContent = async () => {
+      const currentTargetLanguage = mapLanguageToRecipeTarget(i18n.language);
       setTranslating(true);
       try {
         const t = await translateRecipeContent(
@@ -201,17 +189,18 @@ const RecipeDetail = () => {
             ingredients: recipe.ingredients,
             instructions: recipe.instructions,
           },
-          targetLanguage
+          currentTargetLanguage
         );
         if (!cancelled) {
+          // Ensure all translated content is used, with fallback to original
           setTranslated({
             ...recipe,
-            title: t.title ?? recipe.title,
-            description: t.description ?? recipe.description,
-            tag: t.tag ?? recipe.tag,
-            type: t.type ?? recipe.type,
-            ingredients: t.ingredients ?? recipe.ingredients,
-            instructions: t.instructions ?? recipe.instructions,
+            title: t.title || recipe.title,
+            description: t.description || recipe.description,
+            tag: t.tag || recipe.tag,
+            type: t.type || recipe.type,
+            ingredients: t.ingredients || recipe.ingredients,
+            instructions: t.instructions || recipe.instructions,
           });
         }
       } catch (error) {
@@ -230,7 +219,7 @@ const RecipeDetail = () => {
     return () => {
       cancelled = true;
     };
-  }, [recipe, targetLanguage, effectiveId]);
+  }, [recipe, i18n.language, effectiveId]);
 
   if (loading) {
     return (
@@ -298,32 +287,8 @@ const RecipeDetail = () => {
     <ScrollView contentContainerStyle={[styles.screen, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <Hero />
 
-      {/* Language selector */}
-      <View style={[styles.cardRow, { paddingHorizontal: 12, marginBottom: 8 }]}>
-        {([
-          { code: 'en', labelKey: 'common.english' },
-          { code: 'tr', labelKey: 'common.turkish' },
-          { code: 'ja', labelKey: 'common.japanese' },
-        ] as const).map(({ code, labelKey }) => {
-          const active = activeLang === code;
-          return (
-            <TouchableOpacity
-              key={code}
-              onPress={() => {
-                setActiveLang(code);
-              }}
-              style={[
-                styles.langChip,
-                { borderColor: colors.gray[200], backgroundColor: active ? colors.primary : colors.white },
-              ]}
-            >
-              <Text style={[styles.langChipText, { color: active ? colors.primaryContrast : textColors.primary }]}>{t(labelKey)}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
       {translating ? (
-        <View style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
+        <View style={{ paddingHorizontal: 12, paddingBottom: 8, paddingTop: 8 }}>
           <Text style={{ color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }}>{t('recipes.translating')}</Text>
         </View>
       ) : null}
@@ -340,7 +305,7 @@ const RecipeDetail = () => {
         </View>
         <View style={[styles.miniCard, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
           <Text style={[styles.miniLabel, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.sm }]}>{t('recipes.price')}</Text>
-          <Text style={[styles.miniValue, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.base }]}>{recipe.price != null ? `$${recipe.price}` : '-'}</Text>
+          <Text style={[styles.miniValue, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.base }]}>{formatPrice(recipe.price, i18n.language)}</Text>
         </View>
       </View>
 
