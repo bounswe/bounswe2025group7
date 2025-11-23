@@ -3,10 +3,12 @@ import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Touchable
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { recipeService } from '../../services/recipeService';
 import ShareModal from '../../components/ShareModal';
 import { useFocusEffect } from '@react-navigation/native';
+import { translateRecipeContent, mapLanguageToRecipeTarget } from '../../services/translationService';
 
 type Ingredient = string | { name: string; amount?: string | number; quantity?: number };
 
@@ -26,43 +28,16 @@ type Recipe = {
   nutritionData?: Record<string, any>;
 };
 
-// Pretty labels and units for nutrition keys
-const labelMap: Record<string, string> = {
-  calories: 'Calories',
-  calorie: 'Calories',
-  energy: 'Energy',
-  protein: 'Protein',
-  fat: 'Fat',
-  fats: 'Fat',
-  carbs: 'Carbs',
-  carbohydrate: 'Carbs',
-  carbohydrates: 'Carbs',
-  sugar: 'Sugar',
-  sugars: 'Sugar',
-  fiber: 'Fiber',
-  sodium: 'Sodium',
-  salt: 'Salt',
-};
+// Helper functions for nutrition formatting
 const unitFor = (key: string) => {
   const k = key.toLowerCase();
   if (k.includes('cal')) return 'kcal';
   if (k.includes('sodium') || k.includes('salt')) return 'mg';
   return 'g';
 };
-const prettyLabel = (key: string) => labelMap[key.toLowerCase()] ?? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 const formatNum = (n: number) => {
   const fixed = Number.isInteger(n) ? String(n) : n.toFixed(2);
   return fixed.replace(/\.00$/, '');
-};
-const normalizeNutrition = (data: any) => {
-  const pairs: [string, any][] = Array.isArray(data) ? data.map((v: any, i: number) => [String(i + 1), v]) : Object.entries(data ?? {});
-  return pairs.map(([k, v]) => {
-    if (typeof v === 'number') return { label: prettyLabel(k), value: `${formatNum(v)} ${unitFor(k)}` };
-    const parsed = typeof v === 'string' && !isNaN(Number(v)) ? Number(v) : null;
-    return parsed !== null
-      ? { label: prettyLabel(k), value: `${formatNum(parsed)} ${unitFor(k)}` }
-      : { label: prettyLabel(k), value: String(v) };
-  });
 };
 
 const displayIngredient = (ing: Ingredient) => {
@@ -75,6 +50,7 @@ const RecipeDetail = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, textColors, fonts, lineHeights } = useThemeColors();
+  const { t, i18n } = useTranslation();
   const { recipeId, id } = useLocalSearchParams<{ recipeId?: string; id?: string }>();
   const effectiveId = (recipeId ?? id) as string;
 
@@ -83,6 +59,59 @@ const RecipeDetail = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [translated, setTranslated] = useState<Recipe | null>(null);
+  const [activeLang, setActiveLang] = useState<'en' | 'tr' | 'ja'>('en');
+
+  // Keep i18n language in sync with local selection
+  useEffect(() => {
+    const target = mapLanguageToRecipeTarget(activeLang);
+    if (i18n.language !== target) {
+      i18n.changeLanguage(target);
+    }
+  }, [activeLang, i18n]);
+
+  // Reset language to English whenever recipe changes
+  useEffect(() => {
+    setActiveLang('en');
+  }, [effectiveId]);
+
+  // Get target language from local state
+  const targetLanguage = activeLang;
+
+  // Nutrition label translation helper
+  const getNutritionLabel = (key: string): string => {
+    // Try different key variations
+    const variations = [
+      key.toLowerCase(), // lowercase: "vitamina"
+      key, // original: "VitaminA"
+      key.replace(/([A-Z])/g, '_$1').toLowerCase(), // camelCase to snake_case: "vitamin_a"
+      key.replace(/_/g, '').toLowerCase(), // snake_case to lowercase: "vitamin_a" -> "vitamina"
+    ];
+
+    for (const variation of variations) {
+      const translationKey = `recipes.nutritionLabels.${variation}`;
+      const translated = t(translationKey, { defaultValue: '' });
+      if (translated && translated !== translationKey) {
+        return translated;
+      }
+    }
+
+    // Fallback to formatted key name
+    return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
+
+  // Normalize nutrition data with translations
+  const normalizeNutrition = (data: any) => {
+    const pairs: [string, any][] = Array.isArray(data) ? data.map((v: any, i: number) => [String(i + 1), v]) : Object.entries(data ?? {});
+    return pairs.map(([k, v]) => {
+      if (typeof v === 'number') return { label: getNutritionLabel(k), value: `${formatNum(v)} ${unitFor(k)}` };
+      const parsed = typeof v === 'string' && !isNaN(Number(v)) ? Number(v) : null;
+      return parsed !== null
+        ? { label: getNutritionLabel(k), value: `${formatNum(parsed)} ${unitFor(k)}` }
+        : { label: getNutritionLabel(k), value: String(v) };
+    });
+  };
 
   const onBack = () => {
     if ((router as any).canGoBack?.()) router.back();
@@ -141,7 +170,7 @@ const RecipeDetail = () => {
         await recipeService.saveRecipe(rid);
       }
     } catch {
-      Alert.alert('Error', 'Could not update saved state. Please try again.');
+      Alert.alert(t('common.error'), t('recipes.saveError'));
     }
     // Always re-check from server to reflect true state
     try {
@@ -154,11 +183,60 @@ const RecipeDetail = () => {
     }
   };
 
+  // Auto-translate when recipe or language changes
+  useEffect(() => {
+    if (!recipe) return;
+
+    let cancelled = false;
+    const translateContent = async () => {
+      setTranslating(true);
+      try {
+        const t = await translateRecipeContent(
+          String(recipe.id ?? effectiveId),
+          {
+            title: recipe.title,
+            description: recipe.description,
+            tag: recipe.tag,
+            type: recipe.type,
+            ingredients: recipe.ingredients,
+            instructions: recipe.instructions,
+          },
+          targetLanguage
+        );
+        if (!cancelled) {
+          setTranslated({
+            ...recipe,
+            title: t.title ?? recipe.title,
+            description: t.description ?? recipe.description,
+            tag: t.tag ?? recipe.tag,
+            type: t.type ?? recipe.type,
+            ingredients: t.ingredients ?? recipe.ingredients,
+            instructions: t.instructions ?? recipe.instructions,
+          });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          // On error, just show original content
+          setTranslated(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setTranslating(false);
+        }
+      }
+    };
+
+    translateContent();
+    return () => {
+      cancelled = true;
+    };
+  }, [recipe, targetLanguage, effectiveId]);
+
   if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: textColors.secondary, marginTop: 8, fontFamily: fonts.regular, lineHeight: lineHeights.base }}>Loading...</Text>
+        <Text style={{ color: textColors.secondary, marginTop: 8, fontFamily: fonts.regular, lineHeight: lineHeights.base }}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -166,7 +244,7 @@ const RecipeDetail = () => {
   if (!recipe) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <Text style={{ color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }}>Recipe not found.</Text>
+        <Text style={{ color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }}>{t('recipes.recipeNotFound')}</Text>
         <TouchableOpacity style={[styles.backBtn, { position: 'relative', marginTop: 12, backgroundColor: colors.primary }]} onPress={onBack}>
           <Ionicons name="arrow-back" size={20} color={colors.primaryContrast} />
         </TouchableOpacity>
@@ -184,10 +262,10 @@ const RecipeDetail = () => {
 
       {/* Overlay for title and tag */}
       <View style={styles.heroOverlay}>
-        <Text numberOfLines={2} style={[styles.heroTitle, { color: colors.white, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>{recipe.title}</Text>
-        {!!recipe.tag && (
+        <Text numberOfLines={2} style={[styles.heroTitle, { color: colors.white, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>{translated?.title ?? recipe.title}</Text>
+        {!!(translated?.tag ?? recipe.tag) && (
           <View style={[styles.tag, { backgroundColor: colors.primary }]}>
-            <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.tagText, { color: colors.primaryContrast, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{recipe.tag}</Text>
+            <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.tagText, { color: colors.primaryContrast, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{translated?.tag ?? recipe.tag}</Text>
           </View>
         )}
       </View>
@@ -220,67 +298,97 @@ const RecipeDetail = () => {
     <ScrollView contentContainerStyle={[styles.screen, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <Hero />
 
+      {/* Language selector */}
+      <View style={[styles.cardRow, { paddingHorizontal: 12, marginBottom: 8 }]}>
+        {([
+          { code: 'en', labelKey: 'common.english' },
+          { code: 'tr', labelKey: 'common.turkish' },
+          { code: 'ja', labelKey: 'common.japanese' },
+        ] as const).map(({ code, labelKey }) => {
+          const active = activeLang === code;
+          return (
+            <TouchableOpacity
+              key={code}
+              onPress={() => {
+                setActiveLang(code);
+              }}
+              style={[
+                styles.langChip,
+                { borderColor: colors.gray[200], backgroundColor: active ? colors.primary : colors.white },
+              ]}
+            >
+              <Text style={[styles.langChipText, { color: active ? colors.primaryContrast : textColors.primary }]}>{t(labelKey)}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+      {translating ? (
+        <View style={{ paddingHorizontal: 12, paddingBottom: 8 }}>
+          <Text style={{ color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }}>{t('recipes.translating')}</Text>
+        </View>
+      ) : null}
+
       {/* Summary row like MyRecipe cards */}
       <View style={styles.cardRow}>
         <View style={[styles.miniCard, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
-          <Text style={[styles.miniLabel, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.sm }]}>Calories</Text>
+          <Text style={[styles.miniLabel, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.sm }]}>{t('recipes.calories')}</Text>
           <Text style={[styles.miniValue, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.base }]}>{recipe.totalCalorie ?? '-'}</Text>
         </View>
         <View style={[styles.miniCard, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
-          <Text style={[styles.miniLabel, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.sm }]}>Type</Text>
-          <Text style={[styles.miniValue, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.base }]}>{recipe.type ?? '-'}</Text>
+          <Text style={[styles.miniLabel, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.sm }]}>{t('recipes.type')}</Text>
+          <Text style={[styles.miniValue, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.base }]}>{translated?.type ?? recipe.type ?? '-'}</Text>
         </View>
         <View style={[styles.miniCard, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
-          <Text style={[styles.miniLabel, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.sm }]}>Price</Text>
+          <Text style={[styles.miniLabel, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.sm }]}>{t('recipes.price')}</Text>
           <Text style={[styles.miniValue, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.base }]}>{recipe.price != null ? `$${recipe.price}` : '-'}</Text>
         </View>
       </View>
 
-      {!!recipe.description && (
+      {!!(translated?.description ?? recipe.description) && (
         <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
-          <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>Description</Text>
-          <Text style={[styles.bodyText, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{recipe.description}</Text>
+          <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>{t('recipes.description')}</Text>
+          <Text style={[styles.bodyText, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{translated?.description ?? recipe.description}</Text>
         </View>
       )}
 
       <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
-        <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>Ingredients</Text>
-        {recipe.ingredients?.length ? (
-          recipe.ingredients.map((ing, i) => (
+        <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>{t('recipes.ingredients')}</Text>
+        {(translated?.ingredients ?? recipe.ingredients)?.length ? (
+          (translated?.ingredients ?? recipe.ingredients)!.map((ing, i) => (
             <Text key={`ing-${i}`} style={[styles.listItem, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>• {displayIngredient(ing)}</Text>
           ))
         ) : (
-          <Text style={[styles.muted, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No ingredients listed.</Text>
+          <Text style={[styles.muted, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.noIngredients')}</Text>
         )}
       </View>
 
       <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
-        <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>Instructions</Text>
-        {recipe.instructions?.length ? (
-          recipe.instructions.map((ins, i) => (
+        <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>{t('recipes.instructions')}</Text>
+        {(translated?.instructions ?? recipe.instructions)?.length ? (
+          (translated?.instructions ?? recipe.instructions)!.map((ins, i) => (
             <Text key={`ins-${i}`} style={[styles.listItem, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{i + 1}. {String(ins)}</Text>
           ))
         ) : (
-          <Text style={[styles.muted, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No instructions provided.</Text>
+          <Text style={[styles.muted, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.noInstructions')}</Text>
         )}
       </View>
 
       {(recipe.healthinessScore != null || recipe.easinessScore != null) && (
         <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
-          <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>Scores</Text>
+          <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>{t('recipes.scores')}</Text>
           <View style={{ flexDirection: 'row', gap: 16 }}>
-            <Text style={[styles.kv, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Healthiness: {recipe.healthinessScore ?? '-'}</Text>
-            <Text style={[styles.kv, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Easiness: {recipe.easinessScore ?? '-'}</Text>
+            <Text style={[styles.kv, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.healthiness')}: {recipe.healthinessScore ?? '-'}</Text>
+            <Text style={[styles.kv, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.easiness')}: {recipe.easinessScore ?? '-'}</Text>
           </View>
         </View>
       )}
 
       {!!recipe.nutritionData && (
         <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
-          <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>Nutrition</Text>
+          <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>{t('recipes.nutrition')}</Text>
           {(() => {
             const items = normalizeNutrition(recipe.nutritionData);
-            if (!items.length) return <Text style={[styles.muted, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No nutrition data.</Text>;
+            if (!items.length) return <Text style={[styles.muted, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.noNutritionData')}</Text>;
             return (
               <View>
                 {items.map(({ label, value }, idx) => (
@@ -360,6 +468,14 @@ const styles = StyleSheet.create({
 
   // Cards
   cardRow: { paddingHorizontal: 12, flexDirection: 'row', gap: 12, marginBottom: 4 },
+  langChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginRight: 8,
+  },
+  langChipText: { fontSize: 13, fontWeight: '600' },
   miniCard: {
     flex: 1,
     backgroundColor: '#fff',

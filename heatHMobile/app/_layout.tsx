@@ -3,6 +3,7 @@ import React from 'react';
 import { ThemeProvider } from '../context/ThemeContext';
 import { useFonts } from '../hooks/useFonts';
 import { View, Text, ActivityIndicator } from 'react-native';
+import '../i18n'; // Initialize i18n
 
 export default function RootLayout() {
   const fontsLoaded = useFonts();
