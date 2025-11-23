@@ -64,7 +64,7 @@
   },
   "recipes": {
     "description": "説明",
-    "ingredients": "材料",
+    "ingredients": "材料 (グラム)",
     "instructions": "手順",
     "calories": "カロリー",
     "type": "種類",
@@ -199,7 +199,7 @@
     "searching": "レシピを検索中...",
     "noResults": "レシピが見つかりませんでした。別の検索をお試しください。",
     "enterQuery": "セマンティック検索を使用してレシピを見つけるには、検索クエリを入力してください",
-    "minCharacters": "検索するには少なくとも{count}文字入力してください",
+    "minCharacters": "検索するには少なくとも3文字入力してください",
     "tag": "タグ",
     "type": "種類",
     "calories": "カロリー",

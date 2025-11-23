@@ -28,6 +28,8 @@ export default function SearchScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [translatedTitles, setTranslatedTitles] = useState<Map<number, string>>(new Map());
+  const [translatedTags, setTranslatedTags] = useState<Map<number, string>>(new Map());
+  const [translatedTypes, setTranslatedTypes] = useState<Map<number, string>>(new Map());
 
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const requestId = useRef(0);
@@ -88,17 +90,21 @@ export default function SearchScreen() {
     };
   }, [query]);
 
-  // Translate recipe titles when results or language changes
+  // Translate recipe titles, tags, and types when results or language changes
   useEffect(() => {
     if (results.length === 0) {
       setTranslatedTitles(new Map());
+      setTranslatedTags(new Map());
+      setTranslatedTypes(new Map());
       return;
     }
 
     let cancelled = false;
-    const translateTitles = async () => {
+    const translateContent = async () => {
       const targetLang = mapLanguageToRecipeTarget(i18n.language);
-      const translations = new Map<number, string>();
+      const titleTranslations = new Map<number, string>();
+      const tagTranslations = new Map<number, string>();
+      const typeTranslations = new Map<number, string>();
 
       await Promise.all(
         results.map(async (recipe) => {
@@ -106,7 +112,19 @@ export default function SearchScreen() {
             if (recipe.title) {
               const translated = await translateTextContent(recipe.title, targetLang);
               if (!cancelled) {
-                translations.set(recipe.id, translated);
+                titleTranslations.set(recipe.id, translated);
+              }
+            }
+            if (recipe.tag) {
+              const translated = await translateTextContent(recipe.tag, targetLang);
+              if (!cancelled) {
+                tagTranslations.set(recipe.id, translated);
+              }
+            }
+            if (recipe.type) {
+              const translated = await translateTextContent(recipe.type, targetLang);
+              if (!cancelled) {
+                typeTranslations.set(recipe.id, translated);
               }
             }
           } catch (error) {
@@ -116,11 +134,13 @@ export default function SearchScreen() {
       );
 
       if (!cancelled) {
-        setTranslatedTitles(translations);
+        setTranslatedTitles(titleTranslations);
+        setTranslatedTags(tagTranslations);
+        setTranslatedTypes(typeTranslations);
       }
     };
 
-    translateTitles();
+    translateContent();
     return () => {
       cancelled = true;
     };
@@ -144,8 +164,8 @@ export default function SearchScreen() {
         )}
         <View style={styles.recipeInfo}>
           <Text style={[styles.recipeTitle, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{translatedTitles.get(item.id) ?? item.title ?? t('recipes.untitledRecipe')}</Text>
-          {item.tag && <Text style={[styles.recipeTag, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{t('search.tag')}: {item.tag}</Text>}
-          {item.type && <Text style={[styles.recipeType, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{t('search.type')}: {item.type}</Text>}
+          {item.tag && <Text style={[styles.recipeTag, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{t('search.tag')}: {translatedTags.get(item.id) ?? item.tag}</Text>}
+          {item.type && <Text style={[styles.recipeType, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{t('search.type')}: {translatedTypes.get(item.id) ?? item.type}</Text>}
           {item.totalCalorie !== undefined && (
             <Text style={[styles.recipeCalories, { color: colors.warning }]}>{t('search.calories')}: {item.totalCalorie}</Text>
           )}
@@ -218,7 +238,7 @@ export default function SearchScreen() {
       {trimmed.length > 0 && trimmed.length < MIN_QUERY_LENGTH && !loading && (
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyText, { color: textColors.disabled, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
-            {t('search.minCharacters', { count: MIN_QUERY_LENGTH })}
+            {t('search.minCharacters')}
           </Text>
         </View>
       )}
