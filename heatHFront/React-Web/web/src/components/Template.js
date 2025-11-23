@@ -139,7 +139,7 @@ const Template = ({ children }) => {
               color={location.pathname === '/calorie-tracking' ? 'secondary' : 'inherit'}
               startIcon={<MonitorWeightIcon />}
             >
-              Calorie Tracking
+              {t('calorieTracking.title')}
             </NavButton>
 
             <LanguageSwitcher variant="icon" />
