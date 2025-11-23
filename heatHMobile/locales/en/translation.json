@@ -64,7 +64,7 @@
   },
   "recipes": {
     "description": "Description",
-    "ingredients": "Ingredients",
+    "ingredients": "Ingredients (gram)",
     "instructions": "Instructions",
     "calories": "Calories",
     "type": "Type",
@@ -199,7 +199,7 @@
     "searching": "Searching recipes...",
     "noResults": "No recipes found. Try a different search.",
     "enterQuery": "Enter a search query to find recipes using semantic search",
-    "minCharacters": "Type at least {count} characters to search",
+    "minCharacters": "Type at least 3 characters to search",
     "tag": "Tag",
     "type": "Type",
     "calories": "Calories",

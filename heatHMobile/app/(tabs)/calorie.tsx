@@ -24,6 +24,7 @@ import { recipeService } from '../../services/recipeService';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { translateTextContent, mapLanguageToRecipeTarget } from '../../services/translationService';
 
 export default function CalorieScreen() {
   const { colors, textColors, fonts } = useThemeColors();
@@ -52,6 +53,9 @@ export default function CalorieScreen() {
   const [showRecipeSelector, setShowRecipeSelector] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [recipeDetails, setRecipeDetails] = useState<Record<number, any>>({});
+  const [translatedRecipeNames, setTranslatedRecipeNames] = useState<Map<number, string>>(new Map());
+  const [translatedSelectedRecipeTitle, setTranslatedSelectedRecipeTitle] = useState<string | null>(null);
+  const [translatedRecipeTitles, setTranslatedRecipeTitles] = useState<Map<number, string>>(new Map());
   const [dailyMacros, setDailyMacros] = useState({ p: 0, f: 0, c: 0 });
 
   // Chart State
@@ -240,6 +244,111 @@ export default function CalorieScreen() {
         }
     }
   }, [selectedRecipe, eatenDate, selectedDate, trackingData]);
+
+  // Translate recipe names when tracking data or language changes
+  useEffect(() => {
+    if (trackingData.length === 0) {
+      setTranslatedRecipeNames(new Map());
+      return;
+    }
+
+    let cancelled = false;
+    const translateNames = async () => {
+      const targetLang = mapLanguageToRecipeTarget(i18nHook.language);
+      const translations = new Map<number, string>();
+
+      await Promise.all(
+        trackingData.map(async (item: any) => {
+          try {
+            const recipeId = item.recipeId || item.id;
+            if (recipeId && item.name) {
+              const translated = await translateTextContent(item.name, targetLang);
+              if (!cancelled) {
+                translations.set(recipeId, translated);
+              }
+            }
+          } catch (error) {
+            // Ignore translation errors
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setTranslatedRecipeNames(translations);
+      }
+    };
+
+    translateNames();
+    return () => {
+      cancelled = true;
+    };
+  }, [trackingData, i18nHook.language]);
+
+  // Translate selected recipe title when it changes
+  useEffect(() => {
+    if (!selectedRecipe?.title) {
+      setTranslatedSelectedRecipeTitle(null);
+      return;
+    }
+
+    let cancelled = false;
+    const translateTitle = async () => {
+      const targetLang = mapLanguageToRecipeTarget(i18nHook.language);
+      try {
+        const translated = await translateTextContent(selectedRecipe.title, targetLang);
+        if (!cancelled) {
+          setTranslatedSelectedRecipeTitle(translated);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setTranslatedSelectedRecipeTitle(null);
+        }
+      }
+    };
+
+    translateTitle();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRecipe?.title, i18nHook.language]);
+
+  // Translate recipe titles in selector when recipes or language changes
+  useEffect(() => {
+    if (recipes.length === 0) {
+      setTranslatedRecipeTitles(new Map());
+      return;
+    }
+
+    let cancelled = false;
+    const translateTitles = async () => {
+      const targetLang = mapLanguageToRecipeTarget(i18nHook.language);
+      const translations = new Map<number, string>();
+
+      await Promise.all(
+        recipes.map(async (recipe: any) => {
+          try {
+            if (recipe.title && recipe.id) {
+              const translated = await translateTextContent(recipe.title, targetLang);
+              if (!cancelled) {
+                translations.set(recipe.id, translated);
+              }
+            }
+          } catch (error) {
+            // Ignore translation errors
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setTranslatedRecipeTitles(translations);
+      }
+    };
+
+    translateTitles();
+    return () => {
+      cancelled = true;
+    };
+  }, [recipes, i18nHook.language]);
 
   const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0];
@@ -500,7 +609,7 @@ export default function CalorieScreen() {
           <View style={styles.cardInfo}>
             <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginRight: 8}}>
                 <Text style={[styles.cardTitle, { fontFamily: fonts.bold, color: textColors.primary, flex: 1 }]} numberOfLines={1}>
-                  {item.name || 'Unknown Recipe'}
+                  {translatedRecipeNames.get(item.recipeId || item.id) ?? (item.name || 'Unknown Recipe')}
                 </Text>
                 <View style={{backgroundColor: colors.gray[100], paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4}}>
                      <Text style={{fontSize: 10, fontFamily: fonts.medium, color: textColors.secondary}}>
@@ -559,7 +668,7 @@ export default function CalorieScreen() {
              </View>
           )}
           <View style={{flex: 1}}>
-              <Text style={[styles.recipeItemText, { fontFamily: fonts.medium, color: textColors.primary }]}>{item.title}</Text>
+              <Text style={[styles.recipeItemText, { fontFamily: fonts.medium, color: textColors.primary }]}>{translatedRecipeTitles.get(item.id) ?? item.title}</Text>
               <Text style={[styles.recipeItemCal, { fontFamily: fonts.regular, color: textColors.secondary }]}>
                   {item.totalCalorie || item.calories || item.calorie || 0} kcal
               </Text>
@@ -763,7 +872,7 @@ export default function CalorieScreen() {
                                   <Image source={{uri: selectedImageUri}} style={{width: 30, height: 30, borderRadius: 4, marginRight: 8}} />
                               )}
                               <Text style={{ fontFamily: fonts.regular, color: textColors.primary, flex: 1 }} numberOfLines={1}>
-                                  {selectedRecipe.title}
+                                  {translatedSelectedRecipeTitle ?? selectedRecipe.title}
                               </Text>
                           </View>
                       ) : (

@@ -64,7 +64,7 @@
   },
   "recipes": {
     "description": "Açıklama",
-    "ingredients": "Malzemeler",
+    "ingredients": "Malzemeler (gram)",
     "instructions": "Talimatlar",
     "calories": "Kalori",
     "type": "Tür",
@@ -199,7 +199,7 @@
     "searching": "Tarifler aranıyor...",
     "noResults": "Tarif bulunamadı. Farklı bir arama deneyin.",
     "enterQuery": "Anlamsal arama kullanarak tarif bulmak için bir arama sorgusu girin",
-    "minCharacters": "Aramak için en az {count} karakter yazın",
+    "minCharacters": "Aramak için en az 3 karakter yazın",
     "tag": "Etiket",
     "type": "Tür",
     "calories": "Kalori",
