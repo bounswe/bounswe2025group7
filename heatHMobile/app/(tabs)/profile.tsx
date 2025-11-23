@@ -802,7 +802,7 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
             </View>
           </View>
           <Text style={[styles.colorDemoText, { color: textColors.secondary, fontFamily: fonts.regular }]}>
-            {isColorBlind ? 'Color blind mode active - all green colors have been changed to blue for better distinction!' : 'Standard colors are currently active - greens are green.'}
+            {isColorBlind ? t('profile.colorBlindActive') : t('profile.colorStandardActive')}
           </Text>
         </View>
 
