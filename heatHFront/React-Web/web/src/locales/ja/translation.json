@@ -137,7 +137,20 @@
     "saveError": "保存中にエラーが発生しました。もう一度お試しください。",
     "linkCopied": "レシピリンクをコピーしました!",
     "linkCopyFailed": "リンクをコピーできませんでした。再度お試しください。",
-    "checkOutRecipe": "このレシピをチェック!"
+    "checkOutRecipe": "このレシピをチェック!",
+    "nutritionPerServing": "栄養 (1人分)",
+    "cholesterol": "コレステロール",
+    "saturatedFat": "飽和脂肪",
+    "unsaturatedFat": "不飽和脂肪",
+    "vitamins": "ビタミン",
+    "vitaminA": "ビタミンA",
+    "vitaminC": "ビタミンC",
+    "iron": "鉄",
+    "calcium": "カルシウム",
+    "potassium": "カリウム",
+    "sodium": "ナトリウム",
+    "fiber": "食物繊維",
+    "sugar": "糖質"
   },
   "calorieTracking": {
     "title": "カロリートラッキング",

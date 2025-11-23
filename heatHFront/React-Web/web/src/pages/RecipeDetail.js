@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container, Typography, Grid, Box, IconButton, useTheme, Button, Rating,
   Chip, Divider, List, ListItem, ListItemText, Paper, Avatar,
@@ -104,6 +105,7 @@ const RecipeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
+  const { t } = useTranslation();
 
   // States
   const [recipe, setRecipe] = useState(null);
@@ -171,12 +173,12 @@ const RecipeDetail = () => {
     const recipeUrl = window.location.href;
     navigator.clipboard.writeText(recipeUrl)
       .then(() => {
-        setSnackbarMessage('Recipe link copied to clipboard!');
+        setSnackbarMessage(t('recipes.linkCopied'));
         setSnackbarOpen(true);
         handleShareClose();
       })
       .catch(err => {
-        setSnackbarMessage('Failed to copy link. Please try again.');
+        setSnackbarMessage(t('recipes.linkCopyFailed'));
         setSnackbarOpen(true);
         console.error('Could not copy text: ', err);
       });
@@ -189,7 +191,7 @@ const RecipeDetail = () => {
   const shareToSocial = (platform) => {
     const recipeUrl = window.location.href;
     // Now recipe is properly in scope
-    const recipeTitle = recipe?.title || 'Check out this recipe!';
+    const recipeTitle = recipe?.title || t('recipes.checkOutRecipe');
     let shareUrl;
 
     switch (platform) {
@@ -218,15 +220,15 @@ const RecipeDetail = () => {
     try {
       if (isSaved) {
         await unsaveRecipe(recipe.id);
-        setSnackbarMessage('Recipe removed from saved items');
+        setSnackbarMessage(t('recipes.recipeUnsaved'));
       } else {
         await saveRecipe(recipe.id);
-        setSnackbarMessage('Recipe saved successfully!');
+        setSnackbarMessage(t('recipes.recipeSaved'));
       }
       setIsSaved(!isSaved);
       setSnackbarOpen(true);
     } catch (error) {
-      setSnackbarMessage('Error saving recipe. Please try again.');
+      setSnackbarMessage(t('recipes.saveError'));
       setSnackbarOpen(true);
       console.error('Error toggling save status:', error);
     } finally {
@@ -239,7 +241,7 @@ const RecipeDetail = () => {
       <Template>
         <Container>
           <Typography variant="h5" sx={{ my: 4, textAlign: 'center' }}>
-            Loading recipe...
+            {t('recipes.loadingRecipe')}
           </Typography>
         </Container>
       </Template>
@@ -251,11 +253,11 @@ const RecipeDetail = () => {
       <Template>
         <Container>
           <Typography variant="h5" sx={{ my: 4, textAlign: 'center' }}>
-            Recipe not found
+            {t('recipes.recipeNotFound')}
           </Typography>
           <Box sx={{ textAlign: 'center' }}>
             <Button variant="contained" onClick={() => navigate(-1)}>
-              Go Back
+              {t('common.back')}
             </Button>
           </Box>
         </Container>
@@ -315,12 +317,12 @@ const RecipeDetail = () => {
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate(-1)}
           >
-            Back
+            {t('common.back')}
           </Button>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-              Easiness Score
+              {t('recipes.easinessScore')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Rating value={recipe.easinessScore || 3.5} readOnly precision={0.5} />
@@ -332,7 +334,7 @@ const RecipeDetail = () => {
 
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-              Healthiness Score
+              {t('recipes.healthinessScore')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Rating value={recipe.healthinessScore || 3.5} readOnly precision={0.5} />
@@ -346,7 +348,7 @@ const RecipeDetail = () => {
             startIcon={<PrintIcon />}
             onClick={handlePrint}
           >
-            Print
+            {t('recipes.print')}
           </Button>
         </Box>
 
@@ -375,7 +377,7 @@ const RecipeDetail = () => {
                 fontWeight: activeTab === 'details' ? 'bold' : 'normal'
               }}
             >
-              Recipe Details
+              {t('recipes.recipeDetail')}
             </Button>
             <Button
               onClick={() => handleTabChange('instructions')}
@@ -388,7 +390,7 @@ const RecipeDetail = () => {
                 fontWeight: activeTab === 'instructions' ? 'bold' : 'normal'
               }}
             >
-              Instructions
+              {t('recipes.instructions')}
             </Button>
             <Button
               onClick={() => handleTabChange('ingredients')}
@@ -401,7 +403,7 @@ const RecipeDetail = () => {
                 fontWeight: activeTab === 'ingredients' ? 'bold' : 'normal'
               }}
             >
-              Ingredients
+              {t('recipes.ingredients')}
             </Button>
             <Button
               onClick={() => handleTabChange('save')}
@@ -414,7 +416,7 @@ const RecipeDetail = () => {
                 fontWeight: activeTab === 'save' ? 'bold' : 'normal'
               }}
             >
-              Save & Share
+              {t('recipes.saveAndShare')}
             </Button>
           </Box>
         </Box>
@@ -439,7 +441,7 @@ const RecipeDetail = () => {
               }}
             >
               <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                Recipe Details
+                {t('recipes.recipeDetail')}
               </Typography>
               <Grid
                 container
@@ -475,7 +477,7 @@ const RecipeDetail = () => {
                     }}>
                       <LocalDiningIcon color="primary" />
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Calories</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('recipes.calories')}</Typography>
                         <Typography variant="body2" fontWeight="medium">{recipe["totalCalorie"]} kcal</Typography>
                       </Box>
                     </Box>
@@ -493,7 +495,7 @@ const RecipeDetail = () => {
                     }}>
                       <AttachMoneyIcon color="primary" />
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Price</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('recipes.price')}</Typography>
                         <Typography variant="body2" fontWeight="medium">${recipe["price"]}</Typography>
                       </Box>
                     </Box>
@@ -514,14 +516,14 @@ const RecipeDetail = () => {
                         color="text.secondary"
                         sx={{ mb: 1, fontWeight: 'bold' }}
                       >
-                        Nutrition (per serving)
+                        {t('recipes.nutritionPerServing') || 'Nutrition (per serving)'}
                       </Typography>
                       <Table size="small">
                         <TableBody>
                           {/* Carbs */}
                           {nutrition["carbs"] >= 0 && (
                             <NutrientRow
-                              label="Carbohydrates"
+                              label={t('recipes.carbohydrates')}
                               value={nutrition["carbs"]}
                               unit="g"
                               IconComponent={GrainIcon}
@@ -531,7 +533,7 @@ const RecipeDetail = () => {
                           {/* Protein */}
                           {nutrition["protein"] >= 0 && (
                             <NutrientRow
-                              label="Protein"
+                              label={t('recipes.protein')}
                               value={nutrition["protein"]}
                               unit="g"
                               IconComponent={FitnessCenterIcon}
@@ -542,7 +544,7 @@ const RecipeDetail = () => {
                           {nutrition["fat"] >= 0 && (
                             <>
                               <NutrientRow
-                                label="Fat"
+                                label={t('recipes.fat')}
                                 value={nutrition["fat"]}
                                 unit="g"
                                 IconComponent={WaterDropIcon}
@@ -550,7 +552,7 @@ const RecipeDetail = () => {
 
                               {nutrition["cholesterol"] >= 0 && (
                                 <NutrientRow
-                                  label="Cholesterol"
+                                  label={t('recipes.cholesterol') || 'Cholesterol'}
                                   value={nutrition["cholesterol"]}
                                   unit="mg"
                                   indent={8}
@@ -561,7 +563,7 @@ const RecipeDetail = () => {
 
                               {nutrition["saturatedFat"] >= 0 && (
                                 <NutrientRow
-                                  label="Saturated fat"
+                                  label={t('recipes.saturatedFat') || 'Saturated fat'}
                                   value={nutrition["saturatedFat"]}
                                   unit="g"
                                   indent={8}
@@ -573,7 +575,7 @@ const RecipeDetail = () => {
                               {(nutrition["monounsaturated_fat"] >= 0 ||
                                 nutrition["polyunsaturated_fat"] >= 0) && (
                                 <NutrientRow
-                                  label="Unsaturated fat"
+                                  label={t('recipes.unsaturatedFat') || 'Unsaturated fat'}
                                   value={[
                                     nutrition["monounsaturated_fat"] >= 0
                                       ? `${nutrition["monounsaturated_fat"]} g mono`
@@ -596,11 +598,11 @@ const RecipeDetail = () => {
                           {/* Vitamins group */}
                           {(nutrition["vitaminA"] >= 0 || nutrition["vitaminC"] >= 0) && (
                             <>
-                              <NutrientRow label="Vitamins" value="" unit="" IconComponent={HealingIcon} />
+                              <NutrientRow label={t('recipes.vitamins') || 'Vitamins'} value="" unit="" IconComponent={HealingIcon} />
 
                               {nutrition["vitaminA"] >= 0 && (
                                 <NutrientRow
-                                  label="Vitamin A"
+                                  label={t('recipes.vitaminA') || 'Vitamin A'}
                                   value={nutrition["vitaminA"]}
                                   unit="% DV"
                                   indent={8}
@@ -611,7 +613,7 @@ const RecipeDetail = () => {
 
                               {nutrition["vitaminC"] >= 0 && (
                                 <NutrientRow
-                                  label="Vitamin C"
+                                  label={t('recipes.vitaminC') || 'Vitamin C'}
                                   value={nutrition["vitaminC"]}
                                   unit="% DV"
                                   indent={8}
@@ -625,7 +627,7 @@ const RecipeDetail = () => {
                           {/* Iron */}
                           {nutrition["iron"] >= 0 && (
                             <NutrientRow
-                              label="Iron"
+                              label={t('recipes.iron') || 'Iron'}
                               value={nutrition["iron"]}
                               unit="mg"
                               IconComponent={ScienceIcon}
@@ -635,7 +637,7 @@ const RecipeDetail = () => {
                           {/* Calcium */}
                           {nutrition["calcium"] >= 0 && (
                             <NutrientRow
-                              label="Calcium"
+                              label={t('recipes.calcium') || 'Calcium'}
                               value={nutrition["calcium"]}
                               unit="mg"
                               IconComponent={ScienceIcon}
@@ -644,7 +646,7 @@ const RecipeDetail = () => {
 
                           {nutrition["potassium"] >= 0 && (
                             <NutrientRow
-                              label="Potassium"
+                              label={t('recipes.potassium') || 'Potassium'}
                               value={nutrition["potassium"]}
                               unit="mg"
                               IconComponent={ScienceIcon}
@@ -653,7 +655,7 @@ const RecipeDetail = () => {
 
                           {nutrition["sodium"] >= 0 && (
                             <NutrientRow
-                              label="Sodium"
+                              label={t('recipes.sodium') || 'Sodium'}
                               value={nutrition["sodium"]}
                               unit="mg"
                               IconComponent={ScienceIcon}
@@ -682,7 +684,7 @@ const RecipeDetail = () => {
               }}
             >
               <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                Instructions
+                {t('recipes.instructions')}
               </Typography>
               <Box>
                 {recipe["instructions"].map((instruction) => (
@@ -727,7 +729,7 @@ const RecipeDetail = () => {
               }}
             >
               <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                Ingredients
+                {t('recipes.ingredients')}
               </Typography>
               {recipe["ingredients"] && recipe["ingredients"].length > 0 ? (
                 <List disablePadding>
@@ -751,7 +753,7 @@ const RecipeDetail = () => {
                 </List>
               ) : (
                 <Typography variant="body1" color="text.secondary" align="center">
-                  No ingredients listed
+                  {t('recipes.noIngredients')}
                 </Typography>
               )}
             </Paper>
@@ -769,7 +771,7 @@ const RecipeDetail = () => {
               }}
             >
               <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                Save & Share
+                {t('recipes.saveAndShare')}
               </Typography>
               <Box sx={{
                 display: 'flex',
@@ -815,7 +817,7 @@ const RecipeDetail = () => {
                     color={isSaved ? "primary" : "text.secondary"}
                     variant="body2"
                   >
-                    {isSaved ? 'Saved' : 'Save'}
+                    {isSaved ? t('recipes.saved') : t('recipes.saveAction')}
                   </Typography>
                 </Box>
 
@@ -839,7 +841,7 @@ const RecipeDetail = () => {
                   >
                     <ShareIcon fontSize="large" />
                   </IconButton>
-                  <Typography color="info" variant="body2">Share</Typography>
+                  <Typography color="info" variant="body2">{t('common.share')}</Typography>
                 </Box>
                 <Menu
                   anchorEl={shareAnchorEl}
@@ -856,19 +858,19 @@ const RecipeDetail = () => {
                 >
                   <MenuItem onClick={copyLinkToClipboard} dense>
                     <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} />
-                    Copy Link
+                    {t('recipes.copyLink')}
                   </MenuItem>
                   <MenuItem onClick={() => shareToSocial('facebook')} dense>
                     <FacebookIcon fontSize="small" sx={{ mr: 1 }} />
-                    Share to Facebook
+                    {t('recipes.shareToFacebook')}
                   </MenuItem>
                   <MenuItem onClick={() => shareToSocial('twitter')} dense>
                     <TwitterIcon fontSize="small" sx={{ mr: 1 }} />
-                    Share to Twitter
+                    {t('recipes.shareToTwitter')}
                   </MenuItem>
                   <MenuItem onClick={() => shareToSocial('whatsapp')} dense>
                     <WhatsAppIcon fontSize="small" sx={{ mr: 1 }} />
-                    Share via WhatsApp
+                    {t('recipes.shareToWhatsApp')}
                   </MenuItem>
                 </Menu>
 

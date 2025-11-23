@@ -137,7 +137,20 @@
     "saveError": "Tarif kaydedilirken hata oluştu. Lütfen tekrar deneyin.",
     "linkCopied": "Tarif bağlantısı panoya kopyalandı!",
     "linkCopyFailed": "Bağlantı kopyalanamadı. Lütfen tekrar deneyin.",
-    "checkOutRecipe": "Bu tarife göz atın!"
+    "checkOutRecipe": "Bu tarife göz atın!",
+    "nutritionPerServing": "Beslenme değerleri (porsiyon başına)",
+    "cholesterol": "Kolesterol",
+    "saturatedFat": "Doymuş yağ",
+    "unsaturatedFat": "Doymamış yağ",
+    "vitamins": "Vitaminler",
+    "vitaminA": "A Vitamini",
+    "vitaminC": "C Vitamini",
+    "iron": "Demir",
+    "calcium": "Kalsiyum",
+    "potassium": "Potasyum",
+    "sodium": "Sodyum",
+    "fiber": "Lif",
+    "sugar": "Şeker"
   },
   "calorieTracking": {
     "title": "Kalori Takibi",

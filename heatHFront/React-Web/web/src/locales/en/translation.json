@@ -137,7 +137,20 @@
     "saveError": "Error saving recipe. Please try again.",
     "linkCopied": "Recipe link copied to clipboard!",
     "linkCopyFailed": "Failed to copy link. Please try again.",
-    "checkOutRecipe": "Check out this recipe!"
+    "checkOutRecipe": "Check out this recipe!",
+    "nutritionPerServing": "Nutrition (per serving)",
+    "cholesterol": "Cholesterol",
+    "saturatedFat": "Saturated fat",
+    "unsaturatedFat": "Unsaturated fat",
+    "vitamins": "Vitamins",
+    "vitaminA": "Vitamin A",
+    "vitaminC": "Vitamin C",
+    "iron": "Iron",
+    "calcium": "Calcium",
+    "potassium": "Potassium",
+    "sodium": "Sodium",
+    "fiber": "Fiber",
+    "sugar": "Sugar"
   },
   "calorieTracking": {
     "title": "Calorie Tracking",
