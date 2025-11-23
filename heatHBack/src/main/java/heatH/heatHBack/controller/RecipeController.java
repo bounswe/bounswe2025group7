@@ -49,4 +49,9 @@ public class RecipeController {
          recipeService.deleteRecipeById(deleteRecipeRequest.getId());
          return  ResponseEntity.ok("Recipe deleted.");
     }
+
+    @GetMapping("/get-all-for-all")
+    public ResponseEntity<List<Recipe>> getAllRecipeForAll(){
+        return ResponseEntity.ok(recipeService.getAllRecipesForAll());
+    }
 }
