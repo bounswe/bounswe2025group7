@@ -62,5 +62,14 @@ i18n
     compatibilityJSON: 'v4', // For React Native compatibility
   });
 
+// Ensure language changes are saved to AsyncStorage
+i18n.on('languageChanged', async (lng) => {
+  try {
+    await AsyncStorage.setItem('user-language', lng);
+  } catch (error) {
+    // Ignore storage errors
+  }
+});
+
 export default i18n;
 

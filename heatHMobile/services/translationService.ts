@@ -9,6 +9,7 @@ type RecipeContent = {
 
 // Simple in-memory cache per session
 const cache = new Map<string, RecipeContent>();
+const textCache = new Map<string, string>();
 
 function detectSource(text: string): 'en' | 'tr' | 'ja' {
   if (!text) return 'en';
@@ -34,7 +35,8 @@ async function translateText(text: string, target: 'en' | 'tr' | 'ja'): Promise<
   if (source === mappedTarget) {
     return text;
   }
-  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(source + '|' + mappedTarget)}`;
+  const email = '5885erencem@gmail.com';
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(source + '|' + mappedTarget)}&de=${encodeURIComponent(email)}`;
   const resp = await fetch(url, { headers: { Accept: 'application/json' } });
   if (!resp.ok) {
     throw new Error(`Translation failed: ${resp.status}`);
@@ -88,5 +90,30 @@ export function mapLanguageToRecipeTarget(lng: string): 'en' | 'tr' | 'ja' {
 }
 
 export const SUPPORTED_RECIPE_LANGUAGES = ['en', 'tr', 'ja'] as const;
+
+/**
+ * Translate a single text string. Uses caching to avoid redundant API calls.
+ */
+export async function translateTextContent(
+  text: string,
+  target: 'en' | 'tr' | 'ja'
+): Promise<string> {
+  if (!text || !text.trim()) return text;
+  
+  const cacheKey = `${text}:${target}`;
+  if (textCache.has(cacheKey)) {
+    return textCache.get(cacheKey)!;
+  }
+
+  try {
+    const translated = await translateText(text, target);
+    textCache.set(cacheKey, translated);
+    return translated;
+  } catch (error) {
+    // On error, return original text
+    console.warn('Translation failed for text:', text, error);
+    return text;
+  }
+}
 
 
