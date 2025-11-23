@@ -110,10 +110,10 @@ const LanguageTest = () => {
               Current Language Information
             </Typography>
             <Typography variant="body1">
-              <strong>Current Language:</strong> {t('common.language')} ({t('common.english')} / {t('common.turkish')})
+              <strong>Current Language:</strong> {t('common.language')} ({t('common.english')} / {t('common.turkish')} / {t('common.japanese')})
             </Typography>
             <Typography variant="body2" sx={{ mt: 1 }}>
-              Use the language switcher above to change between English and Turkish. 
+              Use the language switcher above to change between English, Turkish, or Japanese. 
               All text on this page will update automatically.
             </Typography>
           </Paper>

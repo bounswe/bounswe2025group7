@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Grid, Box, IconButton, useTheme, Button, Rating,
-  Chip, Divider, List, ListItem, ListItemText, Paper, Avatar
+  Chip, Divider, List, ListItem, ListItemText, Paper, Avatar,
+  Table, TableBody, TableRow, TableCell, Alert
 } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -30,6 +31,8 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import GrainIcon from '@mui/icons-material/Grain';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
+import { useTranslation } from 'react-i18next';
+import { mapLanguageToRecipeTarget, translateRecipeContent } from '../services/recipeTranslation';
 
 // Recipe section styling
 const RecipeDetailSection = styled(Box)(({ theme }) => ({
@@ -53,10 +56,17 @@ const RecipeInfoBox = styled(Box)(({ theme }) => ({
   background: alpha(theme.palette.primary.light, 0.05)
 }));
 
+const LANGUAGE_LABEL_KEYS = {
+  en: 'common.english',
+  tr: 'common.turkish',
+  ja: 'common.japanese',
+};
+
 const RecipeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
+  const { t, i18n } = useTranslation();
 
   // States
   const [recipe, setRecipe] = useState(null);
@@ -72,6 +82,12 @@ const RecipeDetail = () => {
   // Add these states inside your RecipeDetail component
   const [isSaved, setIsSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [translatedContent, setTranslatedContent] = useState(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translationError, setTranslationError] = useState(null);
+
+  const targetLanguage = mapLanguageToRecipeTarget(i18n.language || 'en');
+  const targetLanguageLabelKey = LANGUAGE_LABEL_KEYS[targetLanguage] || LANGUAGE_LABEL_KEYS.en;
 
   // Fetch recipe data
   useEffect(() => {
@@ -79,6 +95,7 @@ const RecipeDetail = () => {
       try {
         const response = await apiClient.get(`/recipe/get?recipeId=${id}`);
         setRecipe(response.data);
+        console.log('Fetched recipe:', response.data);
       } catch (error) {
         console.error("Error fetching recipe:", error);
       } finally {
@@ -101,6 +118,56 @@ const RecipeDetail = () => {
     fetchSavedStatus();
   }, [recipe]);
 
+  useEffect(() => {
+    if (!recipe) return;
+
+    let cancelled = false;
+    const translateContent = async () => {
+      setIsTranslating(true);
+      setTranslationError(null);
+      setTranslatedContent(null);
+
+      const content = {
+        title: recipe.title,
+        description: recipe.description,
+        tag: recipe.tag,
+        type: recipe.type,
+        ingredients: recipe.ingredients
+          ? recipe.ingredients.map((ingredient) =>
+              typeof ingredient === 'string' ? ingredient : { ...ingredient }
+            )
+          : undefined,
+        instructions: Array.isArray(recipe.instructions) ? recipe.instructions : undefined,
+      };
+
+      try {
+        const translated = await translateRecipeContent(
+          `recipe-${recipe.id}`,
+          content,
+          targetLanguage
+        );
+        if (!cancelled) {
+          setTranslatedContent(translated);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Error translating recipe content', error);
+          setTranslationError(error);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsTranslating(false);
+        }
+      }
+    };
+
+    translateContent();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [recipe, targetLanguage]);
+
   const handlePrint = () => {
     window.print();
   };
@@ -122,12 +189,12 @@ const RecipeDetail = () => {
     const recipeUrl = window.location.href;
     navigator.clipboard.writeText(recipeUrl)
       .then(() => {
-        setSnackbarMessage('Recipe link copied to clipboard!');
+        setSnackbarMessage(t('recipes.linkCopied'));
         setSnackbarOpen(true);
         handleShareClose();
       })
       .catch(err => {
-        setSnackbarMessage('Failed to copy link. Please try again.');
+        setSnackbarMessage(t('recipes.linkCopyFailed'));
         setSnackbarOpen(true);
         console.error('Could not copy text: ', err);
       });
@@ -140,7 +207,7 @@ const RecipeDetail = () => {
   const shareToSocial = (platform) => {
     const recipeUrl = window.location.href;
     // Now recipe is properly in scope
-    const recipeTitle = recipe?.title || 'Check out this recipe!';
+    const recipeTitle = recipe?.title || t('recipes.checkOutRecipe');
     let shareUrl;
 
     switch (platform) {
@@ -169,15 +236,15 @@ const RecipeDetail = () => {
     try {
       if (isSaved) {
         await unsaveRecipe(recipe.id);
-        setSnackbarMessage('Recipe removed from saved items');
+        setSnackbarMessage(t('recipes.recipeUnsaved'));
       } else {
         await saveRecipe(recipe.id);
-        setSnackbarMessage('Recipe saved successfully!');
+        setSnackbarMessage(t('recipes.recipeSaved'));
       }
       setIsSaved(!isSaved);
       setSnackbarOpen(true);
     } catch (error) {
-      setSnackbarMessage('Error saving recipe. Please try again.');
+      setSnackbarMessage(t('recipes.saveError'));
       setSnackbarOpen(true);
       console.error('Error toggling save status:', error);
     } finally {
@@ -190,7 +257,7 @@ const RecipeDetail = () => {
       <Template>
         <Container>
           <Typography variant="h5" sx={{ my: 4, textAlign: 'center' }}>
-            Loading recipe...
+            {t('recipes.loadingRecipe')}
           </Typography>
         </Container>
       </Template>
@@ -202,17 +269,24 @@ const RecipeDetail = () => {
       <Template>
         <Container>
           <Typography variant="h5" sx={{ my: 4, textAlign: 'center' }}>
-            Recipe not found
+            {t('recipes.recipeNotFound')}
           </Typography>
           <Box sx={{ textAlign: 'center' }}>
             <Button variant="contained" onClick={() => navigate(-1)}>
-              Go Back
+              {t('common.back')}
             </Button>
           </Box>
         </Container>
       </Template>
     );
   }
+
+  const translationLanguageName = t(targetLanguageLabelKey);
+  const displayTitle = translatedContent?.title || recipe.title;
+  const displayTag = translatedContent?.tag || recipe.tag;
+  const displayType = translatedContent?.type || recipe.type;
+  const instructionsToShow = translatedContent?.instructions || (Array.isArray(recipe.instructions) ? recipe.instructions : []);
+  const ingredientsToShow = translatedContent?.ingredients || (Array.isArray(recipe.ingredients) ? recipe.ingredients : []);
 
   return (
     <Template>
@@ -221,7 +295,7 @@ const RecipeDetail = () => {
         <Box
           component="img"
           src={recipe["photo"]}
-          alt={recipe["title"]}
+          alt={displayTitle}
           sx={{
             width: '100%',
             height: '100%',
@@ -241,12 +315,12 @@ const RecipeDetail = () => {
         >
           <Container maxWidth="lg">
             <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 1 }}>
-              {recipe["title"]}
+              {displayTitle}
             </Typography>
 
-            {recipe["tag"] && (
+            {displayTag && (
               <Chip
-                label={recipe["tag"]}
+                label={displayTag}
                 size="small"
                 sx={{
                   mt: 1,
@@ -261,17 +335,32 @@ const RecipeDetail = () => {
       </Box>
 
       <Container maxWidth="lg" sx={{ mt: 4 }}>
+        {(isTranslating || translationError) && (
+          <Box sx={{ mb: 2 }}>
+            {isTranslating && (
+              <Alert severity="info">
+                {t('recipes.translationInProgress', { language: translationLanguageName })}
+              </Alert>
+            )}
+            {translationError && (
+              <Alert severity="warning" sx={{ mt: isTranslating ? 1 : 0 }}>
+                {t('recipes.translationFailed')}
+              </Alert>
+            )}
+          </Box>
+        )}
+
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Button
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate(-1)}
           >
-            Back
+            {t('common.back')}
           </Button>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-              Easiness Score
+              {t('recipes.easinessScore')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Rating value={recipe.easinessScore || 3.5} readOnly precision={0.5} />
@@ -283,7 +372,7 @@ const RecipeDetail = () => {
 
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-              Healthiness Score
+              {t('recipes.healthinessScore')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Rating value={recipe.healthinessScore || 3.5} readOnly precision={0.5} />
@@ -297,7 +386,7 @@ const RecipeDetail = () => {
             startIcon={<PrintIcon />}
             onClick={handlePrint}
           >
-            Print
+            {t('recipes.print')}
           </Button>
         </Box>
 
@@ -326,7 +415,7 @@ const RecipeDetail = () => {
                 fontWeight: activeTab === 'details' ? 'bold' : 'normal'
               }}
             >
-              Recipe Details
+              {t('recipes.recipeDetail')}
             </Button>
             <Button
               onClick={() => handleTabChange('instructions')}
@@ -339,7 +428,7 @@ const RecipeDetail = () => {
                 fontWeight: activeTab === 'instructions' ? 'bold' : 'normal'
               }}
             >
-              Instructions
+              {t('recipes.instructions')}
             </Button>
             <Button
               onClick={() => handleTabChange('ingredients')}
@@ -352,7 +441,7 @@ const RecipeDetail = () => {
                 fontWeight: activeTab === 'ingredients' ? 'bold' : 'normal'
               }}
             >
-              Ingredients
+              {t('recipes.ingredients')}
             </Button>
             <Button
               onClick={() => handleTabChange('save')}
@@ -365,7 +454,7 @@ const RecipeDetail = () => {
                 fontWeight: activeTab === 'save' ? 'bold' : 'normal'
               }}
             >
-              Save & Share
+              {t('recipes.saveAndShare')}
             </Button>
           </Box>
         </Box>
@@ -382,16 +471,18 @@ const RecipeDetail = () => {
             fullwidth
               elevation={1}
               sx={{
-                p: 3,
+                p: 2.5,
                 width: '100%',
-                bgcolor: alpha(theme.palette.background.default, 0.7)
+                maxWidth: 720,
+                mx: 'auto',
+                bgcolor: alpha(theme.palette.background.default, 0.7),
               }}
             >
               <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                Recipe Details
+                {t('recipes.recipeDetail')}
               </Typography>
               <Grid container spacing={2} sx={{ mt: 1 }}>
-                {recipe["type"] && (
+                {displayType && (
                   <Grid item xs={12}>
                     <Box sx={{
                       display: 'flex', alignItems: 'center', gap: 1,
@@ -402,7 +493,7 @@ const RecipeDetail = () => {
                     }}>
                       <LocalDiningIcon color="primary" />
                       <Box>
-                        <Typography variant="body2" fontWeight="medium">{recipe["type"]}</Typography>
+                        <Typography variant="body2" fontWeight="medium">{displayType}</Typography>
                       </Box>
                     </Box>
                   </Grid>
@@ -419,7 +510,7 @@ const RecipeDetail = () => {
                     }}>
                       <LocalDiningIcon color="primary" />
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Calories</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('recipes.calories')}</Typography>
                         <Typography variant="body2" fontWeight="medium">{recipe["totalCalorie"]} kcal</Typography>
                       </Box>
                     </Box>
@@ -437,7 +528,7 @@ const RecipeDetail = () => {
                     }}>
                       <AttachMoneyIcon color="primary" />
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Price</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('recipes.price')}</Typography>
                         <Typography variant="body2" fontWeight="medium">${recipe["price"]}</Typography>
                       </Box>
                     </Box>
@@ -455,7 +546,7 @@ const RecipeDetail = () => {
                     }}>
                       <GrainIcon color="primary" />
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Carbohydrates</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('recipes.carbohydrates')}</Typography>
                         <Typography variant="body2" fontWeight="medium">{recipe["nutritionData"]["carbs"]}g</Typography>
                       </Box>
                     </Box>
@@ -473,7 +564,7 @@ const RecipeDetail = () => {
                     }}>
                       <FitnessCenterIcon color="primary" />
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Protein</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('recipes.protein')}</Typography>
                         <Typography variant="body2" fontWeight="medium">{recipe["nutritionData"]["protein"]}g</Typography>
                       </Box>
                     </Box>
@@ -491,7 +582,7 @@ const RecipeDetail = () => {
                     }}>
                       <WaterDropIcon color="primary" />
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Fat</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('recipes.fat')}</Typography>
                         <Typography variant="body2" fontWeight="medium">{recipe["nutritionData"]["fat"]}g</Typography>
                       </Box>
                     </Box>
@@ -515,35 +606,41 @@ const RecipeDetail = () => {
               }}
             >
               <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                Instructions
+                {t('recipes.instructions')}
               </Typography>
               <Box>
-                {recipe["instructions"].map((instruction) => (
-                  <Box sx={{ display: 'flex', mb: 3 }}>
-                    <Box
-                      sx={{
-                        minWidth: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        bgcolor: theme.palette.primary.main,
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mr: 2,
-                        mt:1,
-                        fontWeight: 'bold',
-                        flexShrink: 0,
-                        fontSize: '5.75rem'
-                      }}
-                    >
+                {instructionsToShow.length > 0 ? (
+                  instructionsToShow.map((instruction, idx) => (
+                    <Box key={`instruction-${idx}`} sx={{ display: 'flex', mb: 3 }}>
+                      <Box
+                        sx={{
+                          minWidth: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          bgcolor: theme.palette.primary.main,
+                          color: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mr: 2,
+                          mt:1,
+                          fontWeight: 'bold',
+                          flexShrink: 0,
+                          fontSize: '5.75rem'
+                        }}
+                      >
 
+                      </Box>
+                      <Typography variant="body1">
+                        {instruction}
+                      </Typography>
                     </Box>
-                    <Typography variant="body1">
-                      {instruction}
-                    </Typography>
-                  </Box>
-                ))}
+                  ))
+                ) : (
+                  <Typography variant="body1" color="text.secondary">
+                    {t('recipes.noInstructions')}
+                  </Typography>
+                )}
               </Box>
             </Paper>
           )}
@@ -560,18 +657,23 @@ const RecipeDetail = () => {
               }}
             >
               <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                Ingredients
+                {t('recipes.ingredients')}
               </Typography>
-              {recipe["ingredients"] && recipe["ingredients"].length > 0 ? (
+              {ingredientsToShow.length > 0 ? (
                 <List disablePadding>
-                  {recipe["ingredients"].map((ingredientStr, idx) => {
-                    const name = ingredientStr["name"] ? ingredientStr["name"] : "";
-                    const amount = ingredientStr["quantity"] ? ingredientStr["quantity"] : "";
+                  {ingredientsToShow.map((ingredientItem, idx) => {
+                    const normalizedIngredient =
+                      typeof ingredientItem === 'string' ? { name: ingredientItem } : ingredientItem || {};
+                    const name = normalizedIngredient.name || '';
+                    const amount =
+                      normalizedIngredient.quantity ??
+                      normalizedIngredient.amount ??
+                      '';
                     return (
                       <ListItem
-                        key={idx}
+                        key={`ingredient-${idx}`}
                         disablePadding
-                        divider={idx < recipe["ingredients"].length - 1}
+                        divider={idx < ingredientsToShow.length - 1}
                         sx={{ py: 1 }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
@@ -584,7 +686,7 @@ const RecipeDetail = () => {
                 </List>
               ) : (
                 <Typography variant="body1" color="text.secondary" align="center">
-                  No ingredients listed
+                  {t('recipes.noIngredients')}
                 </Typography>
               )}
             </Paper>
@@ -602,7 +704,7 @@ const RecipeDetail = () => {
               }}
             >
               <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                Save & Share
+                {t('recipes.saveAndShare')}
               </Typography>
               <Box sx={{
                 display: 'flex',
@@ -648,7 +750,7 @@ const RecipeDetail = () => {
                     color={isSaved ? "primary" : "text.secondary"}
                     variant="body2"
                   >
-                    {isSaved ? 'Saved' : 'Save'}
+                    {isSaved ? t('recipes.saved') : t('recipes.saveAction')}
                   </Typography>
                 </Box>
 
@@ -672,7 +774,7 @@ const RecipeDetail = () => {
                   >
                     <ShareIcon fontSize="large" />
                   </IconButton>
-                  <Typography color="info" variant="body2">Share</Typography>
+                  <Typography color="info" variant="body2">{t('common.share')}</Typography>
                 </Box>
                 <Menu
                   anchorEl={shareAnchorEl}
@@ -689,19 +791,19 @@ const RecipeDetail = () => {
                 >
                   <MenuItem onClick={copyLinkToClipboard} dense>
                     <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} />
-                    Copy Link
+                    {t('recipes.copyLink')}
                   </MenuItem>
                   <MenuItem onClick={() => shareToSocial('facebook')} dense>
                     <FacebookIcon fontSize="small" sx={{ mr: 1 }} />
-                    Share to Facebook
+                    {t('recipes.shareToFacebook')}
                   </MenuItem>
                   <MenuItem onClick={() => shareToSocial('twitter')} dense>
                     <TwitterIcon fontSize="small" sx={{ mr: 1 }} />
-                    Share to Twitter
+                    {t('recipes.shareToTwitter')}
                   </MenuItem>
                   <MenuItem onClick={() => shareToSocial('whatsapp')} dense>
                     <WhatsAppIcon fontSize="small" sx={{ mr: 1 }} />
-                    Share via WhatsApp
+                    {t('recipes.shareToWhatsApp')}
                   </MenuItem>
                 </Menu>
 
