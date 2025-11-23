@@ -51,7 +51,7 @@ const CalorieTracking = () => {
     const fetchRecipes = async () => {
       try {
         setLoadingRecipes(true);
-        const response = await apiClient.get('/recipe/get-all');
+        const response = await apiClient.get('/recipe/get-all-for-all');
         setRecipes(response.data || []);
       } catch (err) {
         console.error('Failed to fetch recipes:', err);
