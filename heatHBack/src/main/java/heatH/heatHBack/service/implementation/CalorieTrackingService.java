@@ -80,4 +80,21 @@ public class CalorieTrackingService {
                 .filter(response -> response != null)
                 .collect(Collectors.toList());
     }
+
+    public void updateCalorieTracking(String recipeId, Date eatenDate, Double portion) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        User user = userRepository.findByUsername(email).orElseThrow(() -> new RuntimeException("User not found"));
+        Long userId = user.getId();
+
+        Long recipeIdLong = Long.valueOf(recipeId);
+
+        Optional<CalorieTracking> existingTracking = calorieTrackingRepository
+                .findByUserIdAndRecipeIdAndEatenDateIgnoringTime(userId, recipeIdLong, eatenDate);
+
+        if (existingTracking.isPresent()) {
+            existingTracking.get().setPortion(portion);
+            calorieTrackingRepository.save(existingTracking.get());
+        }
+    }
 }

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Grid, Box, IconButton, useTheme, Button, Rating,
-  Chip, Divider, List, ListItem, ListItemText, Paper, Avatar, Alert
+  Chip, Divider, List, ListItem, ListItemText, Paper, Avatar,
+  Table, TableBody, TableRow, TableCell, Alert
 } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -94,6 +95,7 @@ const RecipeDetail = () => {
       try {
         const response = await apiClient.get(`/recipe/get?recipeId=${id}`);
         setRecipe(response.data);
+        console.log('Fetched recipe:', response.data);
       } catch (error) {
         console.error("Error fetching recipe:", error);
       } finally {
@@ -469,9 +471,11 @@ const RecipeDetail = () => {
             fullwidth
               elevation={1}
               sx={{
-                p: 3,
+                p: 2.5,
                 width: '100%',
-                bgcolor: alpha(theme.palette.background.default, 0.7)
+                maxWidth: 720,
+                mx: 'auto',
+                bgcolor: alpha(theme.palette.background.default, 0.7),
               }}
             >
               <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>

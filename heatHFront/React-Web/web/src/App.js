@@ -28,6 +28,7 @@ import ContactUs from './pages/ContactUs';
 import UserProfile from './pages/UserProfile';
 import LanguageTest from './pages/LanguageTest';
 import SemanticSearch from './pages/SemanticSearch';
+import CalorieTracking from './pages/CalorieTracking';
 
 function App() {
   return (
@@ -55,7 +56,8 @@ function App() {
             <Route path="/saved" element={<SavedRecipes />} />
             <Route path="/myrecipes" element={<MyRecipes />} /> 
             <Route path="/recipe/:id" element={<RecipeDetail />} />  
-            <Route path="/user/:userId" element={<UserProfile />} /> 
+            <Route path="/user/:userId" element={<UserProfile />} />
+            <Route path="/calorie-tracking" element={<CalorieTracking />} /> 
           </Route>  
         </Routes>
       </BrowserRouter>
