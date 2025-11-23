@@ -279,6 +279,8 @@
     "calories": "Kalori",
     "protein": "Protein",
     "fat": "Yağ",
-    "carbs": "Karbonhidrat"
+    "carbs": "Karbonhidrat",
+    "noEntriesForThisDay": "Bu gün için giriş yok",
+    "tapToTrackCalories": "Kalorilerinizi takip etmek için + butonuna dokunun"
   }
 }
