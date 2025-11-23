@@ -18,6 +18,9 @@ import { colors, textColors } from '../../constants/theme';
 import { recipeService } from '../../services/recipeService';
 import ShareModal from '../../components/ShareModal';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
+import { translateTextContent, mapLanguageToRecipeTarget } from '../../services/translationService';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 60) / 2; // 2 columns with padding
@@ -30,12 +33,14 @@ interface SavedRecipe {
 
 export default function SavedRecipesScreen() {
   const { colors, textColors, fonts, lineHeights } = useThemeColors();
+  const { t } = useTranslation();
   const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<SavedRecipe | null>(null);
+  const [translatedTitles, setTranslatedTitles] = useState<Map<number, string>>(new Map());
   const router = useRouter();
 
   // Fetch saved recipes
@@ -68,6 +73,42 @@ export default function SavedRecipesScreen() {
     }, [loading])
   );
 
+  // Translate recipe titles when language or recipes change
+  useEffect(() => {
+    if (savedRecipes.length === 0) {
+      setTranslatedTitles(new Map());
+      return;
+    }
+
+    let cancelled = false;
+    const translateTitles = async () => {
+      const targetLang = mapLanguageToRecipeTarget(i18n.language);
+      const translations = new Map<number, string>();
+
+      await Promise.all(
+        savedRecipes.map(async (recipe) => {
+          try {
+            const translated = await translateTextContent(recipe.title, targetLang);
+            if (!cancelled) {
+              translations.set(recipe.recipeId, translated);
+            }
+          } catch (error) {
+            // Ignore translation errors
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setTranslatedTitles(translations);
+      }
+    };
+
+    translateTitles();
+    return () => {
+      cancelled = true;
+    };
+  }, [savedRecipes, i18n.language]);
+
   // Handle pull to refresh
   const onRefresh = () => {
     setRefreshing(true);
@@ -81,22 +122,22 @@ export default function SavedRecipesScreen() {
   // Handle unsave recipe
   const handleUnsaveRecipe = async (recipeId: number) => {
     Alert.alert(
-      'Remove Recipe',
-      'Are you sure you want to remove this recipe from your saved recipes?',
+      t('recipes.removeRecipe'),
+      t('recipes.removeRecipeConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         { 
-          text: 'Remove', 
+          text: t('common.remove'), 
           style: 'destructive',
           onPress: async () => {
             try {
               await recipeService.unsaveRecipe(recipeId);
               // Remove from local state
               setSavedRecipes(prev => prev.filter(recipe => recipe.recipeId !== recipeId));
-              Alert.alert('Success', 'Recipe removed from saved recipes');
+              Alert.alert(t('common.success'), t('recipes.recipeRemoved'));
             } catch (err: any) {
               console.error('Error unsaving recipe:', err);
-              Alert.alert('Error', 'Failed to remove recipe. Please try again.');
+              Alert.alert(t('common.error'), t('alerts.failedToRemove'));
             }
           }
         }
@@ -138,7 +179,7 @@ export default function SavedRecipesScreen() {
       
       <View style={styles.recipeContent}>
         <Text style={[styles.recipeTitle, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]} numberOfLines={2}>
-          {recipe.title}
+          {translatedTitles.get(recipe.recipeId) ?? recipe.title}
         </Text>
         
         <View style={styles.actionRow}>
@@ -148,32 +189,21 @@ export default function SavedRecipesScreen() {
             onPress={() => handleRecipePress(recipe)}
             activeOpacity={0.8}
           >
-            <Text style={[styles.actionButtonText, { color: colors.white }]}>View</Text>
-            <Ionicons name="eye-outline" size={18} color={colors.primary} />
+            <Text style={[styles.actionButtonText, { color: colors.white }]}>{t('common.view')}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.actionButton, styles.unsaveButton, { backgroundColor: colors.error }]}
             onPress={() => handleUnsaveRecipe(recipe.recipeId)}
           >
-            <Text style={[styles.actionButtonText, styles.unsaveButtonText, { color: colors.white }]}>Unsave</Text>
+            <Text style={[styles.actionButtonText, styles.unsaveButtonText, { color: colors.white }]}>{t('recipes.unsave')}</Text>
           </TouchableOpacity>
-          
           <TouchableOpacity 
             style={[styles.actionButton, { backgroundColor: colors.primary }]}
             accessibilityLabel="Share recipe"
             onPress={() => handleShareRecipe(recipe)}
             activeOpacity={0.8}
           >
-            <Text style={[styles.actionButtonText, { color: colors.white }]}>Share</Text>
-            <Ionicons name="share-outline" size={18} color={colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            accessibilityLabel="Unsave recipe"
-            style={styles.iconButton}
-            onPress={() => handleUnsaveRecipe(recipe.recipeId)}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="bookmark" size={18} color={colors.primary} />
+            <Text style={[styles.actionButtonText, { color: colors.white }]}>{t('common.share')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -183,10 +213,10 @@ export default function SavedRecipesScreen() {
   // Render empty state
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={[styles.emptyText, { color: textColors.disabled, fontFamily: fonts.regular, lineHeight: lineHeights.lg }]}>No saved recipes yet</Text>
+      <Text style={[styles.emptyText, { color: textColors.disabled, fontFamily: fonts.regular, lineHeight: lineHeights.lg }]}>{t('recipes.noSavedRecipes')}</Text>
       <Text style={[styles.emptyDescription, { color: textColors.disabled, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
       <Ionicons name="bookmark-outline" size={56} color={textColors.disabled} />
-        Recipes you save will appear here
+        {t('recipes.recipesWillAppear')}
       </Text>
       <TouchableOpacity
         style={styles.ctaButton}
@@ -194,7 +224,7 @@ export default function SavedRecipesScreen() {
         activeOpacity={0.85}
       >
         <Ionicons name="search-outline" size={16} color={colors.white} />
-        <Text style={styles.ctaButtonText}>Browse recipes</Text>
+        <Text style={styles.ctaButtonText}>{t('recipes.browseRecipes')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -204,7 +234,7 @@ export default function SavedRecipesScreen() {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Loading saved recipes...</Text>
+        <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.loadingSavedRecipes')}</Text>
       </View>
     );
   }
@@ -223,14 +253,14 @@ export default function SavedRecipesScreen() {
         }
       >
         <View style={styles.content}>
-          <Text style={[styles.title, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>Saved Recipes</Text>
-          <Text style={[styles.subtitle, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Your Bookmarked Recipes</Text>
+          <Text style={[styles.title, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>{t('recipes.savedRecipes')}</Text>
+          <Text style={[styles.subtitle, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.yourBookmarkedRecipes')}</Text>
           
           {error && (
             <View style={[styles.errorContainer, { backgroundColor: colors.error + '10', borderLeftColor: colors.error }]}>
               <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
               <TouchableOpacity style={[styles.retryButton, { backgroundColor: colors.error }]} onPress={fetchSavedRecipes}>
-                <Text style={[styles.retryButtonText, { color: colors.white }]}>Retry</Text>
+                <Text style={[styles.retryButtonText, { color: colors.white }]}>{t('common.retry')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -340,28 +370,18 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    flexDirection: 'column',
+    alignItems: 'stretch',
     marginTop: 6,
+    gap: 8,
   },
   actionButton: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
+    width: '100%',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderRadius: 6,
-    marginHorizontal: 2,
-  },
-  iconButton: {
-    width: 38,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: colors.primary + '10',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8,
-    borderWidth: 1,
-    borderColor: colors.primary + '22',
   },
   unsaveButton: {
     // Dynamic styling applied in component

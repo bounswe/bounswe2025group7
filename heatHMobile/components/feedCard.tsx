@@ -7,6 +7,9 @@ import { feedService } from '@/services/feedService';
 import { recipeService } from '@/services/recipeService';
 import { Ionicons } from '@expo/vector-icons';
 import Modal from 'react-native-modal';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+import { translateTextContent, mapLanguageToRecipeTarget } from '../services/translationService';
 
 type FeedResponse = {
   id: number;
@@ -31,8 +34,15 @@ type FeedCardProps = {
 export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
   const { colors, textColors, fonts, lineHeights } = useThemeColors();
   const router = useRouter();
+  const { t } = useTranslation();
   const fullName = [feed.name, feed.surname].filter(Boolean).join(' ') || 'User';
-  const created = feed.createdAt ? new Date(feed.createdAt).toLocaleString() : '';
+  const created = feed.createdAt ? (() => {
+    const lang = i18n.language || 'en';
+    let locale = 'en-US';
+    if (lang.startsWith('tr')) locale = 'tr-TR';
+    else if (lang.startsWith('ja')) locale = 'ja-JP';
+    return new Date(feed.createdAt).toLocaleString(locale);
+  })() : '';
   const imageUri =
     feed.type === 'RECIPE' ? feed?.recipe?.photo ?? null :
     feed.type === 'IMAGE_AND_TEXT' ? feed?.image ?? null :
@@ -44,9 +54,12 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
   const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
   const [commentsLoading, setCommentsLoading] = useState<boolean>(false);
   const [comments, setComments] = useState<any[]>([]);
+  const [translatedComments, setTranslatedComments] = useState<any[]>([]);
   const [commentMessage, setCommentMessage] = useState<string>('');
   const [commentSubmitting, setCommentSubmitting] = useState<boolean>(false);
   const [commentCount, setCommentCount] = useState<number>(feed.commentCount ?? 0);
+  const [translatedText, setTranslatedText] = useState<string | null>(null);
+  const [translatingText, setTranslatingText] = useState<boolean>(false);
   const likeScale = useRef(new Animated.Value(1)).current;
   const saveScale = useRef(new Animated.Value(1)).current;
 
@@ -65,6 +78,77 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
 
     checkSavedStatus();
   }, [feed.type, feed.recipe?.id]);
+
+  // Translate feed text when language changes
+  useEffect(() => {
+    if (!feed.text) {
+      setTranslatedText(null);
+      return;
+    }
+
+    let cancelled = false;
+    const translateFeedText = async () => {
+      setTranslatingText(true);
+      try {
+        const targetLang = mapLanguageToRecipeTarget(i18n.language);
+        const translated = await translateTextContent(feed.text!, targetLang);
+        if (!cancelled) {
+          setTranslatedText(translated);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setTranslatedText(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setTranslatingText(false);
+        }
+      }
+    };
+
+    translateFeedText();
+    return () => {
+      cancelled = true;
+    };
+  }, [feed.text, i18n.language]);
+
+  // Translate comments when they change or language changes
+  useEffect(() => {
+    if (comments.length === 0) {
+      setTranslatedComments([]);
+      return;
+    }
+
+    let cancelled = false;
+    const translateComments = async () => {
+      try {
+        const targetLang = mapLanguageToRecipeTarget(i18n.language);
+        const translated = await Promise.all(
+          comments.map(async (comment) => {
+            if (!comment.message) return comment;
+            try {
+              const translatedMessage = await translateTextContent(comment.message, targetLang);
+              return { ...comment, message: translatedMessage };
+            } catch {
+              return comment;
+            }
+          })
+        );
+        if (!cancelled) {
+          setTranslatedComments(translated);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setTranslatedComments(comments);
+        }
+      }
+    };
+
+    translateComments();
+    return () => {
+      cancelled = true;
+    };
+  }, [comments, i18n.language]);
 
   const bumpLike = () => {
     Animated.sequence([
@@ -129,12 +213,12 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
             await doLike();
           }
         } catch (err2: any) {
-          const errorMsg = err2?.response?.data?.message || err2?.message || 'Failed to toggle like';
-          Alert.alert('Error', errorMsg);
+          const errorMsg = err2?.response?.data?.message || err2?.message || t('alerts.failedToToggleLike');
+          Alert.alert(t('common.error'), errorMsg);
         }
       } else {
-        const errorMsg = error?.response?.data?.message || error?.message || 'Failed to toggle like';
-        Alert.alert('Error', errorMsg);
+        const errorMsg = error?.response?.data?.message || error?.message || t('alerts.failedToToggleLike');
+        Alert.alert(t('common.error'), errorMsg);
       }
     }
   };
@@ -172,12 +256,12 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
             await doSave();
           }
         } catch (err2: any) {
-          const errorMsg = err2?.response?.data?.message || err2?.message || 'Failed to toggle save';
-          Alert.alert('Error', errorMsg);
+          const errorMsg = err2?.response?.data?.message || err2?.message || t('alerts.failedToToggleSave');
+          Alert.alert(t('common.error'), errorMsg);
         }
       } else {
-        const errorMsg = error?.response?.data?.message || error?.message || 'Failed to toggle save';
-        Alert.alert('Error', errorMsg);
+        const errorMsg = error?.response?.data?.message || error?.message || t('alerts.failedToToggleSave');
+        Alert.alert(t('common.error'), errorMsg);
       }
     }
   };
@@ -189,8 +273,8 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
       const data = await feedService.getFeedComments(feed.id);
       setComments(Array.isArray(data) ? data : []);
     } catch (error: any) {
-      const errorMsg = error?.response?.data?.message || error?.message || 'Failed to fetch comments';
-      Alert.alert('Error', errorMsg);
+      const errorMsg = error?.response?.data?.message || error?.message || t('alerts.failedToFetchComments');
+      Alert.alert(t('common.error'), errorMsg);
     } finally {
       setCommentsLoading(false);
     }
@@ -208,8 +292,8 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
       const data = await feedService.getFeedComments(feed.id);
       setComments(Array.isArray(data) ? data : []);
     } catch (error: any) {
-      const errorMsg = error?.response?.data?.message || error?.message || 'Failed to comment on feed';
-      Alert.alert('Error', errorMsg);
+      const errorMsg = error?.response?.data?.message || error?.message || t('alerts.failedToComment');
+      Alert.alert(t('common.error'), errorMsg);
     } finally {
       setCommentSubmitting(false);
     }
@@ -218,7 +302,13 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
   const formatDateTime = (value: any) => {
     try {
       const date = new Date(value);
-      if (!isNaN(date.getTime())) return date.toLocaleString();
+      if (!isNaN(date.getTime())) {
+        const lang = i18n.language || 'en';
+        let locale = 'en-US';
+        if (lang.startsWith('tr')) locale = 'tr-TR';
+        else if (lang.startsWith('ja')) locale = 'ja-JP';
+        return date.toLocaleString(locale);
+      }
     } catch {}
     return String(value ?? '');
   };
@@ -250,7 +340,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
         <TouchableOpacity activeOpacity={0.7} onPress={handleRecipePress}>
           {!!feed.text && (
             <Text style={[styles.text, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
-              {feed.text}
+              {translatingText ? t('recipes.translating') : (translatedText ?? feed.text)}
             </Text>
           )}
           {imageUri ? (
@@ -261,7 +351,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
         <>
           {!!feed.text && (
             <Text style={[styles.text, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
-              {feed.text}
+              {translatingText ? t('recipes.translating') : (translatedText ?? feed.text)}
             </Text>
           )}
           {imageUri ? (
@@ -290,11 +380,11 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
               color={colors.error}
             />
           </Animated.View>
-          <Text style={[styles.meta, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{likeCount}</Text>
+          <Text style={[styles.meta, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{likeCount} {t('feed.likes')}</Text>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.7} onPress={handleShowComments} style={styles.actionContainer}>
           <Ionicons name="chatbubble-outline" size={18} color={textColors.secondary} />
-          <Text style={[styles.meta, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{commentCount}</Text>
+          <Text style={[styles.meta, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{commentCount} {t('feed.commentsCount')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -309,7 +399,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Comments</Text>
+            <Text style={styles.modalTitle}>{t('feed.comments')}</Text>
             <TouchableOpacity onPress={() => setCommentsVisible(false)}>
               <Ionicons name="close" size={20} color={textColors.secondary} />
             </TouchableOpacity>
@@ -319,40 +409,43 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
             {commentsLoading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={styles.loadingText}>Loading comments…</Text>
+                <Text style={styles.loadingText}>{t('feed.loadingComments')}</Text>
               </View>
             ) : comments.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="chatbubble-ellipses-outline" size={22} color={textColors.secondary} />
-                <Text style={styles.emptyText}>No comments yet</Text>
+                <Text style={styles.emptyText}>{t('feed.noComments')}</Text>
               </View>
             ) : (
               <FlatList
                 data={comments}
                 keyExtractor={(item: any, index: number) => String(item?.id ?? index)}
                 ItemSeparatorComponent={() => <View style={styles.separator} />}
-                renderItem={({ item }: { item: any }) => (
-                  <View style={styles.commentRow}>
-                    {item?.profilePhoto ? (
-                      <Image source={{ uri: item.profilePhoto }} style={styles.commentAvatar} />
-                    ) : (
-                      <View style={[styles.commentAvatar, styles.commentAvatarFallback]} />
-                    )}
-                    <View style={styles.commentBody}>
-                      <View style={styles.commentHeaderRow}>
-                        <Text style={styles.commentName} numberOfLines={1}>
-                          {[item?.name, item?.surname].filter(Boolean).join(' ') || 'User'}
-                        </Text>
-                        {!!item?.createdAt && (
-                          <Text style={styles.commentTime}>{formatDateTime(item.createdAt)}</Text>
+                renderItem={({ item, index }: { item: any; index: number }) => {
+                  const translatedComment = translatedComments[index] || item;
+                  return (
+                    <View style={styles.commentRow}>
+                      {item?.profilePhoto ? (
+                        <Image source={{ uri: item.profilePhoto }} style={styles.commentAvatar} />
+                      ) : (
+                        <View style={[styles.commentAvatar, styles.commentAvatarFallback]} />
+                      )}
+                      <View style={styles.commentBody}>
+                        <View style={styles.commentHeaderRow}>
+                          <Text style={styles.commentName} numberOfLines={1}>
+                            {[item?.name, item?.surname].filter(Boolean).join(' ') || 'User'}
+                          </Text>
+                          {!!item?.createdAt && (
+                            <Text style={styles.commentTime}>{formatDateTime(item.createdAt)}</Text>
+                          )}
+                        </View>
+                        {!!translatedComment?.message && (
+                          <Text style={styles.commentMessage}>{String(translatedComment.message)}</Text>
                         )}
                       </View>
-                      {!!item?.message && (
-                        <Text style={styles.commentMessage}>{String(item.message)}</Text>
-                      )}
                     </View>
-                  </View>
-                )}
+                  );
+                }}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{ paddingBottom: 8 }}
                 style={styles.commentsList}
@@ -363,7 +456,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({ feed }) => {
           <View style={styles.commentInputRow}>
             <TextInput
               style={styles.commentTextInput}
-              placeholder="Write a comment..."
+              placeholder={t('feed.writeComment')}
               placeholderTextColor={textColors.secondary}
               value={commentMessage}
               onChangeText={setCommentMessage}

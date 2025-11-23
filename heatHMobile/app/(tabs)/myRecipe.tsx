@@ -21,6 +21,10 @@ import { apiClient } from '../../services/apiClient';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { recipeService } from '../../services/recipeService';
 import RecipeDetail from '../recipeDetail/recipeDetail';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
+import { translateTextContent, mapLanguageToRecipeTarget } from '../../services/translationService';
+import { formatPriceForInput, parsePriceToUSD } from '../../services/currencyService';
 
 
 type RecipeItem = {
@@ -40,12 +44,15 @@ type IngredientForm = { name: string; amount: string };
 
 export default function MyRecipeScreen() {
   const { colors, textColors, fonts, lineHeights } = useThemeColors();
+  const { t } = useTranslation();
   const router = useRouter();
 
   const [recipes, setRecipes] = useState<RecipeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | number | null>(null);
+  const [translatedTitles, setTranslatedTitles] = useState<Map<string | number, string>>(new Map());
+  const [translatedInstructions, setTranslatedInstructions] = useState<Map<string | number, string>>(new Map());
 
   // Form state
   const [openForm, setOpenForm] = useState(false);
@@ -98,6 +105,56 @@ export default function MyRecipeScreen() {
     fetchMyRecipes();
   }, [fetchMyRecipes]);
 
+  // Translate recipe titles and first instruction when language or recipes change
+  useEffect(() => {
+    if (recipes.length === 0) {
+      setTranslatedTitles(new Map());
+      setTranslatedInstructions(new Map());
+      return;
+    }
+
+    let cancelled = false;
+    const translateContent = async () => {
+      const targetLang = mapLanguageToRecipeTarget(i18n.language);
+      const titleTranslations = new Map<string | number, string>();
+      const instructionTranslations = new Map<string | number, string>();
+
+      await Promise.all(
+        recipes.map(async (recipe) => {
+          try {
+            // Translate title
+            if (recipe.title) {
+              const translatedTitle = await translateTextContent(recipe.title, targetLang);
+              if (!cancelled) {
+                titleTranslations.set(recipe.id, translatedTitle);
+              }
+            }
+            
+            // Translate first instruction if available
+            if (Array.isArray(recipe.instructions) && recipe.instructions.length > 0 && recipe.instructions[0]) {
+              const translatedInstruction = await translateTextContent(recipe.instructions[0], targetLang);
+              if (!cancelled) {
+                instructionTranslations.set(recipe.id, translatedInstruction);
+              }
+            }
+          } catch (error) {
+            // Ignore translation errors
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setTranslatedTitles(titleTranslations);
+        setTranslatedInstructions(instructionTranslations);
+      }
+    };
+
+    translateContent();
+    return () => {
+      cancelled = true;
+    };
+  }, [recipes, i18n.language]);
+
   const openCreateForm = () => {
     resetForm();
     setOpenForm(true);
@@ -109,7 +166,7 @@ export default function MyRecipeScreen() {
     setTitle(r.title || '');
     setType(r.type || '');
     setTag(r.tag || '');
-    setPrice(String(r.price ?? ''));
+    setPrice(formatPriceForInput(r.price ?? 0, i18n.language));
     // instructions might be string[] or missing
     setInstructions(Array.isArray(r.instructions) ? r.instructions : []);
     setImagePreview(r.photo || r.image || '');
@@ -183,6 +240,8 @@ export default function MyRecipeScreen() {
   const handleSubmit = async () => {
     if (!isFormComplete) return;
     setSubmitting(true);
+    // Convert local currency to USD for storage
+    const priceInUSD = parsePriceToUSD(price, i18n.language) ?? 0;
     const body = {
       title,
       instructions,
@@ -191,7 +250,7 @@ export default function MyRecipeScreen() {
       type,
       photo: photoBase64 || imagePreview || 'https://picsum.photos/seed/default/300/300',
       totalCalorie: 0,
-      price: Number(price),
+      price: priceInUSD,
     };
     try {
       if (isEditing && editingId != null) {
@@ -211,7 +270,7 @@ export default function MyRecipeScreen() {
   };
 
   const confirmDelete = (id: string | number) => {
-    Alert.alert('Delete Recipe', 'Are you sure you want to delete this recipe?', [
+    Alert.alert(t('alerts.deleteRecipe'), t('alerts.deleteRecipeConfirm'), [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -222,7 +281,7 @@ export default function MyRecipeScreen() {
             await recipeService.deleteRecipe(Number(id));
             await fetchMyRecipes();
           } catch {
-            Alert.alert('Error', 'Failed to delete recipe.');
+              Alert.alert(t('common.error'), t('alerts.failedToDelete'));
           } finally {
             setDeletingId(null);
           }
@@ -265,11 +324,11 @@ export default function MyRecipeScreen() {
           )}
         </View>
         <Text numberOfLines={1} style={[styles.cardTitle, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>
-          {item.title}
+          {translatedTitles.get(item.id) ?? item.title}
         </Text>
         {Array.isArray(item.instructions) && item.instructions.length > 0 ? (
           <Text numberOfLines={1} style={[styles.cardSubtitle, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>
-            {item.instructions[0]}
+            {translatedInstructions.get(item.id) ?? item.instructions[0]}
           </Text>
         ) : null}
       </TouchableOpacity>
@@ -277,11 +336,11 @@ export default function MyRecipeScreen() {
   };
 
   const openItemMenu = (item: RecipeItem) => {
-    Alert.alert(item.title, 'What do you want to do?', [
-      { text: 'View', onPress: () => openDetail(item.id) },
-      { text: 'Edit', onPress: () => openEditForm(item) },
-      { text: 'Delete', style: 'destructive', onPress: () => confirmDelete(item.id) },
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(item.title, t('common.whatDoYouWant'), [
+      { text: t('common.view'), onPress: () => openDetail(item.id) },
+      { text: t('common.edit'), onPress: () => openEditForm(item) },
+      { text: t('common.delete'), style: 'destructive', onPress: () => confirmDelete(item.id) },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   };
 
@@ -289,7 +348,7 @@ export default function MyRecipeScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: textColors.secondary, marginTop: 8, fontFamily: fonts.regular, lineHeight: lineHeights.base }}>Loading recipes...</Text>
+        <Text style={{ color: textColors.secondary, marginTop: 8, fontFamily: fonts.regular, lineHeight: lineHeights.base }}>{t('recipes.loadingRecipes')}</Text>
       </View>
     );
   }
@@ -300,8 +359,8 @@ export default function MyRecipeScreen() {
 
       {recipes.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={[styles.emptyTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>My Recipes</Text>
-          <Text style={[styles.emptySub, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Create your first recipe.</Text>
+          <Text style={[styles.emptyTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>{t('recipes.myRecipes')}</Text>
+          <Text style={[styles.emptySub, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.createFirstRecipe')}</Text>
         </View>
       ) : (
         <FlatList
@@ -324,9 +383,9 @@ export default function MyRecipeScreen() {
           <View style={styles.modalBackdrop}>
             <View style={[styles.modalCard, { backgroundColor: colors.white }]}>
               <ScrollView contentContainerStyle={{ paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
-                <Text style={[styles.modalTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>{isEditing ? 'Edit Recipe' : 'Create New Recipe'}</Text>
+                <Text style={[styles.modalTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>{isEditing ? t('recipes.editRecipe') : t('recipes.createNewRecipe')}</Text>
 
-                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Title</Text>
+                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('recipes.title')}</Text>
                 <TextInput
                   value={title}
                   onChangeText={setTitle}
@@ -335,7 +394,7 @@ export default function MyRecipeScreen() {
                   editable={!submitting}
                 />
 
-                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Type</Text>
+                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('recipes.type')}</Text>
                 <TextInput
                   value={type}
                   onChangeText={setType}
@@ -344,23 +403,23 @@ export default function MyRecipeScreen() {
                   editable={!submitting}
                 />
 
-                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Tag</Text>
+                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('recipes.tag')}</Text>
                 <TextInput value={tag} onChangeText={setTag} placeholder="e.g. vegetarian" style={[styles.input, { backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]} editable={!submitting} />
 
-                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Price</Text>
+                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('recipes.price')}</Text>
                 <TextInput
                   value={price}
                   onChangeText={setPrice}
                   keyboardType="numeric"
-                  placeholder="e.g. 10"
+                  placeholder={t('recipes.pricePlaceholder')}
                   style={[styles.input, { backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
                   editable={!submitting}
                 />
 
-                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Photo</Text>
+                <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('recipes.photo')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <TouchableOpacity style={[styles.pickBtn, { backgroundColor: colors.primary + '20' }]} onPress={handlePickImage} disabled={submitting}>
-                    <Text style={[styles.pickBtnText, { color: colors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Pick Image</Text>
+                    <Text style={[styles.pickBtnText, { color: colors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('recipes.pickImage')}</Text>
                   </TouchableOpacity>
                   {imagePreview ? <Image source={{ uri: imagePreview }} style={{ width: 56, height: 56, borderRadius: 8 }} /> : null}
                 </View>
@@ -381,7 +440,7 @@ export default function MyRecipeScreen() {
                   </TouchableOpacity>
                 </View>
                 {instructions.length === 0 ? (
-                  <Text style={[styles.muted, { color: textColors.hint, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No instructions added yet</Text>
+                  <Text style={[styles.muted, { color: textColors.hint, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.noInstructionsAdded')}</Text>
                 ) : (
                   <View style={styles.chipsWrap}>
                     {instructions.map((inst, idx) => (
@@ -392,19 +451,19 @@ export default function MyRecipeScreen() {
                   </View>
                 )}
 
-                <Text style={[styles.label, { marginTop: 16, color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Ingredient</Text>
+                <Text style={[styles.label, { marginTop: 16, color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('recipes.ingredient')}</Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <TextInput
                     value={curIngName}
                     onChangeText={setCurIngName}
-                    placeholder="Name"
+                    placeholder={t('recipes.enterName')}
                     style={[styles.input, { flex: 1, backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
                     editable={!submitting}
                   />
                   <TextInput
                     value={curIngAmt}
                     onChangeText={setCurIngAmt}
-                    placeholder="Amount"
+                    placeholder={t('recipes.enterAmount')}
                     style={[styles.input, { flex: 1, backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
                     editable={!submitting}
                     onSubmitEditing={addIngredient}
@@ -415,7 +474,7 @@ export default function MyRecipeScreen() {
                   </TouchableOpacity>
                 </View>
                 {ingredients.length === 0 ? (
-                  <Text style={[styles.muted, { color: textColors.hint, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No ingredients added yet</Text>
+                  <Text style={[styles.muted, { color: textColors.hint, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.noIngredientsAdded')}</Text>
                 ) : (
                   <View style={styles.chipsWrap}>
                     {ingredients.map((ing, idx) => (

@@ -23,9 +23,12 @@ import { calorieService } from '../../services/calorieService';
 import { recipeService } from '../../services/recipeService';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { translateTextContent, mapLanguageToRecipeTarget } from '../../services/translationService';
 
 export default function CalorieScreen() {
   const { colors, textColors, fonts } = useThemeColors();
+  const { t, i18n: i18nHook } = useTranslation();
 
   // State for date selection
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -50,6 +53,9 @@ export default function CalorieScreen() {
   const [showRecipeSelector, setShowRecipeSelector] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [recipeDetails, setRecipeDetails] = useState<Record<number, any>>({});
+  const [translatedRecipeNames, setTranslatedRecipeNames] = useState<Map<number, string>>(new Map());
+  const [translatedSelectedRecipeTitle, setTranslatedSelectedRecipeTitle] = useState<string | null>(null);
+  const [translatedRecipeTitles, setTranslatedRecipeTitles] = useState<Map<number, string>>(new Map());
   const [dailyMacros, setDailyMacros] = useState({ p: 0, f: 0, c: 0 });
 
   // Chart State
@@ -239,12 +245,128 @@ export default function CalorieScreen() {
     }
   }, [selectedRecipe, eatenDate, selectedDate, trackingData]);
 
+  // Translate recipe names when tracking data or language changes
+  useEffect(() => {
+    if (trackingData.length === 0) {
+      setTranslatedRecipeNames(new Map());
+      return;
+    }
+
+    let cancelled = false;
+    const translateNames = async () => {
+      const targetLang = mapLanguageToRecipeTarget(i18nHook.language);
+      const translations = new Map<number, string>();
+
+      await Promise.all(
+        trackingData.map(async (item: any) => {
+          try {
+            const recipeId = item.recipeId || item.id;
+            if (recipeId && item.name) {
+              const translated = await translateTextContent(item.name, targetLang);
+              if (!cancelled) {
+                translations.set(recipeId, translated);
+              }
+            }
+          } catch (error) {
+            // Ignore translation errors
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setTranslatedRecipeNames(translations);
+      }
+    };
+
+    translateNames();
+    return () => {
+      cancelled = true;
+    };
+  }, [trackingData, i18nHook.language]);
+
+  // Translate selected recipe title when it changes
+  useEffect(() => {
+    if (!selectedRecipe?.title) {
+      setTranslatedSelectedRecipeTitle(null);
+      return;
+    }
+
+    let cancelled = false;
+    const translateTitle = async () => {
+      const targetLang = mapLanguageToRecipeTarget(i18nHook.language);
+      try {
+        const translated = await translateTextContent(selectedRecipe.title, targetLang);
+        if (!cancelled) {
+          setTranslatedSelectedRecipeTitle(translated);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setTranslatedSelectedRecipeTitle(null);
+        }
+      }
+    };
+
+    translateTitle();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRecipe?.title, i18nHook.language]);
+
+  // Translate recipe titles in selector when recipes or language changes
+  useEffect(() => {
+    if (recipes.length === 0) {
+      setTranslatedRecipeTitles(new Map());
+      return;
+    }
+
+    let cancelled = false;
+    const translateTitles = async () => {
+      const targetLang = mapLanguageToRecipeTarget(i18nHook.language);
+      const translations = new Map<number, string>();
+
+      await Promise.all(
+        recipes.map(async (recipe: any) => {
+          try {
+            if (recipe.title && recipe.id) {
+              const translated = await translateTextContent(recipe.title, targetLang);
+              if (!cancelled) {
+                translations.set(recipe.id, translated);
+              }
+            }
+          } catch (error) {
+            // Ignore translation errors
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setTranslatedRecipeTitles(translations);
+      }
+    };
+
+    translateTitles();
+    return () => {
+      cancelled = true;
+    };
+  }, [recipes, i18nHook.language]);
+
   const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0];
   };
   
   const formatDisplayDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const lang = i18nHook.language || 'en';
+    // Map i18n language codes to locale codes
+    let locale = 'en-US';
+    if (lang.startsWith('tr')) locale = 'tr-TR';
+    else if (lang.startsWith('ja')) locale = 'ja-JP';
+    
+    return date.toLocaleDateString(locale, { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   const fetchTrackingData = async () => {
@@ -285,7 +407,7 @@ export default function CalorieScreen() {
 
     const portionNum = parseFloat(portion.replace(',', '.'));
     if (isNaN(portionNum) || portionNum <= 0) {
-      Alert.alert('Invalid Input', 'Portion must be a positive number.');
+      Alert.alert(t('alerts.validationError'), t('calorie.invalidPortion'));
       return;
     }
 
@@ -487,11 +609,11 @@ export default function CalorieScreen() {
           <View style={styles.cardInfo}>
             <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginRight: 8}}>
                 <Text style={[styles.cardTitle, { fontFamily: fonts.bold, color: textColors.primary, flex: 1 }]} numberOfLines={1}>
-                  {item.name || 'Unknown Recipe'}
+                  {translatedRecipeNames.get(item.recipeId || item.id) ?? (item.name || 'Unknown Recipe')}
                 </Text>
                 <View style={{backgroundColor: colors.gray[100], paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4}}>
                      <Text style={{fontSize: 10, fontFamily: fonts.medium, color: textColors.secondary}}>
-                         {displayPortion} portion{displayPortion != 1 ? 's' : ''}
+                         {displayPortion} {t('calorie.portion')}{displayPortion != 1 ? 's' : ''}
                      </Text>
                 </View>
             </View>
@@ -546,7 +668,7 @@ export default function CalorieScreen() {
              </View>
           )}
           <View style={{flex: 1}}>
-              <Text style={[styles.recipeItemText, { fontFamily: fonts.medium, color: textColors.primary }]}>{item.title}</Text>
+              <Text style={[styles.recipeItemText, { fontFamily: fonts.medium, color: textColors.primary }]}>{translatedRecipeTitles.get(item.id) ?? item.title}</Text>
               <Text style={[styles.recipeItemCal, { fontFamily: fonts.regular, color: textColors.secondary }]}>
                   {item.totalCalorie || item.calories || item.calorie || 0} kcal
               </Text>
@@ -588,9 +710,9 @@ export default function CalorieScreen() {
       <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.gray[200] }]}>
               <TouchableOpacity onPress={() => setShowChartModal(false)}>
-                  <Text style={[styles.modalCancel, { fontFamily: fonts.medium, color: colors.gray[600] }]}>Close</Text>
+                  <Text style={[styles.modalCancel, { fontFamily: fonts.medium, color: colors.gray[600] }]}>{t('calorie.close')}</Text>
               </TouchableOpacity>
-              <Text style={[styles.modalTitle, { fontFamily: fonts.bold, color: textColors.primary }]}>Analytics</Text>
+              <Text style={[styles.modalTitle, { fontFamily: fonts.bold, color: textColors.primary }]}>{t('calorie.analytics')}</Text>
               <View style={{width: 40}} />
           </View>
 
@@ -616,7 +738,7 @@ export default function CalorieScreen() {
                               fontFamily: chartPeriod === p ? fonts.bold : fonts.medium,
                               color: chartPeriod === p ? textColors.primary : textColors.secondary,
                               textTransform: 'capitalize'
-                          }}>{p === 'week' ? 'Weekly' : 'Monthly'}</Text>
+                          }}>{p === 'week' ? t('calorie.weekly') : t('calorie.monthly')}</Text>
                       </TouchableOpacity>
                   ))}
               </View>
@@ -645,7 +767,7 @@ export default function CalorieScreen() {
                               fontFamily: fonts.medium,
                               color: chartMetric === m ? '#fff' : textColors.secondary,
                               textTransform: 'capitalize'
-                          }}>{m}</Text>
+                          }}>{t(`calorie.${m}`)}</Text>
                       </TouchableOpacity>
                   )})}
               </ScrollView>
@@ -670,7 +792,10 @@ export default function CalorieScreen() {
                             yAxisSuffix={chartMetric === 'calories' ? '' : 'g'}
                           />
                           <Text style={{marginTop: 10, fontFamily: fonts.regular, color: textColors.secondary, textAlign: 'center'}}>
-                              {chartMetric === 'calories' ? 'Total Calories per Day' : `Total ${chartMetric.charAt(0).toUpperCase() + chartMetric.slice(1)} (g) per Day`}
+                              {chartMetric === 'calories' ? t('calorie.totalCaloriesPerDay') : 
+                               chartMetric === 'protein' ? t('calorie.totalProteinPerDay') :
+                               chartMetric === 'fat' ? t('calorie.totalFatPerDay') :
+                               t('calorie.totalCarbsPerDay')}
                           </Text>
                       </View>
                   )
@@ -686,14 +811,14 @@ export default function CalorieScreen() {
       <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.gray[200] }]}>
               <TouchableOpacity onPress={closeAddModal}>
-                  <Text style={[styles.modalCancel, { fontFamily: fonts.medium, color: colors.gray[600] }]}>Cancel</Text>
+                  <Text style={[styles.modalCancel, { fontFamily: fonts.medium, color: colors.gray[600] }]}>{t('common.cancel')}</Text>
               </TouchableOpacity>
-              <Text style={[styles.modalTitle, { fontFamily: fonts.bold, color: textColors.primary }]}>{isEditing ? 'Edit Entry' : 'Add Entry'}</Text>
+              <Text style={[styles.modalTitle, { fontFamily: fonts.bold, color: textColors.primary }]}>{isEditing ? t('calorie.editEntry') : t('calorie.addEntry')}</Text>
               <TouchableOpacity onPress={handleAddTracking} disabled={addingTracking}>
                   {addingTracking ? (
                       <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
-                      <Text style={[styles.modalDone, { fontFamily: fonts.bold, color: colors.primary }]}>{isEditing ? 'Update' : 'Save'}</Text>
+                      <Text style={[styles.modalDone, { fontFamily: fonts.bold, color: colors.primary }]}>{isEditing ? t('calorie.update') : t('common.save')}</Text>
                   )}
               </TouchableOpacity>
           </View>
@@ -701,7 +826,7 @@ export default function CalorieScreen() {
           <ScrollView style={styles.modalBody}>
               {/* Date Selection in Modal */}
               <View style={styles.inputGroup}>
-                  <Text style={[styles.label, { fontFamily: fonts.medium, color: textColors.secondary }]}>Date</Text>
+                  <Text style={[styles.label, { fontFamily: fonts.medium, color: textColors.secondary }]}>{t('calorie.date')}</Text>
                   <View style={[styles.dateInputRow, { opacity: isEditing ? 0.5 : 1 }]}>
                       {Platform.OS === 'android' ? (
                           <TouchableOpacity 
@@ -735,7 +860,7 @@ export default function CalorieScreen() {
 
               {/* Recipe Selection */}
               <View style={styles.inputGroup}>
-                  <Text style={[styles.label, { fontFamily: fonts.medium, color: textColors.secondary }]}>Recipe</Text>
+                  <Text style={[styles.label, { fontFamily: fonts.medium, color: textColors.secondary }]}>{t('recipes.recipe')}</Text>
                   <TouchableOpacity
                       style={[styles.inputButton, { borderColor: colors.gray[300], backgroundColor: isEditing ? colors.gray[100] : 'transparent' }]}
                       onPress={() => !isEditing && setShowRecipeSelector(true)}
@@ -747,11 +872,11 @@ export default function CalorieScreen() {
                                   <Image source={{uri: selectedImageUri}} style={{width: 30, height: 30, borderRadius: 4, marginRight: 8}} />
                               )}
                               <Text style={{ fontFamily: fonts.regular, color: textColors.primary, flex: 1 }} numberOfLines={1}>
-                                  {selectedRecipe.title}
+                                  {translatedSelectedRecipeTitle ?? selectedRecipe.title}
                               </Text>
                           </View>
                       ) : (
-                          <Text style={{ fontFamily: fonts.regular, color: colors.gray[400] }}>Select a recipe</Text>
+                          <Text style={{ fontFamily: fonts.regular, color: colors.gray[400] }}>{t('calorie.selectRecipe')}</Text>
                       )}
                       <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
                   </TouchableOpacity>
@@ -759,7 +884,7 @@ export default function CalorieScreen() {
 
               {/* Portion Input */}
               <View style={styles.inputGroup}>
-                  <Text style={[styles.label, { fontFamily: fonts.medium, color: textColors.secondary }]}>Portion</Text>
+                  <Text style={[styles.label, { fontFamily: fonts.medium, color: textColors.secondary }]}>{t('calorie.portion')}</Text>
                   <View style={[styles.textInputWrapper, { borderColor: colors.gray[300] }]}>
                       <TextInput
                           style={[styles.textInput, { fontFamily: fonts.regular, color: textColors.primary }]}
@@ -769,7 +894,7 @@ export default function CalorieScreen() {
                           placeholder="1.0"
                           placeholderTextColor={colors.gray[400]}
                       />
-                      <Text style={{ fontFamily: fonts.medium, color: colors.gray[500], marginRight: 12 }}>servings</Text>
+                      <Text style={{ fontFamily: fonts.medium, color: colors.gray[500], marginRight: 12 }}>{t('calorie.servings')}</Text>
                   </View>
               </View>
               
@@ -777,7 +902,7 @@ export default function CalorieScreen() {
                    <View style={[styles.infoBox, { backgroundColor: colors.primary + '15' }]}>
                       <Ionicons name="information-circle-outline" size={20} color={colors.primary} style={{marginRight: 8}} />
                       <Text style={{ fontFamily: fonts.medium, color: colors.primary }}>
-                          Total: {(selectedRecipe.totalCalorie || selectedRecipe.calories || selectedRecipe.calorie || 0) * (parseFloat(portion) || 0)} kcal
+                          {t('calorie.total')}: {(selectedRecipe.totalCalorie || selectedRecipe.calories || selectedRecipe.calorie || 0) * (parseFloat(portion) || 0)} kcal
                       </Text>
                    </View>
               )}
@@ -797,7 +922,7 @@ export default function CalorieScreen() {
             <TouchableOpacity onPress={() => setShowRecipeSelector(false)}>
                 <Ionicons name="chevron-back" size={24} color={colors.primary} />
             </TouchableOpacity>
-            <Text style={[styles.modalTitle, { fontFamily: fonts.bold, color: textColors.primary }]}>Select Recipe</Text>
+            <Text style={[styles.modalTitle, { fontFamily: fonts.bold, color: textColors.primary }]}>{t('calorie.selectRecipe')}</Text>
             <View style={{width: 24}} />
         </View>
         
@@ -892,7 +1017,7 @@ export default function CalorieScreen() {
 
         {/* Total Calories Card */}
         <View style={styles.summaryContainer}>
-            <Text style={[styles.summaryLabel, { fontFamily: fonts.medium, color: textColors.secondary }]}>Total Intake</Text>
+            <Text style={[styles.summaryLabel, { fontFamily: fonts.medium, color: textColors.secondary }]}>{t('calorie.totalIntake')}</Text>
             <View style={styles.summaryValueContainer}>
                 <Text style={[styles.summaryValue, { fontFamily: fonts.bold, color: colors.primary }]}>
                     {calculateTotalCalories().toFixed(0)}

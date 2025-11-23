@@ -6,9 +6,11 @@ import { feedService } from '../../services/feedService';
 import FeedCard from '@/components/feedCard';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 export default function HomeScreen() {
   const { colors, textColors, fonts, lineHeights } = useThemeColors();
+  const { t } = useTranslation();
   const [feeds, setFeeds] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +77,7 @@ export default function HomeScreen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission required', 'We need gallery permission to select a photo.');
+        Alert.alert(t('alerts.permissionRequired'), t('alerts.photoLibraryPermission'));
         return;
       }
 
@@ -94,7 +96,7 @@ export default function HomeScreen() {
       const mime = (asset as any).mimeType || 'image/jpeg';
       const base64 = asset.base64;
       if (!base64) {
-        Alert.alert('Error', 'Could not read selected image.');
+        Alert.alert(t('common.error'), t('alerts.failedToPickImage'));
         return;
       }
       const dataUri = `data:${mime};base64,${base64}`;
@@ -150,7 +152,7 @@ export default function HomeScreen() {
     return (
       <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Loading recent feeds...</Text>
+        <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('feed.loadingFeeds')}</Text>
       </View>
     );
   }
@@ -168,18 +170,18 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>Recent Feeds</Text>
+      <Text style={[styles.title, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>{t('feed.recentFeeds')}</Text>
       <FlatList
         data={feedArray}
         keyExtractor={(item: any) => String(item.id ?? Math.random())}
         renderItem={({ item }) => <FeedCard feed={item} />}
-        ListEmptyComponent={<Text style={[styles.emptyText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>No feeds found.</Text>}
+        ListEmptyComponent={<Text style={[styles.emptyText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('feed.noFeeds')}</Text>}
         ListHeaderComponent={(
           <View style={styles.composeCard}>
             <TextInput
               value={newPostText}
               onChangeText={setNewPostText}
-              placeholder="What's on your mind?"
+              placeholder={t('feed.whatsOnMind')}
               placeholderTextColor={textColors.secondary}
               multiline
               style={styles.composeInput}
@@ -199,7 +201,7 @@ export default function HomeScreen() {
                 <Text style={[
                   styles.mediaButtonText,
                   { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }
-                ]}>Photo</Text>
+                ]}>{t('feed.photo')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 activeOpacity={0.7}
@@ -217,7 +219,7 @@ export default function HomeScreen() {
                   <Text style={[
                     styles.postButtonText,
                     { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base }
-                  ]}>Post</Text>
+                  ]}>{t('feed.post')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -231,7 +233,7 @@ export default function HomeScreen() {
         ListFooterComponent={loadingMore ? (
           <View style={styles.footer}>
             <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={[styles.footerText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>Loading more...</Text>
+            <Text style={[styles.footerText, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('feed.loadingMore')}</Text>
           </View>
         ) : null}
       />
