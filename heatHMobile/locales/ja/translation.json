@@ -47,14 +47,16 @@
     "startSharing": "レシピや体験を共有し始めましょう！",
     "fontPreview": "フォントプレビュー",
     "colorDemonstration": "色のデモンストレーション",
-    "fontMode": "フォント: {mode}",
-    "colorMode": "色: {mode}",
+    "fontMode": "フォント: {{mode}}",
+    "colorMode": "色: {{mode}}",
     "dyslexicFont": "ディスレクシア対応 (OpenDyslexic)",
     "normalFont": "通常 (システム)",
     "colorBlindMode": "色覚異常モード",
+    "colorBlindActive": "色覚異常モードが有効です。識別しやすいよう緑色は青に置き換えられています。",
+    "colorStandardActive": "標準の色が有効です。緑は従来どおり表示されます。",
     "standardColors": "標準",
     "profileSaved": "プロフィールが正常に保存されました",
-    "fontPreviewText": "このテキストは現在のフォントの見え方を示しています。{mode}",
+    "fontPreviewText": "このテキストは現在のフォントの見え方を示しています。{{mode}}",
     "fontPreviewDyslexic": "ディスレクシア対応のOpenDyslexicフォントがアクティブです。",
     "fontPreviewNormal": "通常のシステムフォントがアクティブです。",
     "colorSuccess": "成功",
@@ -279,6 +281,8 @@
     "calories": "カロリー",
     "protein": "タンパク質",
     "fat": "脂質",
-    "carbs": "炭水化物"
+    "carbs": "炭水化物",
+    "noEntriesForThisDay": "この日のエントリはありません",
+    "tapToTrackCalories": "カロリーを追跡するには + をタップしてください"
   }
 }

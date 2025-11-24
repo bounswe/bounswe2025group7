@@ -34,7 +34,7 @@ export default function SemanticSearch() {
       const res = await semanticSearchService.search(trimmed);
       setResults(res || []);
     } catch (e) {
-      setError(t('') || 'Search failed');
+      setError(t('semanticSearch.searchFailed'));
       setResults([]);
     } finally {
       setLoading(false);
@@ -53,30 +53,34 @@ export default function SemanticSearch() {
     <Template>
       <Box sx={{ maxWidth: 900, mx: 'auto', py: 2 }}>
         <Typography variant="h5" gutterBottom>
-          {t('') || 'Semantic Search'}
+          {t('semanticSearch.title')}
         </Typography>
 
         <TextField
           fullWidth
           variant="outlined"
-          placeholder={t('') || 'Search recipes'}
+          placeholder={t('semanticSearch.placeholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          helperText={query.trim().length > 0 && query.trim().length < 3 ? (t('') || 'Please type at least 3 characters to search.') : ' '}
+          helperText={
+            query.trim().length > 0 && query.trim().length < 3
+              ? t('semanticSearch.helper')
+              : ' '
+          }
         />
 
         <Box sx={{ mt: 2 }}>
           {loading && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <CircularProgress size={20} />
-              <Typography>{t('') || 'Loading...'}</Typography>
+              <Typography>{t('semanticSearch.loading')}</Typography>
             </Box>
           )}
 
           {error && <Typography color="error">{error}</Typography>}
 
           {!loading && !error && results.length === 0 && query.trim().length >= 3 && (
-            <Typography>{t('') || 'No results found.'}</Typography>
+            <Typography>{t('semanticSearch.noResults')}</Typography>
           )}
 
           <List>
@@ -97,7 +101,7 @@ export default function SemanticSearch() {
                 </ListItemAvatar>
 
                 <ListItemText
-                  primary={r.title ?? r.name ?? r.recipeName ?? 'Untitled'}
+                  primary={r.title ?? r.name ?? r.recipeName ?? t('semanticSearch.untitled')}
                   secondary={r.summary ?? r.description ?? null}
                 />
               </ListItem>

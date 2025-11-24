@@ -26,6 +26,8 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { translateTextContent, mapLanguageToRecipeTarget } from '../../services/translationService';
 
+const isValidDate = (d: any) => d instanceof Date && !isNaN(d.getTime());
+
 export default function CalorieScreen() {
   const { colors, textColors, fonts } = useThemeColors();
   const { t, i18n: i18nHook } = useTranslation();
@@ -355,6 +357,7 @@ export default function CalorieScreen() {
   };
   
   const formatDisplayDate = (date: Date) => {
+    if (!isValidDate(date)) return formatDisplayDate(new Date());
     const lang = i18nHook.language || 'en';
     // Map i18n language codes to locale codes
     let locale = 'en-US';
@@ -497,14 +500,14 @@ export default function CalorieScreen() {
 
   const onSelectedDateChange = (event: any, date?: Date) => {
     setShowSelectedDatePicker(Platform.OS === 'ios');
-    if (date) {
+    if (date && isValidDate(date)) {
       setSelectedDate(date);
     }
   };
 
   const onEatenDateChange = (event: any, date?: Date) => {
     setShowEatenDatePicker(Platform.OS === 'ios');
-    if (date) {
+    if (date && isValidDate(date)) {
       setEatenDate(date);
     }
   };
@@ -839,7 +842,7 @@ export default function CalorieScreen() {
                       ) : (
                            <View pointerEvents={isEditing ? 'none' : 'auto'}>
                                <DateTimePicker
-                                  value={eatenDate}
+                                  value={isValidDate(eatenDate) ? eatenDate : new Date()}
                                   mode="date"
                                   display="default"
                                   onChange={onEatenDateChange}
@@ -850,7 +853,7 @@ export default function CalorieScreen() {
                   </View>
                   {Platform.OS === 'android' && showEatenDatePicker && (
                        <DateTimePicker
-                          value={eatenDate}
+                          value={isValidDate(eatenDate) ? eatenDate : new Date()}
                           mode="date"
                           display="default"
                           onChange={onEatenDateChange}
@@ -1047,10 +1050,10 @@ export default function CalorieScreen() {
                 <View style={styles.emptyContainer}>
                     <Ionicons name="nutrition-outline" size={64} color={colors.gray[300]} />
                     <Text style={[styles.emptyText, { fontFamily: fonts.medium, color: textColors.secondary }]}>
-                        No entries for this day
+                        {t('calorie.noEntriesForThisDay')}
                     </Text>
                     <Text style={[styles.emptySubText, { fontFamily: fonts.regular, color: textColors.disabled }]}>
-                        Tap + to track your calories
+                        {t('calorie.tapToTrackCalories')}
                     </Text>
                 </View>
             }
@@ -1087,7 +1090,7 @@ export default function CalorieScreen() {
 
       {Platform.OS === 'android' && showSelectedDatePicker && (
           <DateTimePicker
-            value={selectedDate}
+            value={isValidDate(selectedDate) ? selectedDate : new Date()}
             mode="date"
             display="default"
             onChange={onSelectedDateChange}

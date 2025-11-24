@@ -47,14 +47,16 @@
     "startSharing": "Start sharing your recipes and experiences!",
     "fontPreview": "Font Preview",
     "colorDemonstration": "Color Demonstration",
-    "fontMode": "Font: {mode}",
-    "colorMode": "Colors: {mode}",
+    "fontMode": "Font: {{mode}}",
+    "colorMode": "Colors: {{mode}}",
     "dyslexicFont": "Dyslexic (OpenDyslexic)",
     "normalFont": "Normal (System)",
     "colorBlindMode": "Color Blind Mode",
+    "colorBlindActive": "Color blind mode active - all green colors have been changed to blue for better distinction!",
+    "colorStandardActive": "Standard colors are currently active - greens are green.",
     "standardColors": "Standard",
     "profileSaved": "Profile saved successfully",
-    "fontPreviewText": "This text shows how the current font looks. {mode}",
+    "fontPreviewText": "This text shows how the current font looks. {{mode}}",
     "fontPreviewDyslexic": "Dyslexic-friendly OpenDyslexic font is active.",
     "fontPreviewNormal": "Normal system font is active.",
     "colorSuccess": "Success",
@@ -279,6 +281,8 @@
     "calories": "Calories",
     "protein": "Protein",
     "fat": "Fat",
-    "carbs": "Carbs"
+    "carbs": "Carbs",
+    "noEntriesForThisDay": "No entries for this day",
+    "tapToTrackCalories": "Tap + to track your calories"
   }
 }

@@ -20,6 +20,7 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import Template from '../components/Template';
 import apiClient, { saveRecipe, unsaveRecipe } from '../services/apiClient';
 import Snackbar from '@mui/material/Snackbar';
+import { useTranslation } from 'react-i18next';
 
 // Header section styling
 const ProfileHeader = styled(Box)(({ theme }) => ({
@@ -34,6 +35,7 @@ const UserProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
+  const { t } = useTranslation();
   
   // States for user data
   const [profileData, setProfileData] = useState(null);
@@ -79,14 +81,14 @@ const UserProfile = () => {
             setFeeds(processedFeeds);
           } catch (err) {
             console.error("Error fetching user profile:", err);
-            setError("Failed to load user profile. Please try again.");
+            setError(t('userProfile.loadError'));
           } finally {
             setLoading(false);
           }
         };
     
         fetchUserProfile();
-      }, [userId]);
+      }, [userId, t]);
 
    
 
@@ -134,7 +136,7 @@ const UserProfile = () => {
         }));
       }
       
-      setSnackbarMessage('Failed to update like status');
+      setSnackbarMessage(t('userProfile.likeError'));
       setSnackbarOpen(true);
     }
   };
@@ -180,7 +182,7 @@ const UserProfile = () => {
         }));
       }
       
-      setSnackbarMessage('Failed to update bookmark status');
+      setSnackbarMessage(t('userProfile.bookmarkError'));
       setSnackbarOpen(true);
     }
   };
@@ -203,7 +205,7 @@ const UserProfile = () => {
       }
     } catch (err) {
       console.error('Failed to fetch comments:', err);
-      setSnackbarMessage("Failed to load comments. Please try again.");
+      setSnackbarMessage(t('userProfile.commentsLoadError'));
       setSnackbarOpen(true);
     } finally {
       setCommentsLoading(false);
@@ -250,7 +252,7 @@ const UserProfile = () => {
       
     } catch (err) {
       console.error('Failed to post comment:', err);
-      setSnackbarMessage("Failed to post comment. Please try again.");
+      setSnackbarMessage(t('userProfile.commentsPostError'));
       setSnackbarOpen(true);
     } finally {
       setCommentsLoading(false);
@@ -274,13 +276,13 @@ const UserProfile = () => {
     const recipeUrl = `${window.location.origin}/recipe/${recipeToShare.id}`;
     navigator.clipboard.writeText(recipeUrl)
       .then(() => {
-        setSnackbarMessage("Recipe link copied to clipboard!");
+        setSnackbarMessage(t('recipes.linkCopied'));
         setSnackbarOpen(true);
         handleShareClose();
       })
       .catch(err => {
         console.error('Failed to copy link:', err);
-        setSnackbarMessage("Failed to copy link. Please try again.");
+        setSnackbarMessage(t('recipes.linkCopyFailed'));
         setSnackbarOpen(true);
       });
   };
@@ -289,7 +291,7 @@ const UserProfile = () => {
     if (!recipeToShare) return;
     
     const recipeUrl = `${window.location.origin}/recipe/${recipeToShare.id}`;
-    const recipeTitle = recipeToShare.title || 'Check out this recipe!';
+    const recipeTitle = recipeToShare.title || t('recipes.checkOutRecipe');
     let shareUrl;
 
     switch (platform) {
@@ -329,9 +331,9 @@ const UserProfile = () => {
     return (
       <Template>
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh" flexDirection="column">
-          <Typography color="error" gutterBottom>{error || "User not found"}</Typography>
+          <Typography color="error" gutterBottom>{error || t('userProfile.userNotFound')}</Typography>
           <Button variant="contained" onClick={() => navigate(-1)} sx={{ mt: 2 }}>
-            Go Back
+            {t('common.back')}
           </Button>
         </Box>
       </Template>
@@ -359,13 +361,13 @@ const UserProfile = () => {
       {/* User's Feeds */}
       <Container maxWidth="md" sx={{ mb: 4 }}>
         <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-          Posts
+          {t('userProfile.posts')}
         </Typography>
 
         {feeds.length === 0 ? (
           <Paper elevation={1} sx={{ p: 3, textAlign: 'center' }}>
             <Typography color="textSecondary">
-              This user hasn't posted anything yet.
+              {t('userProfile.noPosts')}
             </Typography>
           </Paper>
         ) : (
@@ -564,7 +566,7 @@ const UserProfile = () => {
             overflow: 'hidden'
           }}>
             <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
-              Post
+              {t('userProfile.postHeader')}
             </Typography>
             
             {commentFeed && (
@@ -695,7 +697,7 @@ const UserProfile = () => {
                       onClick={() => navigate(`/recipe/${commentFeed.recipe.id}`)}
                       sx={{ ml: 'auto', mr: 2, mt: -1 }}
                     >
-                      View Recipe
+                      {t('userProfile.viewRecipe')}
                     </Button>
                   )}
                 </Box>
@@ -715,7 +717,7 @@ const UserProfile = () => {
               borderBottom: `1px solid ${theme.palette.divider}`, 
               bgcolor: 'primary.main'
             }}>
-              <Typography variant="h6" color="primary.contrastText">Comments</Typography>
+              <Typography variant="h6" color="primary.contrastText">{t('userProfile.commentsSection')}</Typography>
             </Box>
             
             <Box sx={{ 
@@ -746,7 +748,7 @@ const UserProfile = () => {
                   )}
                 </Box>
               )) : (
-                <Typography color="text.secondary" sx={{ p: 2 }}>No comments yet.</Typography>
+                <Typography color="text.secondary" sx={{ p: 2 }}>{t('userProfile.noComments')}</Typography>
               )}
             </Box>
             
@@ -756,7 +758,7 @@ const UserProfile = () => {
               bgcolor: 'background.paper'
             }}>
               <TextField
-                label="Add a comment"
+                label={t('userProfile.addComment')}
                 fullWidth
                 multiline
                 rows={2}
@@ -771,7 +773,7 @@ const UserProfile = () => {
                 fullWidth
                 disabled={commentsLoading || !newComment.trim()}
               >
-                {commentsLoading ? <CircularProgress size={24} color="inherit" /> : 'Post Comment'}
+                {commentsLoading ? <CircularProgress size={24} color="inherit" /> : t('userProfile.postComment')}
               </Button>
             </Box>
           </Box>
@@ -794,19 +796,19 @@ const UserProfile = () => {
       >
         <MenuItem onClick={copyLinkToClipboard} dense>
           <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} />
-          Copy Link
+          {t('recipes.copyLink')}
         </MenuItem>
         <MenuItem onClick={() => shareToSocial('facebook')} dense>
           <FacebookIcon fontSize="small" sx={{ mr: 1 }} />
-          Share to Facebook
+          {t('recipes.shareToFacebook')}
         </MenuItem>
         <MenuItem onClick={() => shareToSocial('twitter')} dense>
           <TwitterIcon fontSize="small" sx={{ mr: 1 }} />
-          Share to Twitter
+          {t('recipes.shareToTwitter')}
         </MenuItem>
         <MenuItem onClick={() => shareToSocial('whatsapp')} dense>
           <WhatsAppIcon fontSize="small" sx={{ mr: 1 }} />
-          Share via WhatsApp
+          {t('recipes.shareToWhatsApp')}
         </MenuItem>
       </Menu>
 
