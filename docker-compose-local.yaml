@@ -16,8 +16,15 @@ services:
       - ./postgres-data:/var/lib/postgresql/data
     networks:
       - appnet
+    # --- ADD THIS BLOCK ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U localuser -d heathdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    # ----------------------
 
-  # 2. Local MongoDB Service (YENİ EKLENDİ)
+  # 2. Local MongoDB Service
   mongo:
     image: mongo:6.0
     container_name: heath_mongo_local
@@ -30,10 +37,15 @@ services:
       - "27017:27017"
     volumes:
       - ./mongo-data:/data/db
-      # Bu script, container ilk defa oluşturulurken çalışır:
       - ./db-init/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
     networks:
       - appnet
+    # Optional: Add healthcheck for Mongo too for stability
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # 3. Backend Service
   backend:
@@ -41,37 +53,33 @@ services:
       context: ./heatHBack
       dockerfile: Dockerfile
     container_name: heath_backend_dev
-
     environment:
-      # Server
       - SERVER_PORT=8080
-
-      # --- SQL CONFIG (Local 'db' container) ---
       - DB_URL=jdbc:postgresql://db:5432/heathdb
       - DB_USERNAME=localuser
       - DB_PASSWORD=localpass
       - HIBERNATE_DDL_AUTO=update
       - SHOW_SQL=true
-
-      # --- MONGO CONFIG (Local 'mongo' container) ---
-      # Dikkat: 'admin' veritabanında yetkilendirme yapıyoruz (?authSource=admin)
       - MONGODB_URI=mongodb://admin:adminpass@mongo:27017/heath-embedding?authSource=admin
-
-      # --- External APIs (Aynen Kalıyor) ---
+      
+      # SECRETS (Please use an .env file in the future!)
       - GCP_BUCKET_NAME=image-cloud-heath-v2
       - FATSECRET_CLIENT_ID=934f58bfdb0245bca481a88c99dc6f7d
       - FATSECRET_CLIENT_SECRET=6adb0898267a4de9b7ac8ad36ad04033
       - SENDGRID_API_KEY=${SENDGRID_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_MODEL=text-embedding-3-small
-
     ports:
       - "8080:8080"
     networks:
       - appnet
+    # --- UPDATE THIS BLOCK ---
     depends_on:
-      - db
-      - mongo
+      db:
+        condition: service_healthy  # Waits for pg_isready
+      mongo:
+        condition: service_started  # Can change to service_healthy if you added the check above
+    # -------------------------
 
   # 4. Frontend Service
   frontend:
