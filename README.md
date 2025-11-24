@@ -86,7 +86,7 @@ cd bounswe2025group7
 
 ```bash
     cd heatHMobile
-	docker build -t heat-mobile-builder .
+	docker build --platform linux/amd64 -t heat-mobile-builder .
 ```
 
 
