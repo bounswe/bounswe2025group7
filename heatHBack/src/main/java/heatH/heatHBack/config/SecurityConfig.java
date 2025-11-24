@@ -76,7 +76,9 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",
                 "http://127.0.0.1:3000",
-                "http://35.198.76.72:3000"
+                "http://35.198.76.72:3000",
+                "https://www.heath.engineer",
+                "https://heath.engineer"
         ));
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
