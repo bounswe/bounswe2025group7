@@ -51,7 +51,7 @@
 
 ---
 
-## 2. Quick Start (TL;DR)
+## 2. Quick Start for Backend and Frontend Deployment
 
 1. **Install prerequisites:** Git, Docker Desktop (or Docker Engine + Compose).
 2. **Clone repo:**
@@ -81,4 +81,8 @@ cd bounswe2025group7
 ```
 8. After deploying the docker-compose file, you can look at the localhost:3000 for Web Application.
 9.  We have tried this deployment procedure on 4 different computers and they worked succesfully. In case of any error or misunderstanding, please contact us to help you.
+
+## 3. Quick Start for Mobile Deployment
+
+
 
