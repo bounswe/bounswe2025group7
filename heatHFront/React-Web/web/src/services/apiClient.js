@@ -1,9 +1,10 @@
 import axios from 'axios';
 import authService from './authService';
 
-// Create an axios instance using a relative base URL so CRA's proxy can forward to the backend
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+
 const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: `${BASE_URL}/api`, 
 });
 
 // Attach access token to every request
@@ -26,6 +27,7 @@ apiClient.interceptors.response.use(
         await authService.refreshToken();
         const newToken = authService.getAccessToken();
         originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+        // Retry with the new token
         return apiClient(originalRequest);
       } catch (refreshError) {
         authService.logout();

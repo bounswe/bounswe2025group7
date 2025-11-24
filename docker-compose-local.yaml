@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # 1. Local PostgreSQL Service
+  db:
+    image: postgres:15-alpine
+    container_name: heath_db_local
+    restart: always
+    environment:
+      - POSTGRES_USER=localuser
+      - POSTGRES_PASSWORD=localpass
+      - POSTGRES_DB=heathdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - appnet
+    # --- ADD THIS BLOCK ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U localuser -d heathdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    # ----------------------
+
+  # 2. Local MongoDB Service
+  mongo:
+    image: mongo:6.0
+    container_name: heath_mongo_local
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=adminpass
+      - MONGO_INITDB_DATABASE=heath-embedding
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo-data:/data/db
+      - ./db-init/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+    networks:
+      - appnet
+    # Optional: Add healthcheck for Mongo too for stability
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 3. Backend Service
+  backend:
+    build: 
+      context: ./heatHBack
+      dockerfile: Dockerfile
+    container_name: heath_backend_dev
+    environment:
+      - SERVER_PORT=8080
+      - DB_URL=jdbc:postgresql://db:5432/heathdb
+      - DB_USERNAME=localuser
+      - DB_PASSWORD=localpass
+      - HIBERNATE_DDL_AUTO=update
+      - SHOW_SQL=true
+      - MONGODB_URI=mongodb://admin:adminpass@mongo:27017/heath-embedding?authSource=admin
+      
+      # SECRETS (Please use an .env file in the future!)
+      - GCP_BUCKET_NAME=image-cloud-heath-v2
+      - FATSECRET_CLIENT_ID=934f58bfdb0245bca481a88c99dc6f7d
+      - FATSECRET_CLIENT_SECRET=6adb0898267a4de9b7ac8ad36ad04033
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=text-embedding-3-small
+    ports:
+      - "8080:8080"
+    networks:
+      - appnet
+    # --- UPDATE THIS BLOCK ---
+    depends_on:
+      db:
+        condition: service_healthy  # Waits for pg_isready
+      mongo:
+        condition: service_started  # Can change to service_healthy if you added the check above
+    # -------------------------
+
+  # 4. Frontend Service
+  frontend:
+    build: 
+      context: ./heatHFront/React-Web/web
+      dockerfile: Dockerfile
+    container_name: heath_frontend_dev
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./heatHFront/React-Web/web:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_BASE_URL=http://localhost:8080
+    ports:
+      - "3000:3000"
+    networks:
+      - appnet
+    depends_on:
+      - backend
+
+networks:
+  appnet:
+    driver: bridge
