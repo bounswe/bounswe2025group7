@@ -69,7 +69,7 @@ cd bounswe2025group7
     Line: 69  - OPENAI_API_KEY=${OPENAI_API_KEY} // Please ask the students for openai key
     Line: 70  - SENDGRID_API_KEY=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
 ```
-6. After modifying those file, we have still 1 last step:
+6. After modifying those files, we have still 1 last step:
 ```bash
     Add gcp-connection.json file to the directory of "heatHBack/src/main/resources"
 	This step is necessary because our project is using Cloud Storage to handle large files such as high quality photos
