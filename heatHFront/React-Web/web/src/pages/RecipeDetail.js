@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container, Typography, Grid, Box, IconButton, useTheme, Button, Rating,
   Chip, Divider, List, ListItem, ListItemText, Paper, Avatar,
@@ -21,6 +22,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import PrintIcon from '@mui/icons-material/Print';
 import Template from '../components/Template';
 import apiClient, { checkIfRecipeSaved, saveRecipe, unsaveRecipe } from '../services/apiClient';
+import { mapLanguageToRecipeTarget, translateRecipeContent } from '../services/recipeTranslation';
 import Snackbar from '@mui/material/Snackbar';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -31,8 +33,14 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import GrainIcon from '@mui/icons-material/Grain';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
-import { useTranslation } from 'react-i18next';
-import { mapLanguageToRecipeTarget, translateRecipeContent } from '../services/recipeTranslation';
+import ScienceIcon from '@mui/icons-material/Science';
+import HealingIcon from '@mui/icons-material/Healing';
+
+const LANGUAGE_LABEL_KEYS = {
+  en: 'common.english',
+  tr: 'common.turkish',
+  ja: 'common.japanese',
+};
 
 // Recipe section styling
 const RecipeDetailSection = styled(Box)(({ theme }) => ({
@@ -56,11 +64,49 @@ const RecipeInfoBox = styled(Box)(({ theme }) => ({
   background: alpha(theme.palette.primary.light, 0.05)
 }));
 
-const LANGUAGE_LABEL_KEYS = {
-  en: 'common.english',
-  tr: 'common.turkish',
-  ja: 'common.japanese',
-};
+// Simple table row component for nutrition
+const NutrientRow = ({ label, value, unit = '', indent = 0, isSub = false, IconComponent = null }) => (
+  <TableRow>
+    <TableCell
+      sx={{
+        borderBottom: 'none',
+        py: 0.5,
+        pl: 2 + indent,
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {IconComponent && (
+          <IconComponent
+            fontSize="small"
+            color={isSub ? 'disabled' : 'primary'}
+          />
+        )}
+        <Typography
+          variant="body2"
+          color={isSub ? 'text.secondary' : 'text.primary'}
+        >
+          {label}
+        </Typography>
+      </Box>
+    </TableCell>
+    <TableCell
+      align="right"
+      sx={{
+        borderBottom: 'none',
+        py: 0.5,
+        pr: 2,
+      }}
+    >
+      <Typography
+        variant="body2"
+        fontWeight={isSub ? 'normal' : 'medium'}
+        color={isSub ? 'text.secondary' : 'text.primary'}
+      >
+        {value != null && value !== '' ? `${value} ${unit}`.trim() : '-'}
+      </Typography>
+    </TableCell>
+  </TableRow>
+);
 
 const RecipeDetail = () => {
   const { id } = useParams();
@@ -85,6 +131,7 @@ const RecipeDetail = () => {
   const [translatedContent, setTranslatedContent] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationError, setTranslationError] = useState(null);
+  const nutrition = recipe && recipe["nutritionData"] ? recipe["nutritionData"] : null;
 
   const targetLanguage = mapLanguageToRecipeTarget(i18n.language || 'en');
   const targetLanguageLabelKey = LANGUAGE_LABEL_KEYS[targetLanguage] || LANGUAGE_LABEL_KEYS.en;
@@ -118,6 +165,7 @@ const RecipeDetail = () => {
     fetchSavedStatus();
   }, [recipe]);
 
+  // Translate recipe content
   useEffect(() => {
     if (!recipe) return;
 
@@ -281,13 +329,6 @@ const RecipeDetail = () => {
     );
   }
 
-  const translationLanguageName = t(targetLanguageLabelKey);
-  const displayTitle = translatedContent?.title || recipe.title;
-  const displayTag = translatedContent?.tag || recipe.tag;
-  const displayType = translatedContent?.type || recipe.type;
-  const instructionsToShow = translatedContent?.instructions || (Array.isArray(recipe.instructions) ? recipe.instructions : []);
-  const ingredientsToShow = translatedContent?.ingredients || (Array.isArray(recipe.ingredients) ? recipe.ingredients : []);
-
   return (
     <Template>
       {/* Hero section with image and title overlay */}
@@ -295,7 +336,7 @@ const RecipeDetail = () => {
         <Box
           component="img"
           src={recipe["photo"]}
-          alt={displayTitle}
+          alt={translatedContent?.title || recipe["title"]}
           sx={{
             width: '100%',
             height: '100%',
@@ -315,12 +356,12 @@ const RecipeDetail = () => {
         >
           <Container maxWidth="lg">
             <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 1 }}>
-              {displayTitle}
+              {translatedContent?.title || recipe["title"]}
             </Typography>
 
-            {displayTag && (
+            {(translatedContent?.tag || recipe["tag"]) && (
               <Chip
-                label={displayTag}
+                label={translatedContent?.tag || recipe["tag"]}
                 size="small"
                 sx={{
                   mt: 1,
@@ -339,7 +380,7 @@ const RecipeDetail = () => {
           <Box sx={{ mb: 2 }}>
             {isTranslating && (
               <Alert severity="info">
-                {t('recipes.translationInProgress', { language: translationLanguageName })}
+                {t('recipes.translationInProgress', { language: t(targetLanguageLabelKey) })}
               </Alert>
             )}
             {translationError && (
@@ -481,8 +522,13 @@ const RecipeDetail = () => {
               <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
                 {t('recipes.recipeDetail')}
               </Typography>
-              <Grid container spacing={2} sx={{ mt: 1 }}>
-                {displayType && (
+              <Grid
+                container
+                spacing={2}
+                direction="column"
+                sx={{ mt: 1 }}
+              >
+                {(translatedContent?.type || recipe["type"]) && (
                   <Grid item xs={12}>
                     <Box sx={{
                       display: 'flex', alignItems: 'center', gap: 1,
@@ -493,7 +539,7 @@ const RecipeDetail = () => {
                     }}>
                       <LocalDiningIcon color="primary" />
                       <Box>
-                        <Typography variant="body2" fontWeight="medium">{displayType}</Typography>
+                        <Typography variant="body2" fontWeight="medium">{translatedContent?.type || recipe["type"]}</Typography>
                       </Box>
                     </Box>
                   </Grid>
@@ -535,56 +581,167 @@ const RecipeDetail = () => {
                   </Grid>
                 )}
 
-                {recipe["nutritionData"]["carbs"] >= 0 && (
+                {nutrition && (
                   <Grid item xs={12}>
-                    <Box sx={{
-                      display: 'flex', alignItems: 'center', gap: 1,
+                    <Box
+                      sx={{
                       p: 1.5,
-                      height: '100%',
                       bgcolor: alpha(theme.palette.background.paper, 0.4),
                       borderRadius: 1,
-                    }}>
-                      <GrainIcon color="primary" />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">{t('recipes.carbohydrates')}</Typography>
-                        <Typography variant="body2" fontWeight="medium">{recipe["nutritionData"]["carbs"]}g</Typography>
-                      </Box>
-                    </Box>
-                  </Grid>
-                )}
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        color="text.secondary"
+                        sx={{ mb: 1, fontWeight: 'bold' }}
+                      >
+                        {t('recipes.nutritionPerServing') || 'Nutrition (per serving)'}
+                      </Typography>
+                      <Table size="small">
+                        <TableBody>
+                          {/* Carbs */}
+                          {nutrition["carbs"] >= 0 && (
+                            <NutrientRow
+                              label={t('recipes.carbohydrates')}
+                              value={nutrition["carbs"]}
+                              unit="g"
+                              IconComponent={GrainIcon}
+                            />
+                          )}
 
-                {recipe["nutritionData"]["protein"] >= 0 && (
-                  <Grid item xs={12}>
-                    <Box sx={{
-                      display: 'flex', alignItems: 'center', gap: 1,
-                      p: 1.5,
-                      height: '100%',
-                      bgcolor: alpha(theme.palette.background.paper, 0.4),
-                      borderRadius: 1,
-                    }}>
-                      <FitnessCenterIcon color="primary" />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">{t('recipes.protein')}</Typography>
-                        <Typography variant="body2" fontWeight="medium">{recipe["nutritionData"]["protein"]}g</Typography>
-                      </Box>
-                    </Box>
-                  </Grid>
-                )}
+                          {/* Protein */}
+                          {nutrition["protein"] >= 0 && (
+                            <NutrientRow
+                              label={t('recipes.protein')}
+                              value={nutrition["protein"]}
+                              unit="g"
+                              IconComponent={FitnessCenterIcon}
+                            />
+                          )}
 
-                {recipe["nutritionData"]["fat"] >= 0 && (
-                  <Grid item xs={12}>
-                    <Box sx={{
-                      display: 'flex', alignItems: 'center', gap: 1,
-                      p: 1.5,
-                      height: '100%',
-                      bgcolor: alpha(theme.palette.background.paper, 0.4),
-                      borderRadius: 1,
-                    }}>
-                      <WaterDropIcon color="primary" />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">{t('recipes.fat')}</Typography>
-                        <Typography variant="body2" fontWeight="medium">{recipe["nutritionData"]["fat"]}g</Typography>
-                      </Box>
+                          {/* Fat + sub-rows */}
+                          {nutrition["fat"] >= 0 && (
+                            <>
+                              <NutrientRow
+                                label={t('recipes.fat')}
+                                value={nutrition["fat"]}
+                                unit="g"
+                                IconComponent={WaterDropIcon}
+                              />
+
+                              {nutrition["cholesterol"] >= 0 && (
+                                <NutrientRow
+                                  label={t('recipes.cholesterol') || 'Cholesterol'}
+                                  value={nutrition["cholesterol"]}
+                                  unit="mg"
+                                  indent={8}
+                                  isSub
+                                  IconComponent={WaterDropIcon}
+                                />
+                              )}
+
+                              {nutrition["saturatedFat"] >= 0 && (
+                                <NutrientRow
+                                  label={t('recipes.saturatedFat') || 'Saturated fat'}
+                                  value={nutrition["saturatedFat"]}
+                                  unit="g"
+                                  indent={8}
+                                  isSub
+                                  IconComponent={WaterDropIcon}
+                                />
+                              )}
+
+                              {(nutrition["monounsaturated_fat"] >= 0 ||
+                                nutrition["polyunsaturated_fat"] >= 0) && (
+                                <NutrientRow
+                                  label={t('recipes.unsaturatedFat') || 'Unsaturated fat'}
+                                  value={[
+                                    nutrition["monounsaturated_fat"] >= 0
+                                      ? `${nutrition["monounsaturated_fat"]} g mono`
+                                      : null,
+                                    nutrition["polyunsaturated_fat"] >= 0
+                                      ? `${nutrition["polyunsaturated_fat"]} g poly`
+                                      : null,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' + ')}
+                                  unit=""
+                                  indent={8}
+                                  isSub
+                                  IconComponent={WaterDropIcon}
+                                />
+                              )}
+                            </>
+                          )}
+
+                          {/* Vitamins group */}
+                          {(nutrition["vitaminA"] >= 0 || nutrition["vitaminC"] >= 0) && (
+                            <>
+                              <NutrientRow label={t('recipes.vitamins') || 'Vitamins'} value="" unit="" IconComponent={HealingIcon} />
+
+                              {nutrition["vitaminA"] >= 0 && (
+                                <NutrientRow
+                                  label={t('recipes.vitaminA') || 'Vitamin A'}
+                                  value={nutrition["vitaminA"]}
+                                  unit="% DV"
+                                  indent={8}
+                                  isSub
+                                  IconComponent={HealingIcon}
+                                />
+                              )}
+
+                              {nutrition["vitaminC"] >= 0 && (
+                                <NutrientRow
+                                  label={t('recipes.vitaminC') || 'Vitamin C'}
+                                  value={nutrition["vitaminC"]}
+                                  unit="% DV"
+                                  indent={8}
+                                  isSub
+                                  IconComponent={HealingIcon}
+                                />
+                              )}
+                            </>
+                          )}
+
+                          {/* Iron */}
+                          {nutrition["iron"] >= 0 && (
+                            <NutrientRow
+                              label={t('recipes.iron') || 'Iron'}
+                              value={nutrition["iron"]}
+                              unit="mg"
+                              IconComponent={ScienceIcon}
+                            />
+                          )}
+
+                          {/* Calcium */}
+                          {nutrition["calcium"] >= 0 && (
+                            <NutrientRow
+                              label={t('recipes.calcium') || 'Calcium'}
+                              value={nutrition["calcium"]}
+                              unit="mg"
+                              IconComponent={ScienceIcon}
+                            />
+                          )}
+
+                          {nutrition["potassium"] >= 0 && (
+                            <NutrientRow
+                              label={t('recipes.potassium') || 'Potassium'}
+                              value={nutrition["potassium"]}
+                              unit="mg"
+                              IconComponent={ScienceIcon}
+                            />
+                          )}
+
+                          {nutrition["sodium"] >= 0 && (
+                            <NutrientRow
+                              label={t('recipes.sodium') || 'Sodium'}
+                              value={nutrition["sodium"]}
+                              unit="mg"
+                              IconComponent={ScienceIcon}
+                            />
+                          )}
+                        </TableBody>
+                      </Table>
                     </Box>
                   </Grid>
                 )}
@@ -609,38 +766,40 @@ const RecipeDetail = () => {
                 {t('recipes.instructions')}
               </Typography>
               <Box>
-                {instructionsToShow.length > 0 ? (
-                  instructionsToShow.map((instruction, idx) => (
-                    <Box key={`instruction-${idx}`} sx={{ display: 'flex', mb: 3 }}>
-                      <Box
-                        sx={{
-                          minWidth: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          bgcolor: theme.palette.primary.main,
-                          color: 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          mr: 2,
-                          mt:1,
-                          fontWeight: 'bold',
-                          flexShrink: 0,
-                          fontSize: '5.75rem'
-                        }}
-                      >
-
+                {(() => {
+                  const instructionsToShow = translatedContent?.instructions || (Array.isArray(recipe["instructions"]) ? recipe["instructions"] : []);
+                  return instructionsToShow.length > 0 ? (
+                    instructionsToShow.map((instruction, idx) => (
+                      <Box key={`instruction-${idx}`} sx={{ display: 'flex', mb: 3 }}>
+                        <Box
+                          sx={{
+                            minWidth: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            bgcolor: theme.palette.primary.main,
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            mr: 2,
+                            mt:1,
+                            fontWeight: 'bold',
+                            flexShrink: 0,
+                            fontSize: '5.75rem'
+                          }}
+                        >
+                        </Box>
+                        <Typography variant="body1">
+                          {instruction}
+                        </Typography>
                       </Box>
-                      <Typography variant="body1">
-                        {instruction}
-                      </Typography>
-                    </Box>
-                  ))
-                ) : (
-                  <Typography variant="body1" color="text.secondary">
-                    {t('recipes.noInstructions')}
-                  </Typography>
-                )}
+                    ))
+                  ) : (
+                    <Typography variant="body1" color="text.secondary">
+                      {t('recipes.noInstructions')}
+                    </Typography>
+                  );
+                })()}
               </Box>
             </Paper>
           )}
@@ -659,36 +818,39 @@ const RecipeDetail = () => {
               <Typography variant="h6" gutterBottom sx={{ pb: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
                 {t('recipes.ingredients')}
               </Typography>
-              {ingredientsToShow.length > 0 ? (
-                <List disablePadding>
-                  {ingredientsToShow.map((ingredientItem, idx) => {
-                    const normalizedIngredient =
-                      typeof ingredientItem === 'string' ? { name: ingredientItem } : ingredientItem || {};
-                    const name = normalizedIngredient.name || '';
-                    const amount =
-                      normalizedIngredient.quantity ??
-                      normalizedIngredient.amount ??
-                      '';
-                    return (
-                      <ListItem
-                        key={`ingredient-${idx}`}
-                        disablePadding
-                        divider={idx < ingredientsToShow.length - 1}
-                        sx={{ py: 1 }}
-                      >
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                          <Typography variant="body1" fontWeight="medium">{name}</Typography>
-                          <Typography variant="body1" color="text.secondary">{amount}</Typography>
-                        </Box>
-                      </ListItem>
-                    );
-                  })}
-                </List>
-              ) : (
-                <Typography variant="body1" color="text.secondary" align="center">
-                  {t('recipes.noIngredients')}
-                </Typography>
-              )}
+              {(() => {
+                const ingredientsToShow = translatedContent?.ingredients || (Array.isArray(recipe["ingredients"]) ? recipe["ingredients"] : []);
+                return ingredientsToShow.length > 0 ? (
+                  <List disablePadding>
+                    {ingredientsToShow.map((ingredientItem, idx) => {
+                      const normalizedIngredient =
+                        typeof ingredientItem === 'string' ? { name: ingredientItem } : ingredientItem || {};
+                      const name = normalizedIngredient.name || '';
+                      const amount =
+                        normalizedIngredient.quantity ??
+                        normalizedIngredient.amount ??
+                        '';
+                      return (
+                        <ListItem
+                          key={`ingredient-${idx}`}
+                          disablePadding
+                          divider={idx < ingredientsToShow.length - 1}
+                          sx={{ py: 1 }}
+                        >
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                            <Typography variant="body1" fontWeight="medium">{name}</Typography>
+                            <Typography variant="body1" color="text.secondary">{amount}</Typography>
+                          </Box>
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                ) : (
+                  <Typography variant="body1" color="text.secondary" align="center">
+                    {t('recipes.noIngredients')}
+                  </Typography>
+                );
+              })()}
             </Paper>
           )}
 

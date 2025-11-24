@@ -2,39 +2,35 @@ server:
   port: ${SERVER_PORT:8080}
 
 spring:
-  config:
-    import: optional:file:.env[.properties]
   datasource:
-    url: ${DB_URL}
+    url: ${DB_URL} 
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://admin:pass@localhost:27017/heathdb?authSource=admin}
-  
+      uri: ${MONGODB_URI}
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${HIBERNATE_DDL_AUTO:update}
+    show-sql: ${SHOW_SQL:true}
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-  mail:
-    host: ${MAIL_HOST}
-    port: ${MAIL_PORT}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail.smtp.auth: true
-      mail.smtp.starttls.enable: true
-
 gcp:
   bucket:
-    name: ${GCP_BUCKET}
+    name: ${GCP_BUCKET_NAME}
+
+fatsecret:
+  client-id: ${FATSECRET_CLIENT_ID}
+  client-secret: ${FATSECRET_CLIENT_SECRET}
 
 sendgrid:
   api-key: ${SENDGRID_API_KEY}
+
+openai:
+  apiKey: ${OPENAI_API_KEY}
+  model: ${OPENAI_MODEL:text-embedding-3-small}

@@ -8,6 +8,9 @@ import { interestFormService } from '../../services/interestFormService';
 import { feedService } from '../../services/feedService';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
+import { translateTextContent, mapLanguageToRecipeTarget } from '../../services/translationService';
 
 interface InterestFormData {
   name: string;
@@ -39,6 +42,13 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { colors, textColors, borderColors, fonts, lineHeights } = useThemeColors();
   const { isDark, toggleTheme, isDyslexic, toggleFont, isColorBlind, toggleColorBlind } = useTheme();
+  const { t } = useTranslation();
+  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'tr' | 'ja'>(() => {
+    const lang = i18n.language || 'en';
+    if (lang.startsWith('tr')) return 'tr';
+    if (lang.startsWith('ja')) return 'ja';
+    return 'en';
+  });
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<InterestFormData>({
@@ -67,13 +77,79 @@ export default function ProfileScreen() {
   const [isImageUpdated, setIsImageUpdated] = useState(false);
   const [userFeeds, setUserFeeds] = useState<FeedResponse[]>([]);
   const [feedsLoading, setFeedsLoading] = useState(false);
+  const [translatedFeeds, setTranslatedFeeds] = useState<Map<number, { text?: string; recipeTitle?: string; recipeDescription?: string }>>(new Map());
 
-  const genderOptions = ['Male', 'Female', 'Other'];
+  const genderOptions = [t('personalInfo.male'), t('personalInfo.female'), t('personalInfo.other')];
 
   // Load profile data on component mount
   useEffect(() => {
     checkAuthAndLoadData();
   }, []);
+
+  // Sync current language with i18n
+  useEffect(() => {
+    const lang = i18n.language || 'en';
+    let langCode: 'en' | 'tr' | 'ja' = 'en';
+    if (lang.startsWith('tr')) langCode = 'tr';
+    else if (lang.startsWith('ja')) langCode = 'ja';
+    setCurrentLanguage(langCode);
+  }, [i18n.language]);
+
+  // Translate user feeds when language or feeds change
+  useEffect(() => {
+    if (userFeeds.length === 0) {
+      setTranslatedFeeds(new Map());
+      return;
+    }
+
+    let cancelled = false;
+    const translateFeeds = async () => {
+      const targetLang = mapLanguageToRecipeTarget(i18n.language);
+      const translations = new Map<number, { text?: string; recipeTitle?: string; recipeDescription?: string }>();
+
+      await Promise.all(
+        userFeeds.map(async (feed) => {
+          try {
+            const feedTranslations: { text?: string; recipeTitle?: string; recipeDescription?: string } = {};
+            
+            if (feed.text) {
+              feedTranslations.text = await translateTextContent(feed.text, targetLang);
+            }
+            
+            if (feed.type === 'RECIPE' && feed.recipe) {
+              if (feed.recipe.title) {
+                feedTranslations.recipeTitle = await translateTextContent(feed.recipe.title, targetLang);
+              }
+              if (feed.recipe.description) {
+                feedTranslations.recipeDescription = await translateTextContent(feed.recipe.description, targetLang);
+              }
+            }
+            
+            if (!cancelled) {
+              translations.set(feed.id, feedTranslations);
+            }
+          } catch (error) {
+            // Ignore translation errors
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setTranslatedFeeds(translations);
+      }
+    };
+
+    translateFeeds();
+    return () => {
+      cancelled = true;
+    };
+  }, [userFeeds, i18n.language]);
+
+  // Handle language change
+  const handleLanguageChange = async (lang: 'en' | 'tr' | 'ja') => {
+    setCurrentLanguage(lang);
+    await i18n.changeLanguage(lang);
+  };
 
   const checkAuthAndLoadData = async () => {
     try {
@@ -81,13 +157,13 @@ export default function ProfileScreen() {
       const token = await authService.getAccessToken();
       
       if (!token) {
-        Alert.alert('Authentication Required', 'Please log in to view your profile');
+        Alert.alert(t('alerts.authenticationRequired'), t('alerts.pleaseLogin'));
         router.replace('/auth/sign-in' as any);
         return;
       }
       await Promise.all([loadProfileData(), loadUserFeeds()]);
     } catch (error) {
-      Alert.alert('Authentication Error', 'Please log in again');
+      Alert.alert(t('alerts.authenticationError'), t('alerts.pleaseLoginAgain'));
       router.replace('/auth/sign-in' as any);
     }
   };
@@ -120,7 +196,7 @@ export default function ProfileScreen() {
       setIsImageUpdated(false); // Reset image update flag when loading
     } catch (error: any) {
       if (error.response?.status === 403) {
-        Alert.alert('Authentication Error', 'Please log in again to access your profile');
+        Alert.alert(t('alerts.authenticationError'), t('alerts.pleaseLoginAgain'));
         // Optionally redirect to login
         // router.replace('/auth/sign-in' as any);
       } else if (error.response?.status === 404) {
@@ -139,7 +215,7 @@ export default function ProfileScreen() {
         setProfileImageUri(null);
         setIsImageUpdated(false);
       } else {
-        Alert.alert('Error', 'Failed to load profile data. Please try again.');
+        Alert.alert(t('common.error'), t('alerts.failedToLoad'));
       }
     } finally {
       setIsLoading(false);
@@ -192,11 +268,11 @@ export default function ProfileScreen() {
 
     } catch (error: any) {
       if (error.response?.status === 403) {
-        Alert.alert('Authentication Error', 'Your session has expired. Please log in again.');
+        Alert.alert(t('alerts.authenticationError'), t('alerts.sessionExpired'));
       } else if (error.response?.status === 400) {
-        Alert.alert('Validation Error', 'Please check your input and try again.');
+        Alert.alert(t('alerts.validationError'), t('alerts.checkInput'));
       } else {
-        Alert.alert('Error', 'Failed to save profile. Please try again.');
+        Alert.alert(t('common.error'), t('alerts.failedToSave'));
       }
     } finally {
       setIsLoading(false);
@@ -228,10 +304,16 @@ export default function ProfileScreen() {
   };
 
   const formatDisplayDate = (dateString: string) => {
-    if (!dateString) return 'Not set';
+    if (!dateString) return t('common.notSet');
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
+      const lang = i18n.language || 'en';
+      // Map i18n language codes to locale codes
+      let locale = 'en-US';
+      if (lang.startsWith('tr')) locale = 'tr-TR';
+      else if (lang.startsWith('ja')) locale = 'ja-JP';
+      
+      return date.toLocaleDateString(locale, {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
@@ -275,7 +357,7 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
       // Request permission
       const { status } = await requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Please grant permission to access your photo library');
+        Alert.alert(t('alerts.permissionRequired'), t('alerts.photoLibraryPermission'));
         return;
       }
 
@@ -293,7 +375,7 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
         setIsImageUpdated(true);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick image');
+      Alert.alert(t('common.error'), t('alerts.failedToPickImage'));
     }
   };
 
@@ -328,9 +410,9 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
       }, 100);
     } catch (error) {
       if (Platform.OS === 'web') {
-        alert('Failed to logout. Please try again.');
+        alert(t('alerts.failedToLogout'));
       } else {
-        Alert.alert('Error', 'Failed to logout. Please try again.');
+        Alert.alert(t('common.error'), t('alerts.failedToLogout'));
       }
     }
   };
@@ -338,21 +420,21 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
   const handleLogout = async () => {
     if (Platform.OS === 'web') {
       // Use native browser confirm for web
-      if (confirm('Are you sure you want to logout?')) {
+      if (confirm(t('profile.logoutConfirm'))) {
         await performLogout();
       }
     } else {
       // Use Alert.alert for native
       Alert.alert(
-        'Logout',
-        'Are you sure you want to logout?',
+        t('profile.logout'),
+        t('profile.logoutConfirm'),
         [
           {
-            text: 'Cancel',
+            text: t('common.cancel'),
             style: 'cancel',
           },
           {
-            text: 'Logout',
+            text: t('profile.logout'),
             style: 'destructive',
             onPress: performLogout,
           },
@@ -364,7 +446,7 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
   if (isLoading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular }]}>Loading profile...</Text>
+        <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular }]}>{t('profile.loadingProfile')}</Text>
       </View>
     );
   }
@@ -374,12 +456,12 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
       <View style={styles.content}>
         <View style={[styles.header, { borderBottomColor: borderColors.light }]}>
           <View>
-            <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>Profile</Text>
+            <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>{t('profile.title')}</Text>
             <Text style={[styles.fontModeIndicator, { color: textColors.secondary, fontFamily: fonts.regular }]}>
-              Font: {isDyslexic ? 'Dyslexic (OpenDyslexic)' : 'Normal (System)'}
+              {t('profile.fontMode', { mode: isDyslexic ? t('profile.dyslexicFont') : t('profile.normalFont') })}
             </Text>
             <Text style={[styles.colorBlindIndicator, { color: textColors.secondary, fontFamily: fonts.regular }]}>
-              Colors: {isColorBlind ? 'Color Blind Mode' : 'Standard'}
+              {t('profile.colorMode', { mode: isColorBlind ? t('profile.colorBlindMode') : t('profile.standardColors') })}
             </Text>
           </View>
           <View style={[styles.headerButtons, isDyslexic && styles.headerButtonsDyslexic]}>
@@ -412,11 +494,11 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
           {isEditing && (
             <View style={styles.imageActions}>
               <TouchableOpacity style={[styles.imageActionButton, { backgroundColor: colors.primary }]} onPress={pickImage}>
-                <Text style={[styles.imageActionText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Change Photo</Text>
+                <Text style={[styles.imageActionText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('profile.changePhoto')}</Text>
               </TouchableOpacity>
               {profileImageUri && (
                 <TouchableOpacity style={[styles.removeImageButton, { backgroundColor: colors.error }]} onPress={removeImage}>
-                  <Text style={[styles.removeImageText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Remove</Text>
+                  <Text style={[styles.removeImageText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('common.remove')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -424,41 +506,41 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
-          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Name</Text>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('profile.name')}</Text>
           {isEditing ? (
             <TextInput
               style={[styles.input, { color: textColors.primary, backgroundColor: colors.white, borderColor: borderColors.medium, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
               value={editData.name}
               onChangeText={(text) => setEditData({ ...editData, name: text })}
-              placeholder="Enter your name"
+              placeholder={t('personalInfo.enterName')}
               placeholderTextColor={textColors.hint}
             />
           ) : (
-            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.name || 'Not set'}</Text>
+            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.name || t('common.notSet')}</Text>
           )}
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
-          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Surname</Text>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('profile.surname')}</Text>
           {isEditing ? (
             <TextInput
               style={[styles.input, { color: textColors.primary, backgroundColor: colors.white, borderColor: borderColors.medium, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
               value={editData.surname}
               onChangeText={(text) => setEditData({ ...editData, surname: text })}
-              placeholder="Enter your surname"
+              placeholder={t('personalInfo.enterSurname')}
               placeholderTextColor={textColors.hint}
             />
           ) : (
-            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.surname || 'Not set'}</Text>
+            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.surname || t('common.notSet')}</Text>
           )}
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
-          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium }]}>Date of Birth</Text>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium }]}>{t('profile.dateOfBirth')}</Text>
           {isEditing ? (
             <TouchableOpacity style={[styles.dateSelector, { backgroundColor: colors.white, borderColor: borderColors.medium }]} onPress={openDatePicker}>
               <Text style={[styles.dateSelectorText, { color: textColors.primary, fontFamily: fonts.regular }]}>
-                {editData.dateOfBirth ? formatDisplayDate(editData.dateOfBirth) : 'Select date of birth'}
+                {editData.dateOfBirth ? formatDisplayDate(editData.dateOfBirth) : t('profile.selectDateOfBirth')}
               </Text>
               <Text style={styles.calendarIcon}>📅</Text>
             </TouchableOpacity>
@@ -468,7 +550,7 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
-          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Height (cm)</Text>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('profile.height')}</Text>
           {isEditing ? (
             <TextInput
               style={[styles.input, { color: textColors.primary, backgroundColor: colors.white, borderColor: borderColors.medium, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
@@ -479,12 +561,12 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
               keyboardType="numeric"
             />
           ) : (
-            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.height ? `${profileData.height} cm` : 'Not set'}</Text>
+            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.height ? `${profileData.height} cm` : t('common.notSet')}</Text>
           )}
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
-          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Weight (kg)</Text>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('profile.weight')}</Text>
           {isEditing ? (
             <TextInput
               style={[styles.input, { color: textColors.primary, backgroundColor: colors.white, borderColor: borderColors.medium, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
@@ -495,44 +577,80 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
               keyboardType="numeric"
             />
           ) : (
-            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.weight ? `${profileData.weight} kg` : 'Not set'}</Text>
+            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.weight ? `${profileData.weight} kg` : t('common.notSet')}</Text>
           )}
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
-          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium }]}>Gender</Text>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium }]}>{t('profile.gender')}</Text>
           {isEditing ? (
             <TouchableOpacity
               style={[styles.genderSelector, { backgroundColor: colors.white, borderColor: borderColors.medium }]}
               onPress={() => setShowGenderModal(true)}
             >
               <Text style={[styles.genderSelectorText, { color: textColors.primary, fontFamily: fonts.regular }]}>
-                {editData.gender || 'Select gender'}
+                {editData.gender || t('profile.selectGender')}
               </Text>
               <Text style={[styles.dropdownArrow, { color: textColors.secondary, fontFamily: fonts.regular }]}>▼</Text>
             </TouchableOpacity>
           ) : (
-            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.gender || 'Not set'}</Text>
+            <Text style={[styles.value, { color: textColors.primary, fontFamily: fonts.regular }]}>{profileData.gender || t('common.notSet')}</Text>
           )}
+        </View>
+
+        {/* Language Selection */}
+        <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('profile.language')}</Text>
+          <View style={styles.languageSelector}>
+            {(['en', 'tr', 'ja'] as const).map((lang) => {
+              const isActive = currentLanguage === lang;
+              return (
+                <TouchableOpacity
+                  key={lang}
+                  onPress={() => handleLanguageChange(lang)}
+                  style={[
+                    styles.languageOption,
+                    {
+                      backgroundColor: isActive ? colors.primary : colors.white,
+                      borderColor: isActive ? colors.primary : borderColors.medium,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.languageOptionText,
+                      {
+                        color: isActive ? colors.primaryContrast : textColors.primary,
+                        fontFamily: fonts.regular,
+                        lineHeight: lineHeights.base,
+                      },
+                    ]}
+                  >
+                    {t(`common.${lang === 'en' ? 'english' : lang === 'tr' ? 'turkish' : 'japanese'}`)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         {isEditing && (
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary }]} onPress={handleSave}>
-              <Text style={[styles.saveButtonText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base, textAlign: 'center' }]}>Save Changes</Text>
+              <Text style={[styles.saveButtonText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base, textAlign: 'center' }]}>{t('profile.saveChanges')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.cancelButton, { backgroundColor: colors.white, borderColor: borderColors.medium }]} onPress={handleCancel}>
-              <Text style={[styles.cancelButtonText, { color: textColors.secondary, fontFamily: fonts.medium }]}>Cancel</Text>
+              <Text style={[styles.cancelButtonText, { color: textColors.secondary, fontFamily: fonts.medium }]}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {/* User Feeds Section */}
         <View style={[styles.feedsSection, { borderTopColor: borderColors.light }]}>
-          <Text style={[styles.feedsSectionTitle, { color: colors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>My Posts</Text>
+          <Text style={[styles.feedsSectionTitle, { color: colors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>{t('profile.myPosts')}</Text>
           {feedsLoading ? (
             <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-              <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular }]}>Loading posts...</Text>
+              <Text style={[styles.loadingText, { color: textColors.secondary, fontFamily: fonts.regular }]}>{t('profile.loadingPosts')}</Text>
             </View>
           ) : userFeeds.length > 0 ? (
             userFeeds.map((feed, index) => {
@@ -552,7 +670,7 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
                   
                   {feed.text && (
                     <Text style={[styles.feedContent, { color: textColors.primary, fontFamily: fonts.regular }]} numberOfLines={3}>
-                      {feed.text}
+                      {translatedFeeds.get(feed.id)?.text ?? feed.text}
                     </Text>
                   )}
                   
@@ -564,11 +682,13 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
                   
                   {feed.type === 'RECIPE' && feed.recipe && (
                     <View style={[styles.recipeContainer, { borderColor: borderColors.light }]}>
-                      <Text style={[styles.recipeTitle, { color: textColors.secondary, fontFamily: fonts.medium }]}>Recipe</Text>
-                      <Text style={[styles.recipeName, { color: textColors.primary, fontFamily: fonts.medium }]}>{feed.recipe.title || 'Untitled Recipe'}</Text>
+                      <Text style={[styles.recipeTitle, { color: textColors.secondary, fontFamily: fonts.medium }]}>{t('recipes.recipe')}</Text>
+                      <Text style={[styles.recipeName, { color: textColors.primary, fontFamily: fonts.medium }]}>
+                        {translatedFeeds.get(feed.id)?.recipeTitle ?? feed.recipe.title ?? t('recipes.untitledRecipe')}
+                      </Text>
                       {feed.recipe.description && (
                         <Text style={[styles.recipeDescription, { color: textColors.secondary, fontFamily: fonts.regular }]} numberOfLines={2}>
-                          {feed.recipe.description}
+                          {translatedFeeds.get(feed.id)?.recipeDescription ?? feed.recipe.description}
                         </Text>
                       )}
                     </View>
@@ -576,10 +696,10 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
                   
                   <View style={[styles.feedStats, { borderTopColor: borderColors.light }]}>
                     <Text style={[styles.feedStat, { color: textColors.secondary, fontFamily: fonts.regular }, feed.likedByCurrentUser && { color: colors.error }]}>
-                      {feed.likedByCurrentUser ? '❤️' : '🤍'} {feed.likeCount || 0} likes
+                      {feed.likedByCurrentUser ? '❤️' : '🤍'} {feed.likeCount || 0} {t('feed.likes')}
                     </Text>
                     <Text style={[styles.feedStat, { color: textColors.secondary, fontFamily: fonts.regular }]}>
-                      💬 {feed.commentCount || 0} comments
+                      💬 {feed.commentCount || 0} {t('feed.commentsCount')}
                     </Text>
                   </View>
                 </View>
@@ -602,35 +722,35 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
             })
           ) : (
             <View style={styles.emptyFeedsContainer}>
-              <Text style={[styles.emptyFeedsText, { color: textColors.secondary, fontFamily: fonts.regular }]}>No posts yet</Text>
-              <Text style={[styles.emptyFeedsSubtext, { color: textColors.hint, fontFamily: fonts.regular }]}>Start sharing your recipes and experiences!</Text>
+              <Text style={[styles.emptyFeedsText, { color: textColors.secondary, fontFamily: fonts.regular }]}>{t('profile.noPosts')}</Text>
+              <Text style={[styles.emptyFeedsSubtext, { color: textColors.hint, fontFamily: fonts.regular }]}>{t('profile.startSharing')}</Text>
             </View>
           )}
         </View>
 
         {/* Font Test Section */}
         <View style={[styles.fontTestSection, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
-          <Text style={[styles.fontTestTitle, { color: textColors.primary, fontFamily: fonts.bold }]}>Font Preview</Text>
+          <Text style={[styles.fontTestTitle, { color: textColors.primary, fontFamily: fonts.bold }]}>{t('profile.fontPreview')}</Text>
           <Text style={[styles.fontTestText, { color: textColors.secondary, fontFamily: fonts.regular }]}>
-            This text shows how the current font looks. {isDyslexic ? 'Dyslexic-friendly OpenDyslexic font is active.' : 'Normal system font is active.'}
+            {t('profile.fontPreviewText', { mode: isDyslexic ? t('profile.fontPreviewDyslexic') : t('profile.fontPreviewNormal') })}
           </Text>
         </View>
 
         {/* Color Blind Demonstration Section */}
         <View style={[styles.colorDemoSection, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
-          <Text style={[styles.colorDemoTitle, { color: textColors.primary, fontFamily: fonts.bold }]}>Color Demonstration</Text>
+          <Text style={[styles.colorDemoTitle, { color: textColors.primary, fontFamily: fonts.bold }]}>{t('profile.colorDemonstration')}</Text>
           <View style={styles.colorDemoGrid}>
             <View style={[styles.colorDemoItem, { backgroundColor: colors.success }]}>
-              <Text style={[styles.colorDemoLabel, { color: colors.white, fontFamily: fonts.medium }]}>Success</Text>
+              <Text style={[styles.colorDemoLabel, { color: colors.white, fontFamily: fonts.medium }]}>{t('profile.colorSuccess')}</Text>
             </View>
             <View style={[styles.colorDemoItem, { backgroundColor: colors.error }]}>
-              <Text style={[styles.colorDemoLabel, { color: colors.white, fontFamily: fonts.medium }]}>Error</Text>
+              <Text style={[styles.colorDemoLabel, { color: colors.white, fontFamily: fonts.medium }]}>{t('profile.colorError')}</Text>
             </View>
             <View style={[styles.colorDemoItem, { backgroundColor: colors.warning }]}>
-              <Text style={[styles.colorDemoLabel, { color: colors.white, fontFamily: fonts.medium }]}>Warning</Text>
+              <Text style={[styles.colorDemoLabel, { color: colors.white, fontFamily: fonts.medium }]}>{t('profile.colorWarning')}</Text>
             </View>
             <View style={[styles.colorDemoItem, { backgroundColor: colors.primary }]}>
-              <Text style={[styles.colorDemoLabel, { color: colors.white, fontFamily: fonts.medium }]}>Primary</Text>
+              <Text style={[styles.colorDemoLabel, { color: colors.white, fontFamily: fonts.medium }]}>{t('profile.colorPrimary')}</Text>
             </View>
           </View>
           <Text style={[styles.colorDemoText, { color: textColors.secondary, fontFamily: fonts.regular }]}>
@@ -642,11 +762,11 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
         <View style={styles.bottomActions}>
           {!isEditing && (
             <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.secondary }]} onPress={handleEdit}>
-              <Text style={[styles.editButtonText, { color: colors.white, fontFamily: fonts.medium }]}>Edit Profile</Text>
+              <Text style={[styles.editButtonText, { color: colors.white, fontFamily: fonts.medium }]}>{t('profile.editProfile')}</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.error }]} onPress={handleLogout}>
-            <Text style={[styles.logoutButtonText, { color: colors.white, fontFamily: fonts.medium }]}>Logout</Text>
+            <Text style={[styles.logoutButtonText, { color: colors.white, fontFamily: fonts.medium }]}>{t('profile.logout')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -661,7 +781,7 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.white }]}>
-            <Text style={[styles.modalTitle, { color: textColors.primary, fontFamily: fonts.bold }]}>Select Gender</Text>
+            <Text style={[styles.modalTitle, { color: textColors.primary, fontFamily: fonts.bold }]}>{t('profile.selectGender')}</Text>
             {genderOptions.map((gender) => (
               <TouchableOpacity
                 key={gender}
@@ -687,7 +807,7 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
               style={[styles.cancelModalButton, { borderColor: borderColors.medium }]}
               onPress={() => setShowGenderModal(false)}
             >
-              <Text style={[styles.cancelModalButtonText, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Cancel</Text>
+              <Text style={[styles.cancelModalButtonText, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -703,7 +823,7 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
         <View style={styles.modalOverlay}>
           <View style={[styles.datePickerModal, { backgroundColor: colors.white }]}>
             <View style={[styles.datePickerHeader, { borderBottomColor: borderColors.light }]}>
-              <Text style={[styles.datePickerTitle, { color: textColors.primary, fontFamily: fonts.bold }]}>Select Date of Birth</Text>
+              <Text style={[styles.datePickerTitle, { color: textColors.primary, fontFamily: fonts.bold }]}>{t('profile.selectDateOfBirth')}</Text>
               <TouchableOpacity
                 style={[styles.datePickerCloseButton, { backgroundColor: colors.gray[100] }]}
                 onPress={() => setShowDateModal(false)}
@@ -726,13 +846,13 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
                   style={[styles.datePickerCancelButton, { borderColor: borderColors.medium }]}
                   onPress={() => setShowDateModal(false)}
                 >
-                  <Text style={[styles.datePickerCancelText, { color: textColors.secondary, fontFamily: fonts.medium }]}>Cancel</Text>
+                  <Text style={[styles.datePickerCancelText, { color: textColors.secondary, fontFamily: fonts.medium }]}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.datePickerConfirmButton, { backgroundColor: colors.primary }]}
                   onPress={() => setShowDateModal(false)}
                 >
-                  <Text style={[styles.datePickerConfirmText, { color: colors.white }]}>Confirm</Text>
+                  <Text style={[styles.datePickerConfirmText, { color: colors.white }]}>{t('common.confirm')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -745,16 +865,16 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
         <View style={styles.modalOverlay}>
           <View style={[styles.successModalContent, { backgroundColor: colors.white }]}>
             <Text style={[styles.successIcon, { color: colors.success }]}>✓</Text>
-            <Text style={[styles.successTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>Success!</Text>
+            <Text style={[styles.successTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights['2xl'] }]}>{t('common.success')}!</Text>
             <Text style={[styles.successMessage, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
-              Profile saved successfully
+              {t('profile.profileSaved')}
             </Text>
             <TouchableOpacity 
               style={[styles.successButton, { backgroundColor: colors.primary }]} 
               onPress={() => setShowSuccessModal(false)}
             >
               <Text style={[styles.successButtonText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base, textAlign: 'center' }]}>
-                OK
+                {t('common.ok')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -988,6 +1108,24 @@ const styles = StyleSheet.create({
   },
   dropdownArrow: {
     fontSize: 12,
+  },
+  languageSelector: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  languageOption: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  languageOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   modalOverlay: {
     flex: 1,
