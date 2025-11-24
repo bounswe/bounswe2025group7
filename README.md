@@ -84,5 +84,10 @@ cd bounswe2025group7
 
 ## 3. Quick Start for Mobile Deployment
 
+```bash
+    cd heatHMobile
+	docker build -t heat-mobile-builder .
+```
+
 
 
