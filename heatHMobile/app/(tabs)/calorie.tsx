@@ -169,6 +169,10 @@ export default function CalorieScreen() {
                   const details = currentDetails[id];
                   const portion = item.portion ? (typeof item.portion === 'string' ? parseFloat(item.portion) : item.portion) : 1;
                   
+                  // Always use item.calorie as it's already portion-adjusted from the backend
+                  stats.calories += (item.calorie || 0);
+                  
+                  // For macros, multiply by portion if we have recipe details
                   if (details) {
                       const getVal = (keyPart: string) => {
                           if (!details.nutritionData) return 0;
@@ -182,11 +186,6 @@ export default function CalorieScreen() {
                       stats.protein += getVal('protein') * portion;
                       stats.fat += (getVal('fat') || getVal('fats')) * portion;
                       stats.carbs += (getVal('carb') || getVal('carbohydrate')) * portion;
-                      
-                      const cal = details.totalCalorie || details.calories || details.calorie || item.calorie || 0;
-                      stats.calories += cal * portion;
-                  } else {
-                       stats.calories += (item.calorie || 0);
                   }
               });
           }
