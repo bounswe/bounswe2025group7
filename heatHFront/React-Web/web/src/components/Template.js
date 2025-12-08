@@ -64,7 +64,7 @@ const Template = ({ children }) => {
       flexDirection: 'column',
       minHeight: '100vh'
     }}>
-      <StyledAppBar position="static">
+      <StyledAppBar position="fixed">
         <StyledToolbar>
           {/* Logo at the far left */}
           <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 48, gap: 2 }}>
@@ -90,24 +90,6 @@ const Template = ({ children }) => {
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <NavButton
               component={Link}
-              to="/home"
-              color={location.pathname === '/home' ? 'secondary' : 'inherit'}
-              startIcon={<HomeIcon />}
-            >
-              {t('common.home')}
-            </NavButton>
-
-            <NavButton
-              component={Link}
-              to="/search"
-              color={location.pathname === '/search' ? 'secondary' : 'inherit'}
-              startIcon={<SearchIcon />}
-            >
-              {t('common.search')}
-            </NavButton>
-
-            <NavButton
-              component={Link}
               to="/profile"
               color={location.pathname === '/profile' ? 'secondary' : 'inherit'}
               startIcon={<PersonIcon />}
@@ -115,34 +97,7 @@ const Template = ({ children }) => {
               {t('common.profile')}
             </NavButton>
 
-            <NavButton
-              component={Link}
-              to="/myrecipes"
-              color={location.pathname === '/myrecipes' ? 'secondary' : 'inherit'}
-              startIcon={<RestaurantMenuIcon />}
-            >
-              {t('recipes.myRecipes')}
-            </NavButton>
-
-            <NavButton
-              component={Link}
-              to="/saved"
-              color={location.pathname === '/saved' ? 'secondary' : 'inherit'}
-              startIcon={<BookmarkIcon />}
-            >
-              {t('recipes.savedRecipes')}
-            </NavButton>
-
-            <NavButton
-              component={Link}
-              to="/calorie-tracking"
-              color={location.pathname === '/calorie-tracking' ? 'secondary' : 'inherit'}
-              startIcon={<MonitorWeightIcon />}
-            >
-              {t('calorieTracking.title')}
-            </NavButton>
-
-            <LanguageSwitcher variant="icon" />
+            <LanguageSwitcher variant="text" />
 
             <IconButton
               color="inherit"
@@ -155,8 +110,112 @@ const Template = ({ children }) => {
           </Box>
         </StyledToolbar>
       </StyledAppBar>
+      {/* Spacer to offset fixed AppBar */}
+      <Toolbar />
       <Container sx={{ mt: 4, mb: 4, flex: 1 }}>
-        {children}
+        <Box sx={{ display: 'flex', gap: 3 }}>
+          {/* Main content */}
+          <Box sx={{ flex: 1 }}>
+            {children}
+          </Box>
+
+          {/* Right-side navigation box */}
+          <Box
+            sx={{
+              width: 240,
+              flexShrink: 0,
+              border: '1px solid #e0e0e0',
+              borderRadius: 2,
+              p: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+              position: 'sticky',
+              top: 96,
+              height: 'fit-content',
+              backgroundColor: '#fff',
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+              {t('common.navigation')}
+            </Typography>
+
+            <NavButton
+              component={Link}
+              to="/home"
+              color={location.pathname === '/home' ? 'secondary' : 'inherit'}
+              startIcon={<HomeIcon />}
+              fullWidth
+              sx={{
+                justifyContent: 'flex-start',
+                color: 'text.primary',
+                '&:hover': { backgroundColor: 'action.hover' },
+              }}
+            >
+              {t('common.home')}
+            </NavButton>
+
+            <NavButton
+              component={Link}
+              to="/search"
+              color={location.pathname === '/search' ? 'secondary' : 'inherit'}
+              startIcon={<SearchIcon />}
+              fullWidth
+              sx={{
+                justifyContent: 'flex-start',
+                color: 'text.primary',
+                '&:hover': { backgroundColor: 'action.hover' },
+              }}
+            >
+              {t('common.search')}
+            </NavButton>
+
+            <NavButton
+              component={Link}
+              to="/myrecipes"
+              color={location.pathname === '/myrecipes' ? 'secondary' : 'inherit'}
+              startIcon={<RestaurantMenuIcon />}
+              fullWidth
+              sx={{
+                justifyContent: 'flex-start',
+                color: 'text.primary',
+                '&:hover': { backgroundColor: 'action.hover' },
+              }}
+            >
+              {t('recipes.myRecipes')}
+            </NavButton>
+
+            <NavButton
+              component={Link}
+              to="/saved"
+              color={location.pathname === '/saved' ? 'secondary' : 'inherit'}
+              startIcon={<BookmarkIcon />}
+              fullWidth
+              sx={{
+                justifyContent: 'flex-start',
+                color: 'text.primary',
+                '&:hover': { backgroundColor: 'action.hover' },
+              }}
+            >
+              {t('recipes.savedRecipes')}
+            </NavButton>
+
+            <NavButton
+              component={Link}
+              to="/calorie-tracking"
+              color={location.pathname === '/calorie-tracking' ? 'secondary' : 'inherit'}
+              startIcon={<MonitorWeightIcon />}
+              fullWidth
+              sx={{
+                justifyContent: 'flex-start',
+                color: 'text.primary',
+                '&:hover': { backgroundColor: 'action.hover' },
+              }}
+            >
+              {t('calorieTracking.title')}
+            </NavButton>
+          </Box>
+        </Box>
       </Container>
       <Footer>
         <Container>
