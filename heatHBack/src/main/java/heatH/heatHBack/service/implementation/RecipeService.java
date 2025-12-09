@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import heatH.heatHBack.model.request.RecipeRequest;
+import heatH.heatHBack.model.request.EasinessRateRequest;
 import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
@@ -28,6 +29,7 @@ public class RecipeService {
     private final OpenAIService openAIService;
     private final SemanticSearchService semanticSearchService;
     private final CalorieService calorieService;
+    private final EasinessRateRepository easinessRateRepository;
 
 
     public Recipe saveRecipe(RecipeRequest request) {
@@ -112,5 +114,37 @@ public class RecipeService {
 
     public List<Recipe> getAllRecipesForAll() {
         return recipeRepository.findAll();
+    }
+
+    public EasinessRate rateEasiness(EasinessRateRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        User user = userRepository.findByUsername(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Recipe recipe = recipeRepository.findById(request.getRecipeId())
+                .orElseThrow(() -> new RuntimeException("Recipe not found"));
+        
+        // Check if user already rated this recipe
+        Optional<EasinessRate> existingRate = easinessRateRepository.findByUserAndRecipe(user, recipe);
+        
+        EasinessRate easinessRate;
+        if (existingRate.isPresent()) {
+            // Update existing rating
+            easinessRate = existingRate.get();
+            easinessRate.setEasiness_rate(request.getEasinessRate());
+        } else {
+            // Create new rating
+            easinessRate = new EasinessRate();
+            easinessRate.setUser(user);
+            easinessRate.setRecipe(recipe);
+            easinessRate.setEasiness_rate(request.getEasinessRate());
+        }
+        
+        return easinessRateRepository.save(easinessRate);
+    }
+
+    public Double getAverageEasinessRate(Long recipeId) {
+        return easinessRateRepository.findAverageEasinessRateByRecipeId(recipeId);
     }
 }
