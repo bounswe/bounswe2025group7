@@ -15,6 +15,6 @@ public class Ingredients {
     private Integer quantity;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "measurement_type", nullable = false)
+    @Column(name = "measurement_type", nullable = false, columnDefinition = "varchar(255) default 'GRAM'")
     private MeasurementTypes type;
 }
