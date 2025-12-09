@@ -7,6 +7,8 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import ShareIcon from '@mui/icons-material/Share';
 import Template from '../components/Template';
@@ -544,38 +546,22 @@ const HomePage = () => {
   return (
     <Template>
       <Box>
-        <div style={{ textAlign: 'center' }}> 
-          <Typography variant="h3" sx={{ color: 'primary.main', backgroundColor: 'white' }}>
-            {t('common.home')}
-          </Typography>
-        </div>
-           
-        <Container maxWidth="md" sx={{ py: 4 }}>
+        <Container maxWidth={false} disableGutters sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {/* Post composer box */}
-          <Card sx={{ mb: 4, p: 2, maxWidth: 600, mx: 'auto' }}>
-            <TextField
-              multiline
-              rows={3}
-              fullWidth
-              placeholder={t('home.welcome')}
-              value={userInputText}
-              onChange={(e) => setUserInputText(e.target.value)}
-            />
-            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-              <Button
-                variant={postType === 'image' ? 'contained' : 'outlined'}
-                disabled={postType === 'recipe'}
-                onClick={handleAddImageClick}
-              >
-                {t('home.uploadPhoto')}
-              </Button>
-              <Button
-                variant={postType === 'recipe' ? 'contained' : 'outlined'}
-                disabled={postType === 'image'}
-                onClick={handleAddRecipeClick}
-              >
-                {t('home.attachRecipe')}
-              </Button>
+          <Card sx={{ mb: 4, p: 2, width: '100%', maxWidth: 720 }}>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+              <Avatar
+                sx={{ width: 48, height: 48 }}
+                alt={t('common.profile')}
+              />
+              <TextField
+                multiline
+                rows={3}
+                fullWidth
+                placeholder={t('home.welcome')}
+                value={userInputText}
+                onChange={(e) => setUserInputText(e.target.value)}
+              />
             </Box>
             {/* hidden file input */}
             <input
@@ -604,18 +590,49 @@ const HomePage = () => {
               </Box>
             )}
             {/* Composer actions */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-              {postType === 'image' && postImage && (
-                <Button color="secondary" onClick={() => { setPostImage(null); setPostType(null); }}>
-                  {t('common.delete')}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
+              {/* Chip-like actions */}
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  disabled={postType === 'recipe'}
+                  onClick={handleAddImageClick}
+                  startIcon={<PhotoCameraIcon fontSize="small" />}
+                  sx={{ minWidth: 0, px: 1.25, py: 0.75, borderRadius: 999 }}
+                >
+                  {t('home.uploadPhoto')}
                 </Button>
-              )}
-              {postType === 'recipe' && selectedRecipeForPost && (
-                <Button color="secondary" onClick={() => { setSelectedRecipeForPost(''); setPostType(null); }}>
-                  {t('common.delete')}
+                <Button
+                  variant="outlined"
+                  size="small"
+                  disabled={postType === 'image'}
+                  onClick={handleAddRecipeClick}
+                  startIcon={<AttachFileIcon fontSize="small" />}
+                  sx={{ minWidth: 0, px: 1.25, py: 0.75, borderRadius: 999 }}
+                >
+                  {t('home.attachRecipe')}
                 </Button>
-              )}
+              </Box>
+
+              {/* Delete controls */}
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                {postType === 'image' && postImage && (
+                  <Button color="secondary" onClick={() => { setPostImage(null); setPostType(null); }}>
+                    {t('common.delete')}
+                  </Button>
+                )}
+                {postType === 'recipe' && selectedRecipeForPost && (
+                  <Button color="secondary" onClick={() => { setSelectedRecipeForPost(''); setPostType(null); }}>
+                    {t('common.delete')}
+                  </Button>
+                )}
+              </Box>
+
               <Box sx={{ flexGrow: 1 }} />
+              {postType === 'image' && postImage && (
+                null
+              )}
               <Button
                 variant="contained"
                 color="primary"
@@ -636,21 +653,32 @@ const HomePage = () => {
               <Button sx={{ mt: 2 }} variant="contained" onClick={() => window.location.reload()}>{t('common.retry')}</Button>
             </Box>
           ) : (
-            <Box sx={{ maxWidth: 600, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <Box sx={{ width: '100%', maxWidth: 720, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
               {feeds.map(feed => (
-                <Card key={feed.id} sx={{ width: '100%', boxShadow: 2, '&:hover': { boxShadow: 6 } }}>
+                <Card
+                  key={feed.id}
+                  sx={{
+                    width: '100%',
+                    p: 2,
+                    boxShadow: '0px 4px 12px rgba(0,0,0,0.08)',
+                    transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+                    '&:hover': {
+                      boxShadow: '0px 8px 24px rgba(0,0,0,0.10)',
+                      transform: 'translateY(-2px)',
+                    },
+                  }}
+                >
                   {/* Publisher info */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', px: 2, py: 1, cursor: 'pointer' }} onClick={() => navigate(`/user/${feed.userId}`)}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate(`/user/${feed.userId}`)}>
                     <Avatar src={feed.profilePhoto} alt={`${feed.name} ${feed.surname}`} />
                     <Typography variant="subtitle2" sx={{ ml: 1, fontWeight: 'bold' }}>
                       {feed.name} {feed.surname}
                     </Typography>
                   </Box>
-                  <Box sx={{ height: 1.5, bgcolor: 'primary.main', mx: 2, my: 1 }} />
-                  {feed.type === 'TEXT' && <Box sx={{ p:2 }}><Typography>{feed.text}</Typography></Box>}
-                  {feed.type === 'IMAGE_AND_TEXT' && <Box sx={{ p:2 }}><Box component="img" src={feed.image} alt="feed" sx={{ width:'100%', mb:1 }}/><Typography>{feed.text}</Typography></Box>}
+                  {feed.type === 'TEXT' && <Box sx={{ pt:2 }}><Typography>{feed.text}</Typography></Box>}
+                  {feed.type === 'IMAGE_AND_TEXT' && <Box sx={{ pt:2 }}><Box component="img" src={feed.image} alt="feed" sx={{ width:'100%', mb:1 }}/><Typography>{feed.text}</Typography></Box>}
                   {feed.type === 'RECIPE' && feed.recipe && <>
-                    <Typography variant="h6" sx={{ mt:1, mx:2, mb:2 }}>{feed.recipe.title}</Typography>
+                    <Typography variant="h6" sx={{ mt:2, mb:2 }}>{feed.recipe.title}</Typography>
                     <Box onClick={() => navigate(`/recipe/${feed.recipe.id}`)} sx={{ position:'relative', width:'100%', pt:'100%', overflow:'hidden', cursor:'pointer', '&:hover .descOverlay': { opacity:1, transform:'translateY(0)' } }}>
                       <img src={feed.recipe.photo} alt={feed.recipe.title} style={{ position:'absolute', top:0,left:0,width:'100%',height:'100%',objectFit:'cover' }}/>
                       <Box className="descOverlay" sx={{ position:'absolute', bottom:0, width:'100%', bgcolor: alpha(theme.palette.primary.dark,0.7), color: theme.palette.primary.contrastText, px:1, py:0.5, opacity:0, transform:'translateY(100%)', transition:'all 0.3s ease-in-out' }}>
@@ -659,7 +687,7 @@ const HomePage = () => {
                     </Box>
                   </>}
                   {feed.text?.trim() && (feed.type !== 'TEXT') && (
-                      <Box sx={{ px: 2, pt: 1 }}>
+                      <Box sx={{ pt: 1 }}>
                         <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
                           {feed.text}
                         </Typography>
@@ -733,14 +761,14 @@ const HomePage = () => {
                     position: 'relative',
                     width: '100%',
                     pt: '100%',
-                    boxShadow: 2,
+                    boxShadow: '0px 4px 12px rgba(0,0,0,0.08)',
                     borderRadius: 1,
                     overflow: 'hidden',
                     cursor: 'pointer',
                     transition: 'transform 0.2s, box-shadow 0.2s',
                     '&:hover': {
                       transform: 'scale(1.03)',
-                      boxShadow: 6,
+                      boxShadow: '0px 8px 24px rgba(0,0,0,0.10)',
                     },
                   }}
                 >
@@ -821,7 +849,7 @@ const HomePage = () => {
                 right: 16, 
                 zIndex: 1,
                 bgcolor: 'background.paper',
-                boxShadow: 1,
+                boxShadow: '0px 4px 12px rgba(0,0,0,0.08)',
                 '&:hover': { bgcolor: 'background.default' }
               }}
             >
@@ -1007,7 +1035,7 @@ const HomePage = () => {
                     <CircularProgress />
                   </Box>
                 ) : comments.length > 0 ? comments.map((comment, i) => (
-                  <Box key={i} sx={{ p: 2, borderRadius: 1, bgcolor: 'background.paper', boxShadow: 1 }}>
+          <Box key={i} sx={{ p: 2, borderRadius: 1, bgcolor: 'background.paper', boxShadow: '0px 4px 12px rgba(0,0,0,0.08)' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, cursor: 'pointer' }} onClick={() => { handleCloseComments(); navigate(`/user/${comment.userId}`); }}>
                       <Avatar src={comment.profilePhoto} sx={{ width: 32, height: 32, mr: 1 }} />
                       <Typography variant="subtitle2" color="primary.main" sx={{ fontWeight: 'bold' }}>

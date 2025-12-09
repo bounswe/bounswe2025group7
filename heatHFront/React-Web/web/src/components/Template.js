@@ -114,12 +114,7 @@ const Template = ({ children }) => {
       <Toolbar />
       <Container sx={{ mt: 4, mb: 4, flex: 1 }}>
         <Box sx={{ display: 'flex', gap: 3 }}>
-          {/* Main content */}
-          <Box sx={{ flex: 1 }}>
-            {children}
-          </Box>
-
-          {/* Right-side navigation box */}
+          {/* Left-side navigation box (Explore) */}
           <Box
             sx={{
               width: 240,
@@ -143,13 +138,15 @@ const Template = ({ children }) => {
             <NavButton
               component={Link}
               to="/home"
-              color={location.pathname === '/home' ? 'secondary' : 'inherit'}
               startIcon={<HomeIcon />}
               fullWidth
               sx={{
                 justifyContent: 'flex-start',
-                color: 'text.primary',
-                '&:hover': { backgroundColor: 'action.hover' },
+                color: location.pathname.startsWith('/home') ? 'primary.main' : 'text.primary',
+                backgroundColor: location.pathname.startsWith('/home') ? 'rgba(0, 128, 0, 0.08)' : 'transparent',
+                '&:hover': {
+                  backgroundColor: location.pathname.startsWith('/home') ? 'rgba(0, 128, 0, 0.12)' : 'action.hover',
+                },
               }}
             >
               {t('common.home')}
@@ -158,13 +155,15 @@ const Template = ({ children }) => {
             <NavButton
               component={Link}
               to="/search"
-              color={location.pathname === '/search' ? 'secondary' : 'inherit'}
               startIcon={<SearchIcon />}
               fullWidth
               sx={{
                 justifyContent: 'flex-start',
-                color: 'text.primary',
-                '&:hover': { backgroundColor: 'action.hover' },
+                color: location.pathname.startsWith('/search') ? 'primary.main' : 'text.primary',
+                backgroundColor: location.pathname.startsWith('/search') ? 'rgba(0, 128, 0, 0.08)' : 'transparent',
+                '&:hover': {
+                  backgroundColor: location.pathname.startsWith('/search') ? 'rgba(0, 128, 0, 0.12)' : 'action.hover',
+                },
               }}
             >
               {t('common.search')}
@@ -173,13 +172,15 @@ const Template = ({ children }) => {
             <NavButton
               component={Link}
               to="/myrecipes"
-              color={location.pathname === '/myrecipes' ? 'secondary' : 'inherit'}
               startIcon={<RestaurantMenuIcon />}
               fullWidth
               sx={{
                 justifyContent: 'flex-start',
-                color: 'text.primary',
-                '&:hover': { backgroundColor: 'action.hover' },
+                color: location.pathname.startsWith('/myrecipes') ? 'primary.main' : 'text.primary',
+                backgroundColor: location.pathname.startsWith('/myrecipes') ? 'rgba(0, 128, 0, 0.08)' : 'transparent',
+                '&:hover': {
+                  backgroundColor: location.pathname.startsWith('/myrecipes') ? 'rgba(0, 128, 0, 0.12)' : 'action.hover',
+                },
               }}
             >
               {t('recipes.myRecipes')}
@@ -188,13 +189,15 @@ const Template = ({ children }) => {
             <NavButton
               component={Link}
               to="/saved"
-              color={location.pathname === '/saved' ? 'secondary' : 'inherit'}
               startIcon={<BookmarkIcon />}
               fullWidth
               sx={{
                 justifyContent: 'flex-start',
-                color: 'text.primary',
-                '&:hover': { backgroundColor: 'action.hover' },
+                color: location.pathname.startsWith('/saved') ? 'primary.main' : 'text.primary',
+                backgroundColor: location.pathname.startsWith('/saved') ? 'rgba(0, 128, 0, 0.08)' : 'transparent',
+                '&:hover': {
+                  backgroundColor: location.pathname.startsWith('/saved') ? 'rgba(0, 128, 0, 0.12)' : 'action.hover',
+                },
               }}
             >
               {t('recipes.savedRecipes')}
@@ -203,17 +206,24 @@ const Template = ({ children }) => {
             <NavButton
               component={Link}
               to="/calorie-tracking"
-              color={location.pathname === '/calorie-tracking' ? 'secondary' : 'inherit'}
               startIcon={<MonitorWeightIcon />}
               fullWidth
               sx={{
                 justifyContent: 'flex-start',
-                color: 'text.primary',
-                '&:hover': { backgroundColor: 'action.hover' },
+                color: location.pathname.startsWith('/calorie-tracking') ? 'primary.main' : 'text.primary',
+                backgroundColor: location.pathname.startsWith('/calorie-tracking') ? 'rgba(0, 128, 0, 0.08)' : 'transparent',
+                '&:hover': {
+                  backgroundColor: location.pathname.startsWith('/calorie-tracking') ? 'rgba(0, 128, 0, 0.12)' : 'action.hover',
+                },
               }}
             >
               {t('calorieTracking.title')}
             </NavButton>
+          </Box>
+
+          {/* Main content centered */}
+          <Box sx={{ flex: 1 }}>
+            {children}
           </Box>
         </Box>
       </Container>
