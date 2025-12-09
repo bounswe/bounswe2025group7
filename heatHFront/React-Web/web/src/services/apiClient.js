@@ -61,4 +61,20 @@ export const unsaveRecipe = async (recipeId) => {
   return apiClient.post('/saved-recipes/unsave', { recipeId });
 };
 
+// Rate recipe easiness
+export const rateEasiness = async (recipeId, easinessRate) => {
+  return apiClient.post('/recipe/rate-easiness', { recipeId, easinessRate });
+};
+
+// Get average easiness rate for a recipe
+export const getAverageEasinessRate = async (recipeId) => {
+  try {
+    const response = await apiClient.get(`/recipe/average-easiness-rate?recipeId=${recipeId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching average easiness rate:', error);
+    return null;
+  }
+};
+
 export default apiClient;

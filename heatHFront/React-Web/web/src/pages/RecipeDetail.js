@@ -21,7 +21,7 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import PersonIcon from '@mui/icons-material/Person';
 import PrintIcon from '@mui/icons-material/Print';
 import Template from '../components/Template';
-import apiClient, { checkIfRecipeSaved, saveRecipe, unsaveRecipe } from '../services/apiClient';
+import apiClient, { checkIfRecipeSaved, saveRecipe, unsaveRecipe, rateEasiness, getAverageEasinessRate } from '../services/apiClient';
 import { mapLanguageToRecipeTarget, translateRecipeContent } from '../services/recipeTranslation';
 import Snackbar from '@mui/material/Snackbar';
 import Menu from '@mui/material/Menu';
@@ -131,6 +131,9 @@ const RecipeDetail = () => {
   const [translatedContent, setTranslatedContent] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationError, setTranslationError] = useState(null);
+  const [averageEasinessRate, setAverageEasinessRate] = useState(null);
+  const [userEasinessRating, setUserEasinessRating] = useState(0);
+  const [ratingLoading, setRatingLoading] = useState(false);
   const nutrition = recipe && recipe["nutritionData"] ? recipe["nutritionData"] : null;
 
   const targetLanguage = mapLanguageToRecipeTarget(i18n.language || 'en');
@@ -163,6 +166,26 @@ const RecipeDetail = () => {
     };
 
     fetchSavedStatus();
+  }, [recipe]);
+
+  // Fetch average easiness rate when recipe loads
+  useEffect(() => {
+    const fetchAverageEasinessRate = async () => {
+      if (recipe?.id) {
+        try {
+          const averageRate = await getAverageEasinessRate(recipe.id);
+          // The API might return a number directly or an object with the rate
+          if (averageRate !== null && averageRate !== undefined) {
+            const rate = typeof averageRate === 'number' ? averageRate : averageRate.averageRate || averageRate.rate || averageRate;
+            setAverageEasinessRate(rate);
+          }
+        } catch (error) {
+          console.error('Error fetching average easiness rate:', error);
+        }
+      }
+    };
+
+    fetchAverageEasinessRate();
   }, [recipe]);
 
   // Translate recipe content
@@ -300,6 +323,36 @@ const RecipeDetail = () => {
     }
   };
 
+  // Handle easiness rating change
+  const handleEasinessRatingChange = async (event, newValue) => {
+    if (!recipe?.id || !newValue) return;
+
+    // Convert to integer as backend expects int
+    const ratingValue = Math.round(newValue);
+    
+    setRatingLoading(true);
+    try {
+      await rateEasiness(recipe.id, ratingValue);
+      setUserEasinessRating(ratingValue);
+      
+      // Fetch updated average after rating
+      const updatedAverage = await getAverageEasinessRate(recipe.id);
+      if (updatedAverage !== null && updatedAverage !== undefined) {
+        const rate = typeof updatedAverage === 'number' ? updatedAverage : updatedAverage.averageRate || updatedAverage.rate || updatedAverage;
+        setAverageEasinessRate(rate);
+      }
+      
+      setSnackbarMessage(t('recipes.ratingSubmitted') || 'Rating submitted successfully');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error submitting easiness rating:', error);
+      setSnackbarMessage(t('recipes.ratingError') || 'Error submitting rating');
+      setSnackbarOpen(true);
+    } finally {
+      setRatingLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <Template>
@@ -404,11 +457,22 @@ const RecipeDetail = () => {
               {t('recipes.easinessScore')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Rating value={recipe.easinessScore || 3.5} readOnly precision={0.5} />
+              <Rating 
+                value={averageEasinessRate !== null ? averageEasinessRate : (recipe.easinessScore || 0)} 
+                onChange={handleEasinessRatingChange}
+                precision={1}
+                disabled={ratingLoading}
+                size="medium"
+              />
               <Typography variant="body2" sx={{ ml: 1 }}>
-                (3.5)
+                ({averageEasinessRate !== null ? averageEasinessRate.toFixed(1) : (recipe.easinessScore || 0).toFixed(1)})
               </Typography>
             </Box>
+            {userEasinessRating > 0 && (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                {t('recipes.yourRating') || 'Your rating'}: {userEasinessRating}
+              </Typography>
+            )}
           </Box>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
