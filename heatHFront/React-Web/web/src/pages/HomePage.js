@@ -567,14 +567,14 @@ const HomePage = () => {
                 disabled={postType === 'recipe'}
                 onClick={handleAddImageClick}
               >
-                {t('home.browseRecipes')}
+                {t('home.uploadPhoto')}
               </Button>
               <Button
                 variant={postType === 'recipe' ? 'contained' : 'outlined'}
                 disabled={postType === 'image'}
                 onClick={handleAddRecipeClick}
               >
-                {t('recipes.createRecipe')}
+                {t('home.attachRecipe')}
               </Button>
             </Box>
             {/* hidden file input */}
@@ -622,7 +622,7 @@ const HomePage = () => {
                 onClick={handleSend}
                 disabled={!userInputText && !postImage && !selectedRecipeForPost}
               >
-                {t('common.save')}
+                {t('home.post')}
               </Button>
             </Box>
           </Card>

@@ -18,6 +18,7 @@
     "error": "エラー",
     "success": "成功",
     "retry": "再試行",
+    "navigation": "探索",
     "like": "いいね",
     "likes": "いいね",
     "view": "表示",
@@ -267,6 +268,9 @@
     "quickActions": "クイックアクション",
     "createMealPlan": "食事プランを作成",
     "browseRecipes": "レシピを閲覧",
+    "attachRecipe": "レシピを添付",
+    "uploadPhoto": "写真をアップロード",
+    "post": "投稿",
     "viewProfile": "プロフィールを見る"
   },
   "errors": {

@@ -18,6 +18,7 @@
     "error": "Hata",
     "success": "Başarılı",
     "retry": "Tekrar Dene",
+    "navigation": "Keşfet",
     "like": "beğeni",
     "likes": "beğeni",
     "view": "Görüntüle",
@@ -267,6 +268,9 @@
     "quickActions": "Hızlı İşlemler",
     "createMealPlan": "Yemek Planı Oluştur",
     "browseRecipes": "Tarifleri Gözden Geçir",
+    "attachRecipe": "Tarif Ekle",
+    "uploadPhoto": "Fotoğraf Yükle",
+    "post": "Paylaş",
     "viewProfile": "Profili Görüntüle"
   },
   "errors": {
