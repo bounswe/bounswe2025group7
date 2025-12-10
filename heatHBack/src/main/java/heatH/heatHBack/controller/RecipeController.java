@@ -9,6 +9,11 @@ import org.springframework.web.bind.annotation.*;
 import heatH.heatHBack.model.request.RecipeRequest;
 import heatH.heatHBack.model.response.RecipeResponse;
 import heatH.heatHBack.service.implementation.RecipeService;
+
+import heatH.heatHBack.model.request.EasinessRateRequest;
+import heatH.heatHBack.model.response.EasinessRateResponse;
+import heatH.heatHBack.model.request.GetEasinessRequest;
+
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -53,5 +58,19 @@ public class RecipeController {
     @GetMapping("/get-all-for-all")
     public ResponseEntity<List<Recipe>> getAllRecipeForAll(){
         return ResponseEntity.ok(recipeService.getAllRecipesForAll());
+    }
+
+    @PostMapping("/rate-easiness")
+    public ResponseEntity<RecipeResponse> rateEasiness(@RequestBody EasinessRateRequest easinessRateRequest) {
+        recipeService.rateEasiness(easinessRateRequest);
+        return ResponseEntity.ok(new RecipeResponse("OK"));
+    }
+
+    @PostMapping("/average-easiness-rate")
+    public ResponseEntity<EasinessRateResponse> getAverageEasinessRate(@RequestBody GetEasinessRequest getEasinessRequest) {
+        Double averageRate = recipeService.getAverageEasinessRate(getEasinessRequest.getRecipeId());
+        EasinessRateResponse response = new EasinessRateResponse();
+        response.setAverageEasinessRate(averageRate);
+        return ResponseEntity.ok(response);
     }
 }
