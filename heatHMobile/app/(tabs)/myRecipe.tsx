@@ -25,7 +25,17 @@ import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import { translateTextContent, mapLanguageToRecipeTarget } from '../../services/translationService';
 import { formatPriceForInput, parsePriceToUSD } from '../../services/currencyService';
+import { measurementOptions, measurementOptionMap, normalizeMeasurementType, MeasurementType } from '../../constants/measurements';
 
+
+type IngredientValue =
+  | string
+  | {
+      name?: string;
+      amount?: string | number;
+      quantity?: number;
+      type?: string;
+    };
 
 type RecipeItem = {
   id: string | number;
@@ -33,19 +43,24 @@ type RecipeItem = {
   photo?: string;
   image?: string; // fallback
   instructions?: string[]; // might be array of strings
-  ingredients?: Array<string | { name: string; amount?: string; quantity?: number }>;
+  ingredients?: IngredientValue[];
   tag?: string;
   type?: string;
   totalCalorie?: number;
   price?: number;
 };
 
-type IngredientForm = { name: string; amount: string };
+type IngredientForm = { name: string; amount: string; measurement: MeasurementType };
 
 export default function MyRecipeScreen() {
   const { colors, textColors, fonts, lineHeights } = useThemeColors();
   const { t } = useTranslation();
   const router = useRouter();
+  const getMeasurementLabel = (value: MeasurementType, variant: 'short' | 'long' = 'long') => {
+    const config = measurementOptionMap[value];
+    const key = variant === 'short' ? config.shortKey : config.labelKey;
+    return t(key);
+  };
 
   const [recipes, setRecipes] = useState<RecipeItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,6 +84,8 @@ export default function MyRecipeScreen() {
   const [ingredients, setIngredients] = useState<IngredientForm[]>([]);
   const [curIngName, setCurIngName] = useState('');
   const [curIngAmt, setCurIngAmt] = useState('');
+  const [curIngMeasurement, setCurIngMeasurement] = useState<MeasurementType>('GRAM');
+  const [measurementPickerVisible, setMeasurementPickerVisible] = useState(false);
   const [photoBase64, setPhotoBase64] = useState<string>('');
   const [imagePreview, setImagePreview] = useState<string>('');
 
@@ -84,6 +101,8 @@ export default function MyRecipeScreen() {
     setIngredients([]);
     setCurIngName('');
     setCurIngAmt('');
+    setCurIngMeasurement('GRAM');
+    setMeasurementPickerVisible(false);
     setPhotoBase64('');
     setImagePreview('');
   }, []);
@@ -170,15 +189,18 @@ export default function MyRecipeScreen() {
     // instructions might be string[] or missing
     setInstructions(Array.isArray(r.instructions) ? r.instructions : []);
     setImagePreview(r.photo || r.image || '');
-    // parse ingredients: could be ["Flour: 2 cups"] or [{name, amount/quantity}]
-    const parsed: IngredientForm[] = (r.ingredients || []).map((it: any) => {
+    // parse ingredients: could be ["Flour: 2 cups"] or objects
+    const parsed: IngredientForm[] = (r.ingredients || []).map((it: IngredientValue) => {
       if (typeof it === 'string') {
         const [n, a] = it.split(':');
-        return { name: (n || '').trim(), amount: (a || '').trim() };
+        return { name: (n || '').trim(), amount: (a || '').trim(), measurement: 'GRAM' };
       }
-      return { name: it.name || '', amount: String(it.amount ?? it.quantity ?? '') };
+      const measurement = normalizeMeasurementType(it?.type);
+      const amountValue = it?.amount ?? it?.quantity ?? '';
+      return { name: it?.name || '', amount: String(amountValue ?? ''), measurement };
     });
     setIngredients(parsed);
+    setCurIngMeasurement(parsed[0]?.measurement ?? 'GRAM');
     setOpenForm(true);
   };
 
@@ -218,7 +240,10 @@ export default function MyRecipeScreen() {
 
   const addIngredient = () => {
     if (!curIngName.trim() || !curIngAmt.trim()) return;
-    setIngredients((prev) => [...prev, { name: curIngName.trim(), amount: curIngAmt.trim() }]);
+    setIngredients((prev) => [
+      ...prev,
+      { name: curIngName.trim(), amount: curIngAmt.trim(), measurement: curIngMeasurement },
+    ]);
     setCurIngName('');
     setCurIngAmt('');
   };
@@ -235,6 +260,7 @@ export default function MyRecipeScreen() {
     ingredients.map((i) => ({
       name: i.name,
       quantity: Number(i.amount) || 0,
+      type: i.measurement,
     }));
 
   const handleSubmit = async () => {
@@ -460,28 +486,52 @@ export default function MyRecipeScreen() {
                     style={[styles.input, { flex: 1, backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
                     editable={!submitting}
                   />
+                </View>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                   <TextInput
                     value={curIngAmt}
                     onChangeText={setCurIngAmt}
                     placeholder={t('recipes.enterAmount')}
+                    keyboardType="numeric"
                     style={[styles.input, { flex: 1, backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
                     editable={!submitting}
                     onSubmitEditing={addIngredient}
                     returnKeyType="done"
                   />
+                  <TouchableOpacity
+                    style={[
+                      styles.measureSelect,
+                      { borderColor: colors.gray[300], backgroundColor: colors.gray[50] },
+                      submitting && { opacity: 0.6 },
+                    ]}
+                    onPress={() => setMeasurementPickerVisible(true)}
+                    disabled={submitting}
+                  >
+                    <Text style={[styles.measureSelectText, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>
+                      {getMeasurementLabel(curIngMeasurement)}
+                    </Text>
+                  </TouchableOpacity>
                   <TouchableOpacity style={[styles.smallBtn, { backgroundColor: colors.primary }]} onPress={addIngredient} disabled={!curIngName || !curIngAmt || submitting}>
                     <Text style={[styles.smallBtnText, { color: colors.white, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>Add</Text>
                   </TouchableOpacity>
                 </View>
+                <Text style={[styles.measureHint, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>
+                  {t('recipes.measurements.selected', {
+                    unit: getMeasurementLabel(curIngMeasurement),
+                  })}
+                </Text>
                 {ingredients.length === 0 ? (
                   <Text style={[styles.muted, { color: textColors.hint, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.noIngredientsAdded')}</Text>
                 ) : (
                   <View style={styles.chipsWrap}>
-                    {ingredients.map((ing, idx) => (
-                      <TouchableOpacity key={`${ing.name}-${idx}`} style={[styles.chip, { backgroundColor: colors.primary + '20' }]} onPress={() => removeIngredient(idx)}>
-                        <Text style={[styles.chipText, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{`${igName(ing)}: ${ing.amount}`}</Text>
-                      </TouchableOpacity>
-                    ))}
+                    {ingredients.map((ing, idx) => {
+                      const unit = ing.measurement ? getMeasurementLabel(ing.measurement) : '';
+                      return (
+                        <TouchableOpacity key={`${ing.name}-${idx}`} style={[styles.chip, { backgroundColor: colors.primary + '20' }]} onPress={() => removeIngredient(idx)}>
+                          <Text style={[styles.chipText, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{`${igName(ing)}: ${ing.amount}${unit ? ` ${unit}` : ''}`}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
                 )}
 
@@ -513,6 +563,36 @@ export default function MyRecipeScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+      <Modal visible={measurementPickerVisible} transparent animationType="fade" onRequestClose={() => setMeasurementPickerVisible(false)}>
+        <View style={styles.unitModalBackdrop}>
+          <View style={[styles.unitModalCard, { backgroundColor: colors.white }]}>
+            <Text style={[styles.unitModalTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.base }]}>
+              {t('recipes.measurements.select')}
+            </Text>
+            {measurementOptions.map((option) => {
+              const active = option.value === curIngMeasurement;
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.unitOption,
+                    { borderColor: colors.gray[200] },
+                    active && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                  ]}
+                  onPress={() => {
+                    setCurIngMeasurement(option.value);
+                    setMeasurementPickerVisible(false);
+                  }}
+                >
+                  <Text style={[styles.unitOptionText, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
+                    {t(option.labelKey)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -594,6 +674,33 @@ const styles = StyleSheet.create({
   },
   chipText: { fontSize: 12, fontWeight: '600' },
   muted: { marginTop: 6 },
+  measureSelect: {
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderRadius: 10,
+    justifyContent: 'center',
+  },
+  measureSelectText: { fontWeight: '700' },
+  measureHint: { marginTop: 6 },
+  unitModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    padding: 24,
+    justifyContent: 'center',
+  },
+  unitModalCard: {
+    borderRadius: 16,
+    padding: 16,
+  },
+  unitModalTitle: { fontSize: 16, marginBottom: 8 },
+  unitOption: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginTop: 8,
+  },
+  unitOptionText: { fontWeight: '600' },
   actionBtn: {
     paddingHorizontal: 16,
     paddingVertical: 12,
