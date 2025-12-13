@@ -1,6 +1,7 @@
 package heatH.heatHBack.service.implementation;
 
 import heatH.heatHBack.model.Ingredients;
+import heatH.heatHBack.model.MeasurementTypes;
 import heatH.heatHBack.model.client.FatSecretClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,11 +32,18 @@ public class CalorieService {
                         }
 
                         int baseCalories = (int) nutrition.getOrDefault("calories", 0);
+                        // baseWeight is usually 100g or the serving size in grams provided by API
                         int baseWeight = (int) nutrition.getOrDefault("weight", 100);
-                        int quantity = ingredient.getQuantity() != null ? ingredient.getQuantity() : 0;
 
-                        // Scale calories linearly with weight
-                        double scaledCalories = (baseCalories * (quantity / (double) baseWeight));
+                        // --- CHANGED HERE ---
+                        // Convert the unit quantity to grams using the Enum
+                        MeasurementTypes type = ingredient.getType() != null ? ingredient.getType() : MeasurementTypes.GRAM;
+                        double quantityInGrams = type.toGrams(ingredient.getQuantity() != null ? ingredient.getQuantity() : 0);
+
+                        // Scale calories: (Calories / BaseWeight) * ActualGrams
+                        if (baseWeight == 0) baseWeight = 100; // Prevent division by zero
+                        double scaledCalories = (baseCalories * (quantityInGrams / (double) baseWeight));
+
                         return (int) Math.round(scaledCalories);
 
                     } catch (Exception e) {
@@ -49,20 +57,13 @@ public class CalorieService {
     public Map<String, Double> calculateMacronutrients(List<Ingredients> ingredients) {
         Map<String, Double> totals = new HashMap<>();
 
-        // Orijinal makrolar
-        totals.put("carbs", 0.0);
-        totals.put("fat", 0.0);
-        totals.put("protein", 0.0);
-
-        // İstenen yeni alanlar
-        totals.put("vitamin_a", 0.0);
-        totals.put("vitamin_c", 0.0);
-        totals.put("sodium", 0.0);
-        totals.put("saturated_fat", 0.0);
-        totals.put("potassium", 0.0);
-        totals.put("cholesterol", 0.0);
-        totals.put("calcium", 0.0);
-        totals.put("iron", 0.0);
+        // Initialize totals
+        String[] keys = {
+                "carbs", "fat", "protein", "vitamin_a", "vitamin_c",
+                "sodium", "saturated_fat", "potassium", "cholesterol",
+                "calcium", "iron"
+        };
+        for (String key : keys) totals.put(key, 0.0);
 
         if (ingredients == null || ingredients.isEmpty()) {
             return totals;
@@ -77,55 +78,49 @@ public class CalorieService {
                     continue;
                 }
 
-                // Orijinal makro değerlerini al (Bunlar 'int' olarak geliyor)
-                double baseCarbs = ((Number) nutrition.getOrDefault("carbs", 0.0)).doubleValue();
-                double baseFat = ((Number) nutrition.getOrDefault("fat", 0.0)).doubleValue();
-                double baseProtein = ((Number) nutrition.getOrDefault("protein", 0.0)).doubleValue();
+                // --- CHANGED HERE ---
+                // 1. Calculate the actual weight in grams based on the Unit Type
+                MeasurementTypes type = ingredient.getType() != null ? ingredient.getType() : MeasurementTypes.GRAM;
+                double quantityInGrams = type.toGrams(ingredient.getQuantity() != null ? ingredient.getQuantity() : 0);
 
-                // Yeni mikro değerlerini al (Bunlar 'double' olarak geliyor)
-                double baseVitaminA = ((Number) nutrition.getOrDefault("vitamin_a", 0.0)).doubleValue();
-                double baseVitaminC = ((Number) nutrition.getOrDefault("vitamin_c", 0.0)).doubleValue();
-                double baseSodium = ((Number) nutrition.getOrDefault("sodium", 0.0)).doubleValue();
-                double baseSaturatedFat = ((Number) nutrition.getOrDefault("saturated_fat", 0.0)).doubleValue();
-                double basePotassium = ((Number) nutrition.getOrDefault("potassium", 0.0)).doubleValue();
-                double baseCholesterol = ((Number) nutrition.getOrDefault("cholesterol", 0.0)).doubleValue();
-                double baseCalcium = ((Number) nutrition.getOrDefault("calcium", 0.0)).doubleValue();
-                double baseIron = ((Number) nutrition.getOrDefault("iron", 0.0)).doubleValue();
-
-                // Ağırlık hesaplaması (Orijinal)
+                // 2. Get the base weight from API (usually 100g)
                 int baseWeight = ((Number) nutrition.getOrDefault("weight", 100)).intValue();
-                int quantity = ingredient.getQuantity() != null ? ingredient.getQuantity() : 0;
 
-                // baseWeight 0 ise hatayı önle
                 if (baseWeight == 0) {
                     System.err.println("⚠️ Base weight is 0 for " + ingredient.getName() + ", skipping.");
                     continue;
                 }
 
-                double weightFactor = quantity / (double) baseWeight;
+                // 3. Calculate the factor (e.g., if user has 200g flour and base is 100g, factor is 2.0)
+                double weightFactor = quantityInGrams / (double) baseWeight;
 
-                // Orijinal makroları güncelle
-                totals.put("carbs", totals.get("carbs") + baseCarbs * weightFactor);
-                totals.put("fat", totals.get("fat") + baseFat * weightFactor);
-                totals.put("protein", totals.get("protein") + baseProtein * weightFactor);
-
-                // Yeni mikroları güncelle
-                totals.put("vitamin_a", totals.get("vitamin_a") + baseVitaminA * weightFactor);
-                totals.put("vitamin_c", totals.get("vitamin_c") + baseVitaminC * weightFactor);
-                totals.put("sodium", totals.get("sodium") + baseSodium * weightFactor);
-                totals.put("saturated_fat", totals.get("saturated_fat") + baseSaturatedFat * weightFactor);
-                totals.put("potassium", totals.get("potassium") + basePotassium * weightFactor);
-                totals.put("cholesterol", totals.get("cholesterol") + baseCholesterol * weightFactor);
-                totals.put("calcium", totals.get("calcium") + baseCalcium * weightFactor);
-                totals.put("iron", totals.get("iron") + baseIron * weightFactor);
+                // 4. Update all nutrients using the weight factor
+                // Helper to simplify fetching and adding
+                updateTotal(totals, nutrition, "carbs", weightFactor);
+                updateTotal(totals, nutrition, "fat", weightFactor);
+                updateTotal(totals, nutrition, "protein", weightFactor);
+                updateTotal(totals, nutrition, "vitamin_a", weightFactor);
+                updateTotal(totals, nutrition, "vitamin_c", weightFactor);
+                updateTotal(totals, nutrition, "sodium", weightFactor);
+                updateTotal(totals, nutrition, "saturated_fat", weightFactor);
+                updateTotal(totals, nutrition, "potassium", weightFactor);
+                updateTotal(totals, nutrition, "cholesterol", weightFactor);
+                updateTotal(totals, nutrition, "calcium", weightFactor);
+                updateTotal(totals, nutrition, "iron", weightFactor);
 
             } catch (Exception e) {
                 System.err.println("❌ Error fetching nutrients for ingredient " + ingredient.getName() + ": " + e.getMessage());
             }
         }
 
-        // Round to 2 decimal places for readability (Orijinal)
+        // Round to 2 decimal places
         totals.replaceAll((k, v) -> Math.round(v * 100.0) / 100.0);
         return totals;
+    }
+
+    // Helper method to keep the code clean
+    private void updateTotal(Map<String, Double> totals, Map<String, Object> nutrition, String key, double factor) {
+        double baseValue = ((Number) nutrition.getOrDefault(key, 0.0)).doubleValue();
+        totals.put(key, totals.get(key) + (baseValue * factor));
     }
 }

@@ -176,9 +176,9 @@ const SavedRecipes = () => {
           
           {/* Navigation to My Recipes */}
           <Box sx={{ mb: 4, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-              {t('recipes.savedRecipes')} {t('recipes.myRecipes')}
-            </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+            {t('recipes.savedRecipes')}
+          </Typography>
             <Button 
               variant="contained" 
               color="primary" 
@@ -196,10 +196,10 @@ const SavedRecipes = () => {
           ) : recipes.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                {t('recipes.savedRecipes')}
+                {t('recipes.noSavedRecipes')}
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                {t('recipes.savedRecipes')}
+                {t('home.browseRecipes')}
               </Typography>
               <Button 
                 variant="outlined" 

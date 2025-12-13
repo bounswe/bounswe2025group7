@@ -361,7 +361,7 @@ const MyRecipes = () => {
           {/* Button to open Add Recipe Dialog */}
           <Box sx={{ mb: 4, textAlign: 'center' }}>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-              {t('recipes.createRecipe')} {t('recipes.savedRecipes')}
+              {t('recipes.createRecipe')}
             </Typography>
 
             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
