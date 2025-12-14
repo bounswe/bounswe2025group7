@@ -63,7 +63,11 @@
     "colorSuccess": "Başarılı",
     "colorError": "Hata",
     "colorWarning": "Uyarı",
-    "colorPrimary": "Birincil"
+    "colorPrimary": "Birincil",
+    "measurementSystem": "Ölçü Sistemi",
+    "measurementDescription": "Malzeme miktarlarının nasıl gösterileceğini seçin. Tarifler her zaman metrik olarak saklanır ve anlık olarak dönüştürülür.",
+    "metricSystem": "Metrik (g, ml)",
+    "imperialSystem": "İmparatorluk (oz, fl oz)"
   },
   "recipes": {
     "description": "Açıklama",

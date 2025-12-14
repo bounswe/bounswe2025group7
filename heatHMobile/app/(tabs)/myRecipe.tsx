@@ -25,7 +25,18 @@ import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import { translateTextContent, mapLanguageToRecipeTarget } from '../../services/translationService';
 import { formatPriceForInput, parsePriceToUSD } from '../../services/currencyService';
-import { measurementOptions, measurementOptionMap, normalizeMeasurementType, MeasurementType } from '../../constants/measurements';
+import { useMeasurement } from '../../context/MeasurementContext';
+import {
+  MeasurementType,
+  MeasurementSystem,
+  measurementOptions,
+  measurementOptionMap,
+  convertInputToCanonical,
+  convertQuantityForSystem,
+  formatQuantityText,
+  getMeasurementOptionLabel,
+  normalizeMeasurementType,
+} from '../../constants/measurements';
 
 
 type IngredientValue =
@@ -50,12 +61,13 @@ type RecipeItem = {
   price?: number;
 };
 
-type IngredientForm = { name: string; amount: string; measurement: MeasurementType };
+type IngredientForm = { id: string; name: string; quantity: number; measurementType: MeasurementType };
 
 export default function MyRecipeScreen() {
   const { colors, textColors, fonts, lineHeights } = useThemeColors();
   const { t } = useTranslation();
   const router = useRouter();
+  const { system: measurementSystem } = useMeasurement();
   const getMeasurementLabel = (value: MeasurementType, variant: 'short' | 'long' = 'long') => {
     const config = measurementOptionMap[value];
     const key = variant === 'short' ? config.shortKey : config.labelKey;
@@ -190,17 +202,29 @@ export default function MyRecipeScreen() {
     setInstructions(Array.isArray(r.instructions) ? r.instructions : []);
     setImagePreview(r.photo || r.image || '');
     // parse ingredients: could be ["Flour: 2 cups"] or objects
-    const parsed: IngredientForm[] = (r.ingredients || []).map((it: IngredientValue) => {
+    const parsed: IngredientForm[] = (r.ingredients || []).map((it: IngredientValue, idx) => {
+      const id = `${r.id ?? 'recipe'}-${idx}`;
       if (typeof it === 'string') {
         const [n, a] = it.split(':');
-        return { name: (n || '').trim(), amount: (a || '').trim(), measurement: 'GRAM' };
+        const numeric = Number((a || '').replace(/[^0-9.,-]/g, '').replace(',', '.')) || 0;
+        return { id, name: (n || '').trim(), quantity: numeric, measurementType: 'GRAM' };
       }
-      const measurement = normalizeMeasurementType(it?.type);
-      const amountValue = it?.amount ?? it?.quantity ?? '';
-      return { name: it?.name || '', amount: String(amountValue ?? ''), measurement };
+      const measurementType = normalizeMeasurementType(it?.type);
+      const qtyRaw =
+        typeof it?.quantity === 'number'
+          ? it?.quantity
+          : typeof it?.amount === 'string'
+          ? Number(it?.amount.replace(/,/g, '.'))
+          : Number(it?.amount ?? it?.quantity ?? 0);
+      return {
+        id,
+        name: it?.name || '',
+        quantity: Number.isFinite(qtyRaw) ? Number(qtyRaw) : 0,
+        measurementType,
+      };
     });
     setIngredients(parsed);
-    setCurIngMeasurement(parsed[0]?.measurement ?? 'GRAM');
+    setCurIngMeasurement(parsed[0]?.measurementType ?? 'GRAM');
     setOpenForm(true);
   };
 
@@ -240,9 +264,18 @@ export default function MyRecipeScreen() {
 
   const addIngredient = () => {
     if (!curIngName.trim() || !curIngAmt.trim()) return;
+    const parsedDisplayValue = Number(curIngAmt.replace(',', '.'));
+    if (!isFinite(parsedDisplayValue)) return;
+
+    const canonicalQuantity = convertInputToCanonical(parsedDisplayValue, curIngMeasurement, measurementSystem);
     setIngredients((prev) => [
       ...prev,
-      { name: curIngName.trim(), amount: curIngAmt.trim(), measurement: curIngMeasurement },
+      {
+        id: `${Date.now()}-${prev.length}`,
+        name: curIngName.trim(),
+        quantity: canonicalQuantity,
+        measurementType: curIngMeasurement,
+      },
     ]);
     setCurIngName('');
     setCurIngAmt('');
@@ -259,8 +292,8 @@ export default function MyRecipeScreen() {
   const toApiIngredients = () =>
     ingredients.map((i) => ({
       name: i.name,
-      quantity: Number(i.amount) || 0,
-      type: i.measurement,
+      quantity: i.quantity,
+      type: i.measurementType,
     }));
 
   const handleSubmit = async () => {
@@ -491,7 +524,7 @@ export default function MyRecipeScreen() {
                   <TextInput
                     value={curIngAmt}
                     onChangeText={setCurIngAmt}
-                    placeholder={t('recipes.enterAmount')}
+                    placeholder={`${t('recipes.enterAmount')} (${getMeasurementOptionLabel(curIngMeasurement, measurementSystem).unit || getMeasurementLabel(curIngMeasurement, 'short')})`}
                     keyboardType="numeric"
                     style={[styles.input, { flex: 1, backgroundColor: colors.gray[50], borderColor: colors.gray[300], color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}
                     editable={!submitting}
@@ -517,21 +550,20 @@ export default function MyRecipeScreen() {
                 </View>
                 <Text style={[styles.measureHint, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>
                   {t('recipes.measurements.selected', {
-                    unit: getMeasurementLabel(curIngMeasurement),
+                    unit: `${getMeasurementLabel(curIngMeasurement)} (${getMeasurementOptionLabel(curIngMeasurement, measurementSystem).unit || getMeasurementLabel(curIngMeasurement, 'short')})`,
                   })}
                 </Text>
                 {ingredients.length === 0 ? (
                   <Text style={[styles.muted, { color: textColors.hint, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.noIngredientsAdded')}</Text>
                 ) : (
                   <View style={styles.chipsWrap}>
-                    {ingredients.map((ing, idx) => {
-                      const unit = ing.measurement ? getMeasurementLabel(ing.measurement) : '';
-                      return (
-                        <TouchableOpacity key={`${ing.name}-${idx}`} style={[styles.chip, { backgroundColor: colors.primary + '20' }]} onPress={() => removeIngredient(idx)}>
-                          <Text style={[styles.chipText, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>{`${igName(ing)}: ${ing.amount}${unit ? ` ${unit}` : ''}`}</Text>
-                        </TouchableOpacity>
-                      );
-                    })}
+                    {ingredients.map((ing, idx) => (
+                      <TouchableOpacity key={ing.id || `${ing.name}-${idx}`} style={[styles.chip, { backgroundColor: colors.primary + '20' }]} onPress={() => removeIngredient(idx)}>
+                        <Text style={[styles.chipText, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.sm }]}>
+                          {describeIngredient(ing, measurementSystem, getMeasurementLabel)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
                 )}
 
@@ -597,6 +629,17 @@ export default function MyRecipeScreen() {
     </View>
   );
 }
+
+const describeIngredient = (
+  ingredient: IngredientForm,
+  system: MeasurementSystem,
+  labelResolver: (value: MeasurementType, variant?: 'short' | 'long') => string
+) => {
+  const { value, unit } = convertQuantityForSystem(ingredient.quantity, ingredient.measurementType, system);
+  const valueText = formatQuantityText(value);
+  const unitText = unit || labelResolver(ingredient.measurementType, valueText.length > 3 ? 'long' : 'short');
+  return `${igName(ingredient)}: ${valueText}${unitText ? ` ${unitText}` : ''}`;
+};
 
 const igName = (i: IngredientForm) => (i.name?.length ? i.name : 'Item');
 

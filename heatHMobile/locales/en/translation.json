@@ -63,7 +63,11 @@
     "colorSuccess": "Success",
     "colorError": "Error",
     "colorWarning": "Warning",
-    "colorPrimary": "Primary"
+    "colorPrimary": "Primary",
+    "measurementSystem": "Measurement System",
+    "measurementDescription": "Choose how ingredient amounts are displayed. We always store recipes in metric units and convert on the fly.",
+    "metricSystem": "Metric (g, ml)",
+    "imperialSystem": "Imperial (oz, fl oz)"
   },
   "recipes": {
     "description": "Description",
