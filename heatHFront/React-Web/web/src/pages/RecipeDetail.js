@@ -44,6 +44,28 @@ const UNIT_LABELS = {
   CUP: 'cup',
 };
 
+// Recipe section styling
+const RecipeDetailSection = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(3),
+  margin: theme.spacing(0, 0, 3, 0),
+  borderRadius: theme.shape.borderRadius,
+  background: theme.palette.background.paper,
+  boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
+}));
+
+// Recipe info box styling
+const RecipeInfoBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'column',
+  padding: theme.spacing(2),
+  borderRadius: theme.shape.borderRadius,
+  textAlign: 'center',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  background: alpha(theme.palette.primary.light, 0.05)
+}));
+
 // Simple table row component for nutrition
 const NutrientRow = ({ label, value, unit = '', indent = 0, isSub = false, IconComponent = null }) => (
   <TableRow>
