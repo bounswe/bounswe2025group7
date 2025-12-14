@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { recipeService } from '../../services/recipeService';
 import ShareModal from '../../components/ShareModal';
+import StarRating from '../../components/StarRating';
+import RatingModal from '../../components/RatingModal';
 import { useFocusEffect } from '@react-navigation/native';
 import { translateRecipeContent, mapLanguageToRecipeTarget } from '../../services/translationService';
 import { formatPrice } from '../../services/currencyService';
@@ -64,6 +66,10 @@ const RecipeDetail = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [translated, setTranslated] = useState<Recipe | null>(null);
+  const [averageEasinessScore, setAverageEasinessScore] = useState<number | null>(null);
+  const [userEasinessRate, setUserEasinessRate] = useState<number | null>(null);
+  const [easinessRatingLoading, setEasinessRatingLoading] = useState(false);
+  const [ratingModalVisible, setRatingModalVisible] = useState(false);
 
   // Get target language from global i18n setting
   const getMeasurementLabel = (value?: string | null, variant: 'long' | 'short' = 'long') => {
@@ -180,6 +186,84 @@ const RecipeDetail = () => {
     };
     if (effectiveId) fetchRecipeDetails();
   }, [effectiveId]);
+
+  // Fetch average easiness score
+  useEffect(() => {
+    const fetchAverageEasinessScore = async () => {
+      if (!effectiveId) return;
+      try {
+        const response = await recipeService.getAverageEasiness(Number(effectiveId));
+        const averageScore = response?.averageEasinessRate;
+        if (averageScore !== null && averageScore !== undefined) {
+          setAverageEasinessScore(Number(averageScore));
+        } else {
+          setAverageEasinessScore(null);
+        }
+      } catch (error) {
+        console.error('Error fetching average easiness score:', error);
+        setAverageEasinessScore(null);
+      }
+    };
+    if (effectiveId) fetchAverageEasinessScore();
+  }, [effectiveId]);
+
+  // Fetch user's own easiness rate
+  useEffect(() => {
+    const fetchUserEasinessRate = async () => {
+      if (!effectiveId) return;
+      try {
+        const response = await recipeService.getUserEasinessRate(Number(effectiveId));
+        const userRate = response?.easinessRate;
+        if (userRate !== null && userRate !== undefined) {
+          setUserEasinessRate(Number(userRate));
+        } else {
+          setUserEasinessRate(null);
+        }
+      } catch (error) {
+        console.error('Error fetching user easiness rate:', error);
+        setUserEasinessRate(null);
+      }
+    };
+    if (effectiveId) fetchUserEasinessRate();
+  }, [effectiveId]);
+
+  const handleRateEasiness = async (newValue: number) => {
+    if (!effectiveId || !newValue) return;
+    const roundedValue = Math.round(newValue);
+
+    setEasinessRatingLoading(true);
+    try {
+      // Use the new unified submitRating method
+      await recipeService.submitRating(Number(effectiveId), roundedValue, 'easiness');
+
+      // Fetch updated average score
+      const response = await recipeService.getAverageEasiness(Number(effectiveId));
+      const averageScore = response?.averageEasinessRate;
+      if (averageScore !== null && averageScore !== undefined) {
+        setAverageEasinessScore(Number(averageScore));
+      }
+
+      // Fetch updated user's own rating
+      const userRateResponse = await recipeService.getUserEasinessRate(Number(effectiveId));
+      const userRate = userRateResponse?.easinessRate;
+      if (userRate !== null && userRate !== undefined) {
+        setUserEasinessRate(Number(userRate));
+      } else {
+        setUserEasinessRate(null);
+      }
+      
+      Alert.alert(t('common.success'), t('recipes.easinessRated'));
+    } catch (error) {
+      console.error('Error submitting easiness rating:', error);
+      Alert.alert(t('common.error'), t('recipes.ratingError') || 'Failed to submit rating');
+    } finally {
+      setEasinessRatingLoading(false);
+    }
+  };
+
+  const openRatingModal = () => {
+    setRatingModalVisible(true);
+  };
 
   // Refresh saved state whenever this screen gains focus
   useFocusEffect(
@@ -387,15 +471,55 @@ const RecipeDetail = () => {
         )}
       </View>
 
-      {(recipe.healthinessScore != null || recipe.easinessScore != null) && (
-        <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
-          <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>{t('recipes.scores')}</Text>
-          <View style={{ flexDirection: 'row', gap: 16 }}>
-            <Text style={[styles.kv, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.healthiness')}: {recipe.healthinessScore ?? '-'}</Text>
-            <Text style={[styles.kv, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.easiness')}: {recipe.easinessScore ?? '-'}</Text>
+      <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
+        <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>{t('recipes.scores')}</Text>
+        
+        <View style={styles.scoreRow}>
+          <View style={styles.scoreItem}>
+            <Text style={[styles.scoreLabel, { color: textColors.secondary, fontFamily: fonts.regular }]}>{t('recipes.healthinessScore')}</Text>
+            <View style={styles.ratingContainer}>
+              <StarRating rating={recipe.healthinessScore ?? 0} readOnly size={20} />
+              <Text style={[styles.scoreValue, { color: textColors.primary, fontFamily: fonts.medium }]}>
+                ({recipe.healthinessScore ?? 0})
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.scoreItem}>
+            <Text style={[styles.scoreLabel, { color: textColors.secondary, fontFamily: fonts.regular }]}>{t('recipes.easinessScore')}</Text>
+            <View style={styles.ratingContainer}>
+              <StarRating 
+                rating={averageEasinessScore !== null ? averageEasinessScore : 0} 
+                onRatingChange={() => {}} // Disabled here
+                readOnly={true}
+                size={20}
+              />
+              <Text style={[styles.scoreValue, { color: textColors.primary, fontFamily: fonts.medium }]}>
+                {averageEasinessScore !== null ? `(${averageEasinessScore.toFixed(1)}/5)` : '(0/5)'}
+              </Text>
+            </View>
+
+            <View style={{ marginTop: 12, alignItems: 'center' }}>
+              <Text style={[styles.scoreLabel, { color: textColors.secondary, fontFamily: fonts.regular }]}>{t('recipes.yourEasinessRating')}</Text>
+              <TouchableOpacity 
+                style={styles.ratingContainer}
+                onPress={openRatingModal}
+                activeOpacity={0.7}
+              >
+                <StarRating 
+                  rating={userEasinessRate !== null ? userEasinessRate : 0} 
+                  onRatingChange={openRatingModal}
+                  readOnly={true} // Read only here, rating happens in modal
+                  size={20}
+                />
+                <Text style={[styles.scoreValue, { color: textColors.primary, fontFamily: fonts.medium }]}>
+                  {userEasinessRate !== null ? `(${userEasinessRate}/5)` : t('recipes.tapToRate')}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      )}
+      </View>
 
       {!!recipe.nutritionData && (
         <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
@@ -428,6 +552,15 @@ const RecipeDetail = () => {
           photo: recipe?.photo ?? 'https://picsum.photos/seed/recipe/300/300',
         }}
         baseUrl="https://heath.app"
+      />
+      
+      {/* Rating Modal */}
+      <RatingModal
+        visible={ratingModalVisible}
+        onClose={() => setRatingModalVisible(false)}
+        onSubmit={handleRateEasiness}
+        initialRating={0}
+        title={t('recipes.rateEasiness')}
       />
     </ScrollView>
   );
@@ -557,6 +690,28 @@ const styles = StyleSheet.create({
   nutriValue: { color: '#111827', fontWeight: '700' },
 
   muted: { color: '#6b7280', marginTop: 4 },
+  
+  // Scores
+  scoreRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  scoreItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  scoreLabel: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  ratingContainer: {
+    alignItems: 'center',
+  },
+  scoreValue: {
+    marginTop: 4,
+    fontSize: 12,
+  },
 });
 
 export default RecipeDetail;

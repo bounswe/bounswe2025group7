@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import heatH.heatHBack.model.request.RecipeRequest;
 import heatH.heatHBack.model.response.RecipeResponse;
+import heatH.heatHBack.model.response.UserEasinessRateResponse;
 import heatH.heatHBack.service.implementation.RecipeService;
 
 import heatH.heatHBack.model.request.EasinessRateRequest;
@@ -18,6 +19,7 @@ import heatH.heatHBack.model.response.UserEasinessRateResponse;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+
 
 @Controller
 @RestController
@@ -82,4 +84,11 @@ public class RecipeController {
         response.setEasinessRate(easinessRate);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/healthiness-score")
+    public ResponseEntity<Double> getHealthinessScore(@RequestParam Long recipeId) {
+    Double score = recipeService.getHealthinessScore(recipeId);
+    return ResponseEntity.ok(score);
+    }   
+    
 }

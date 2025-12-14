@@ -52,4 +52,26 @@ export const recipeService = {
       return false;
     }
   },
+
+  submitRating: (recipeId: number, rating: number, type: 'easiness' | 'healthiness' = 'easiness') => {
+    // Currently only easiness is supported by backend
+    if (type === 'easiness') {
+      return apiClient.post<string>('/recipe/rate-easiness', { 
+        recipeId, 
+        easinessRate: rating // Backend expects 'easinessRate' not 'rating'
+      }).then((r: any) => r.data);
+    }
+    // Fallback or future implementation for healthiness if needed
+    return Promise.resolve("Rating type not supported yet");
+  },
+
+  // Keeping these for backward compatibility if needed, but submitRating is the new requested way
+  rateEasiness: (recipeId: number, easinessRate: number) =>
+    apiClient.post<string>('/recipe/rate-easiness', { recipeId, easinessRate }).then((r: any) => r.data),
+
+  getAverageEasiness: (recipeId: number) =>
+    apiClient.post<{ averageEasinessRate: number }>('/recipe/average-easiness-rate', { recipeId }).then((r: any) => r.data),
+
+  getUserEasinessRate: (recipeId: number) =>
+    apiClient.get<{ easinessRate: number | null }>(`/recipe/get-easiness-rate-by-user?recipeId=${recipeId}`).then((r: any) => r.data),
 };
