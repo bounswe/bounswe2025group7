@@ -13,6 +13,7 @@ import heatH.heatHBack.service.implementation.RecipeService;
 import heatH.heatHBack.model.request.EasinessRateRequest;
 import heatH.heatHBack.model.response.EasinessRateResponse;
 import heatH.heatHBack.model.request.GetEasinessRequest;
+import heatH.heatHBack.model.response.UserEasinessRateResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -71,6 +72,14 @@ public class RecipeController {
         Double averageRate = recipeService.getAverageEasinessRate(getEasinessRequest.getRecipeId());
         EasinessRateResponse response = new EasinessRateResponse();
         response.setAverageEasinessRate(averageRate);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/get-easiness-rate-by-user")
+    public ResponseEntity<UserEasinessRateResponse> getEasinessRateByUser(@RequestParam Long recipeId) {
+        Integer easinessRate = recipeService.getEasinessRateByUser(recipeId);
+        UserEasinessRateResponse response = new UserEasinessRateResponse();
+        response.setEasinessRate(easinessRate);
         return ResponseEntity.ok(response);
     }
 }

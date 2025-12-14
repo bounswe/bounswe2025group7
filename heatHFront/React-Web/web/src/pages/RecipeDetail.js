@@ -131,6 +131,8 @@ const RecipeDetail = () => {
   const [translatedContent, setTranslatedContent] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationError, setTranslationError] = useState(null);
+  const [averageEasinessScore, setAverageEasinessScore] = useState(null);
+  const [easinessRatingLoading, setEasinessRatingLoading] = useState(false);
   const nutrition = recipe && recipe["nutritionData"] ? recipe["nutritionData"] : null;
 
   const targetLanguage = mapLanguageToRecipeTarget(i18n.language || 'en');
@@ -164,6 +166,35 @@ const RecipeDetail = () => {
 
     fetchSavedStatus();
   }, [recipe]);
+
+  // Fetch average easiness score when recipe loads
+  useEffect(() => {
+    const fetchAverageEasinessScore = async () => {
+      if (!recipe?.id) return;
+      
+      try {
+        const response = await apiClient.post('/recipe/average-easiness-rate', {
+          recipeId: recipe.id
+        });
+        console.log('Initial average easiness response:', response.data);
+        // Response structure: { averageEasinessRate: number }
+        const averageScore = response.data?.averageEasinessRate;
+        console.log('Initial parsed average score:', averageScore);
+        // Always use the average score from API
+        if (averageScore !== null && averageScore !== undefined) {
+          setAverageEasinessScore(averageScore);
+        } else {
+          setAverageEasinessScore(null);
+        }
+      } catch (error) {
+        console.error("Error fetching average easiness score:", error);
+        // Set to null if there's an error or no ratings yet
+        setAverageEasinessScore(null);
+      }
+    };
+
+    fetchAverageEasinessScore();
+  }, [recipe?.id]);
 
   // Translate recipe content
   useEffect(() => {
@@ -300,6 +331,56 @@ const RecipeDetail = () => {
     }
   };
 
+  // Handle easiness rating change
+  const handleEasinessRatingChange = async (event, newValue) => {
+    if (!recipe?.id || !newValue) return;
+
+    // Only allow whole numbers (1, 2, 3, 4, 5)
+    // Check if the clicked value is a whole number (with small tolerance for floating point)
+    const roundedValue = Math.round(newValue);
+    
+    // If the clicked value is not a whole number, completely ignore it
+    // This prevents half-star selections - user can only click on full stars
+    if (Math.abs(newValue - roundedValue) > 0.01) {
+      // User clicked on half star - ignore completely
+      // The Rating component's value prop won't change, so visually nothing happens
+      return;
+    }
+
+    setEasinessRatingLoading(true);
+    
+    try {
+      await apiClient.post('/recipe/rate-easiness', {
+        recipeId: recipe.id,
+        easinessRate: roundedValue
+      });
+      
+      // Fetch updated average score after rating
+      const response = await apiClient.post('/recipe/average-easiness-rate', {
+        recipeId: recipe.id
+      });
+      console.log('Average easiness response:', response.data);
+      const averageScore = response.data?.averageEasinessRate;
+      console.log('Parsed average score:', averageScore);
+      // Always update with the average score from API (not the user's individual rating)
+      if (averageScore !== null && averageScore !== undefined) {
+        setAverageEasinessScore(Number(averageScore));
+      } else {
+        setAverageEasinessScore(null);
+      }
+      
+      setSnackbarMessage(t('recipes.easinessRated') || 'Easiness rating submitted');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error submitting easiness rating:', error);
+      setSnackbarMessage(t('recipes.ratingError') || 'Failed to submit rating');
+      setSnackbarOpen(true);
+      // On error, don't change the average score - it will stay as it was
+    } finally {
+      setEasinessRatingLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <Template>
@@ -403,10 +484,19 @@ const RecipeDetail = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
               {t('recipes.easinessScore')}
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Rating value={recipe.easinessScore || 3.5} readOnly precision={0.5} />
-              <Typography variant="body2" sx={{ ml: 1 }}>
-                (3.5)
+            <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
+              <Rating 
+                value={averageEasinessScore !== null ? averageEasinessScore : 0} 
+                onChange={handleEasinessRatingChange}
+                precision={1}
+                max={5}
+                disabled={easinessRatingLoading}
+                sx={{ mb: 0.5 }}
+              />
+              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                {averageEasinessScore !== null 
+                  ? `(${averageEasinessScore.toFixed(1)}/5)` 
+                  : '(0/5)'}
               </Typography>
             </Box>
           </Box>
