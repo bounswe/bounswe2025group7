@@ -141,6 +141,7 @@ const RecipeDetail = () => {
   const [translationError, setTranslationError] = useState(null);
   const [averageEasinessScore, setAverageEasinessScore] = useState(null);
   const [easinessRatingLoading, setEasinessRatingLoading] = useState(false);
+  const [userEasinessRate, setUserEasinessRate] = useState(null);
   const nutrition = recipe && recipe["nutritionData"] ? recipe["nutritionData"] : null;
 
   const targetLanguage = mapLanguageToRecipeTarget(i18n.language || 'en');
@@ -229,6 +230,32 @@ const RecipeDetail = () => {
     };
 
     fetchAverageEasinessScore();
+  }, [recipe?.id]);
+
+  // Fetch user's own easiness rate when recipe loads
+  useEffect(() => {
+    const fetchUserEasinessRate = async () => {
+      if (!recipe?.id) return;
+      
+      try {
+        const response = await apiClient.get(`/recipe/get-easiness-rate-by-user?recipeId=${recipe.id}`);
+        console.log('User easiness rate response:', response.data);
+        // Response structure: { easinessRate: number | null }
+        const userRate = response.data?.easinessRate;
+        console.log('Parsed user easiness rate:', userRate);
+        if (userRate !== null && userRate !== undefined) {
+          setUserEasinessRate(userRate);
+        } else {
+          setUserEasinessRate(null);
+        }
+      } catch (error) {
+        console.error("Error fetching user easiness rate:", error);
+        // Set to null if there's an error or no rating yet
+        setUserEasinessRate(null);
+      }
+    };
+
+    fetchUserEasinessRate();
   }, [recipe?.id]);
 
   // Translate recipe content
@@ -391,11 +418,11 @@ const RecipeDetail = () => {
       });
       
       // Fetch updated average score after rating
-      const response = await apiClient.post('/recipe/average-easiness-rate', {
+      const averageResponse = await apiClient.post('/recipe/average-easiness-rate', {
         recipeId: recipe.id
       });
-      console.log('Average easiness response:', response.data);
-      const averageScore = response.data?.averageEasinessRate;
+      console.log('Average easiness response:', averageResponse.data);
+      const averageScore = averageResponse.data?.averageEasinessRate;
       console.log('Parsed average score:', averageScore);
       // Always update with the average score from API (not the user's individual rating)
       if (averageScore !== null && averageScore !== undefined) {
@@ -403,12 +430,22 @@ const RecipeDetail = () => {
       } else {
         setAverageEasinessScore(null);
       }
+
+      // Fetch updated user's own rating after rating
+      const userRateResponse = await apiClient.get(`/recipe/get-easiness-rate-by-user?recipeId=${recipe.id}`);
+      console.log('User easiness rate response after rating:', userRateResponse.data);
+      const userRate = userRateResponse.data?.easinessRate;
+      if (userRate !== null && userRate !== undefined) {
+        setUserEasinessRate(userRate);
+      } else {
+        setUserEasinessRate(null);
+      }
       
-      setSnackbarMessage(t('recipes.easinessRated') || 'Easiness rating submitted');
+      setSnackbarMessage(t('recipes.easinessRated'));
       setSnackbarOpen(true);
     } catch (error) {
       console.error('Error submitting easiness rating:', error);
-      setSnackbarMessage(t('recipes.ratingError') || 'Failed to submit rating');
+      setSnackbarMessage(t('recipes.ratingError'));
       setSnackbarOpen(true);
       // On error, don't change the average score - it will stay as it was
     } finally {
@@ -522,6 +559,24 @@ const RecipeDetail = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
               <Rating 
                 value={averageEasinessScore !== null ? averageEasinessScore : 0} 
+                readOnly
+                precision={0.1}
+                max={5}
+                sx={{ mb: 0.5 }}
+              />
+              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                {averageEasinessScore !== null 
+                  ? `(${averageEasinessScore.toFixed(1)}/5)` 
+                  : '(0/5)'}
+              </Typography>
+            </Box>
+            {/* User's own easiness rate */}
+            <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column', mt: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                {t('recipes.yourEasinessRating')}
+              </Typography>
+              <Rating 
+                value={userEasinessRate !== null ? userEasinessRate : 0} 
                 onChange={handleEasinessRatingChange}
                 precision={1}
                 max={5}
@@ -529,9 +584,9 @@ const RecipeDetail = () => {
                 sx={{ mb: 0.5 }}
               />
               <Typography variant="body2" sx={{ mt: 0.5 }}>
-                {averageEasinessScore !== null 
-                  ? `(${averageEasinessScore.toFixed(1)}/5)` 
-                  : '(0/5)'}
+                {userEasinessRate !== null 
+                  ? `(${userEasinessRate}/5)` 
+                  : '(Not rated)'}
               </Typography>
             </Box>
           </Box>
