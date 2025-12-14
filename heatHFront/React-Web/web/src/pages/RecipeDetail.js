@@ -42,6 +42,15 @@ const LANGUAGE_LABEL_KEYS = {
   ja: 'common.japanese',
 };
 
+const UNIT_LABELS = {
+  GRAM: 'g',
+  ML: 'ml',
+  PIECE: 'piece',
+  TEASPOON: 'tsp',
+  TABLESPOON: 'tbsp',
+  CUP: 'cup',
+};
+
 // Recipe section styling
 const RecipeDetailSection = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -135,6 +144,33 @@ const RecipeDetail = () => {
 
   const targetLanguage = mapLanguageToRecipeTarget(i18n.language || 'en');
   const targetLanguageLabelKey = LANGUAGE_LABEL_KEYS[targetLanguage] || LANGUAGE_LABEL_KEYS.en;
+
+  const normalizeIngredient = (ingredientItem) => {
+    if (typeof ingredientItem === 'string') {
+      const [rawName, rawRest] = ingredientItem.split(':').map(part => part.trim());
+      const [amountPart, unitPart] = (rawRest || '').split(' ').filter(Boolean);
+      return {
+        name: rawRest ? rawName : ingredientItem,
+        quantity: amountPart || '',
+        type: unitPart ? unitPart.toUpperCase() : undefined,
+        fallback: ingredientItem,
+      };
+    }
+    return ingredientItem || {};
+  };
+
+  const formatIngredientAmount = (ingredient) => {
+    if (!ingredient) return '';
+    const quantity = ingredient.quantity ?? ingredient.amount;
+    const unit = ingredient.type;
+
+    if (quantity !== undefined && quantity !== null && quantity !== '') {
+      const unitLabel = unit ? (UNIT_LABELS[unit] || unit.toLowerCase()) : '';
+      return `${quantity}${unitLabel ? ` ${unitLabel}` : ''}`.trim();
+    }
+
+    return '';
+  };
 
   // Fetch recipe data
   useEffect(() => {
@@ -823,13 +859,9 @@ const RecipeDetail = () => {
                 return ingredientsToShow.length > 0 ? (
                   <List disablePadding>
                     {ingredientsToShow.map((ingredientItem, idx) => {
-                      const normalizedIngredient =
-                        typeof ingredientItem === 'string' ? { name: ingredientItem } : ingredientItem || {};
-                      const name = normalizedIngredient.name || '';
-                      const amount =
-                        normalizedIngredient.quantity ??
-                        normalizedIngredient.amount ??
-                        '';
+                      const normalizedIngredient = normalizeIngredient(ingredientItem);
+                      const name = normalizedIngredient.name || normalizedIngredient.fallback || '';
+                      const amountLabel = formatIngredientAmount(normalizedIngredient);
                       return (
                         <ListItem
                           key={`ingredient-${idx}`}
@@ -839,7 +871,7 @@ const RecipeDetail = () => {
                         >
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                             <Typography variant="body1" fontWeight="medium">{name}</Typography>
-                            <Typography variant="body1" color="text.secondary">{amount}</Typography>
+                            <Typography variant="body1" color="text.secondary">{amountLabel || '-'}</Typography>
                           </Box>
                         </ListItem>
                       );

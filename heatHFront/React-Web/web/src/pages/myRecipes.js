@@ -34,6 +34,15 @@ const initialRecipes = [
   { id: 102, title: 'Family Pasta Recipe', image: 'https://picsum.photos/seed/pasta-recipe/300/300', description: 'Traditional pasta with homemade sauce and herbs', liked: false, saved: false, shared: true, isOwnRecipe: true },
 ];
 
+const MEASUREMENT_OPTIONS = [
+  { value: 'GRAM', label: 'g' },
+  { value: 'ML', label: 'ml' },
+  { value: 'PIECE', label: 'piece' },
+  { value: 'TEASPOON', label: 'tsp' },
+  { value: 'TABLESPOON', label: 'tbsp' },
+  { value: 'CUP', label: 'cup' },
+];
+
 const HeaderSection = styled(Box)(({ theme }) => ({
   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
   color: theme.palette.primary.contrastText,
@@ -76,6 +85,7 @@ const MyRecipes = () => {
   const [newIngredients, setNewIngredients] = useState([]);
   const [currentIngredient, setCurrentIngredient] = useState('');
   const [currentAmount, setCurrentAmount] = useState('');
+  const [currentUnit, setCurrentUnit] = useState('GRAM');
 
   const fileInputRef = useRef(null);
   const ingredientInputRef = useRef(null);
@@ -155,11 +165,13 @@ const MyRecipes = () => {
         ...newIngredients,
         {
           name: currentIngredient,
-          amount: currentAmount
+          amount: currentAmount,
+          type: currentUnit || 'GRAM'
         }
       ]);
       setCurrentIngredient('');
       setCurrentAmount('');
+      setCurrentUnit('GRAM');
       if (ingredientInputRef.current) {
         ingredientInputRef.current.focus();
       }
@@ -190,6 +202,7 @@ const MyRecipes = () => {
     setNewIngredients([]);
     setCurrentIngredient('');
     setCurrentAmount('');
+    setCurrentUnit('GRAM');
   };
 
   // Handle add/edit recipe submit
@@ -203,6 +216,7 @@ const MyRecipes = () => {
       const ingredientList = newIngredients.map(ing => ({
         name: ing.name,
         quantity: Number(ing.amount) || 0, // ensure it's an integer
+        type: ing.type || 'GRAM',
       }));
 
       const recipeData = {
@@ -293,8 +307,20 @@ const MyRecipes = () => {
       // Parse ingredients if they exist
       if (recipeToEdit.ingredients && recipeToEdit.ingredients.length > 0) {
         const parsedIngredients = recipeToEdit.ingredients.map(ing => {
-          const [name, amount] = ing.split(': ');
-          return { name, amount: amount || '' };
+          if (typeof ing === 'string') {
+            const [rawName, rawRest] = ing.split(':').map(part => part.trim());
+            const [amountPart, unitPart] = (rawRest || '').split(' ').filter(Boolean);
+            return {
+              name: rawName || ing,
+              amount: amountPart || '',
+              type: (unitPart || 'GRAM').toUpperCase()
+            };
+          }
+          return {
+            name: ing.name || '',
+            amount: ing.quantity ?? ing.amount ?? '',
+            type: ing.type || 'GRAM',
+          };
         });
         setNewIngredients(parsedIngredients);
       }
@@ -717,6 +743,20 @@ const MyRecipes = () => {
                         fullWidth
                         disabled={submitting}
                       />
+                      <FormControl sx={{ minWidth: 120 }} disabled={submitting}>
+                        <InputLabel>Unit</InputLabel>
+                        <Select
+                          value={currentUnit}
+                          label="Unit"
+                          onChange={(e) => setCurrentUnit(e.target.value)}
+                        >
+                          {MEASUREMENT_OPTIONS.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                              {option.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
                       <IconButton
                         color="primary"
                         onClick={handleAddIngredient}
@@ -743,7 +783,7 @@ const MyRecipes = () => {
                           {newIngredients.map((ingredient, index) => (
                             <Chip
                               key={index}
-                              label={`${ingredient.name}: ${ingredient.amount}`}
+                              label={`${ingredient.name}: ${ingredient.amount} ${MEASUREMENT_OPTIONS.find(opt => opt.value === ingredient.type)?.label || ingredient.type || ''}`}
                               onDelete={() => !submitting && handleRemoveIngredient(index)}
                               variant="outlined"
                               disabled={submitting}
