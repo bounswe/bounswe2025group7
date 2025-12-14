@@ -82,19 +82,32 @@ export default function CalorieScreen() {
     trackingData.forEach(item => {
         const recipeId = item.recipeId || item.id;
         const details = recipeDetails[recipeId];
-        const portion = item.portion ? (typeof item.portion === 'string' ? parseFloat(item.portion) : item.portion) : 1;
+        let portion = item.portion ? (typeof item.portion === 'string' ? parseFloat(item.portion) : item.portion) : 1;
+        const itemCalorie = item.calorie ? (typeof item.calorie === 'string' ? parseFloat(item.calorie) : item.calorie) : 0;
         
-        if (details?.nutritionData) {
-            const getVal = (keyPart: string) => {
-                const entry = Object.entries(details.nutritionData).find(([k]) => k.toLowerCase().includes(keyPart));
-                if (!entry) return 0;
-                let v = entry[1];
-                if (typeof v === 'string') v = parseFloat(v);
-                return (typeof v === 'number' && !isNaN(v)) ? v : 0;
-            };
-            p += getVal('protein') * portion;
-            f += (getVal('fat') || getVal('fats')) * portion;
-            c += (getVal('carb') || getVal('carbohydrate')) * portion;
+        if (details) {
+            let unitCal = details.totalCalorie || details.calories || details.calorie || 0;
+            if (typeof unitCal === 'string') unitCal = parseFloat(unitCal);
+
+            if (unitCal > 0 && itemCalorie > 0) {
+                const calculated = itemCalorie / unitCal;
+                if (!item.portion || Math.abs(calculated - portion) > 0.1) {
+                    portion = calculated;
+                }
+            }
+            
+            if (details.nutritionData) {
+                const getVal = (keyPart: string) => {
+                    const entry = Object.entries(details.nutritionData).find(([k]) => k.toLowerCase().includes(keyPart));
+                    if (!entry) return 0;
+                    let v = entry[1];
+                    if (typeof v === 'string') v = parseFloat(v);
+                    return (typeof v === 'number' && !isNaN(v)) ? v : 0;
+                };
+                p += getVal('protein') * portion;
+                f += (getVal('fat') || getVal('fats')) * portion;
+                c += (getVal('carb') || getVal('carbohydrate')) * portion;
+            }
         }
     });
     setDailyMacros({ p, f, c });
@@ -167,9 +180,22 @@ export default function CalorieScreen() {
               dayTracking.forEach((item: any) => {
                   const id = Number(item.recipeId || item.id);
                   const details = currentDetails[id];
-                  const portion = item.portion ? (typeof item.portion === 'string' ? parseFloat(item.portion) : item.portion) : 1;
+                  let portion = item.portion ? (typeof item.portion === 'string' ? parseFloat(item.portion) : item.portion) : 1;
+                  const itemCalorie = item.calorie ? (typeof item.calorie === 'string' ? parseFloat(item.calorie) : item.calorie) : 0;
                   
                   if (details) {
+                      let unitCal = details.totalCalorie || details.calories || details.calorie || 0;
+                      if (typeof unitCal === 'string') unitCal = parseFloat(unitCal);
+
+                      // Try to correct portion if it seems wrong (e.g. 1) but total calories suggest otherwise
+                      if (unitCal > 0 && itemCalorie > 0) {
+                          const calculated = itemCalorie / unitCal;
+                          // If portion is missing or default (1) but calculated is different
+                          if (!item.portion || Math.abs(calculated - portion) > 0.1) {
+                              portion = calculated;
+                          }
+                      }
+
                       const getVal = (keyPart: string) => {
                           if (!details.nutritionData) return 0;
                           const entry = Object.entries(details.nutritionData).find(([k]) => k.toLowerCase().includes(keyPart));
@@ -183,10 +209,13 @@ export default function CalorieScreen() {
                       stats.fat += (getVal('fat') || getVal('fats')) * portion;
                       stats.carbs += (getVal('carb') || getVal('carbohydrate')) * portion;
                       
-                      const cal = details.totalCalorie || details.calories || details.calorie || item.calorie || 0;
-                      stats.calories += cal * portion;
+                      if (itemCalorie > 0) {
+                          stats.calories += itemCalorie;
+                      } else {
+                          stats.calories += unitCal * portion;
+                      }
                   } else {
-                       stats.calories += (item.calorie || 0);
+                       stats.calories += itemCalorie;
                   }
               });
           }
