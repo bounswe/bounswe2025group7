@@ -75,6 +75,8 @@
     "scores": "Puanlar",
     "healthiness": "Sağlıklılık",
     "easiness": "Kolaylık",
+    "healthinessScore": "Sağlıklılık Puanı",
+    "easinessScore": "Kolaylık Puanı",
     "nutrition": "Beslenme",
     "noIngredients": "Malzeme listelenmedi.",
     "noInstructions": "Talimat bulunamadı.",

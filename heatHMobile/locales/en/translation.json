@@ -75,6 +75,8 @@
     "scores": "Scores",
     "healthiness": "Healthiness",
     "easiness": "Easiness",
+    "healthinessScore": "Healthiness Score",
+    "easinessScore": "Easiness Score",
     "nutrition": "Nutrition",
     "noIngredients": "No ingredients listed.",
     "noInstructions": "No instructions provided.",

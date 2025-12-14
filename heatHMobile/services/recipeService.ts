@@ -52,4 +52,10 @@ export const recipeService = {
       return false;
     }
   },
+
+  rateEasiness: (recipeId: number, easinessRate: number) =>
+    apiClient.post<string>('/recipe/rate-easiness', { recipeId, easinessRate }).then((r: any) => r.data),
+
+  getAverageEasiness: (recipeId: number) =>
+    apiClient.post<{ averageEasinessRate: number }>('/recipe/average-easiness-rate', { recipeId }).then((r: any) => r.data),
 };
