@@ -10,8 +10,16 @@ import ShareModal from '../../components/ShareModal';
 import { useFocusEffect } from '@react-navigation/native';
 import { translateRecipeContent, mapLanguageToRecipeTarget } from '../../services/translationService';
 import { formatPrice } from '../../services/currencyService';
+import { measurementOptionMap, MeasurementType, isMeasurementType } from '../../constants/measurements';
 
-type Ingredient = string | { name: string; amount?: string | number; quantity?: number };
+type Ingredient =
+  | string
+  | {
+      name?: string;
+      amount?: string | number;
+      quantity?: number;
+      type?: MeasurementType | string;
+    };
 
 type Recipe = {
   id?: number;
@@ -41,12 +49,6 @@ const formatNum = (n: number) => {
   return fixed.replace(/\.00$/, '');
 };
 
-const displayIngredient = (ing: Ingredient) => {
-  if (typeof ing === 'string') return ing;
-  const qty = ing.amount ?? ing.quantity;
-  return qty !== undefined && qty !== null ? `${ing.name}: ${qty}` : `${ing.name ?? ''}`;
-};
-
 const RecipeDetail = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -64,7 +66,56 @@ const RecipeDetail = () => {
   const [translated, setTranslated] = useState<Recipe | null>(null);
 
   // Get target language from global i18n setting
-  const targetLanguage = mapLanguageToRecipeTarget(i18n.language);
+  const getMeasurementLabel = (value?: string | null, variant: 'long' | 'short' = 'long') => {
+    if (value == null) return '';
+    const raw = value.toString().trim();
+    if (!raw) return '';
+    const upper = raw.toUpperCase();
+    if (isMeasurementType(upper)) {
+      const config = measurementOptionMap[upper as MeasurementType];
+      const key = variant === 'short' ? config.shortKey : config.labelKey;
+      return t(key, { defaultValue: raw });
+    }
+    return raw;
+  };
+
+  const renderIngredientRow = (ing: Ingredient, index: number) => {
+    if (typeof ing === 'string') {
+      return (
+        <Text key={`ing-${index}`} style={[styles.listItem, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>
+          • {ing}
+        </Text>
+      );
+    }
+
+    const qtyValue = ing.amount ?? ing.quantity;
+    const quantity = qtyValue != null && qtyValue !== '' ? String(qtyValue) : '';
+    const unitLabel = ing.type ? getMeasurementLabel(ing.type, quantity.length > 3 ? 'long' : 'short') : '';
+    const displayName = ing.name?.trim() || t('recipes.ingredient');
+
+    return (
+      <View
+        key={`ing-${index}`}
+        style={[
+          styles.ingredientRow,
+          {
+            borderColor: colors.gray[200],
+            backgroundColor: colors.gray[50],
+          },
+        ]}
+      >
+        <Text style={[styles.ingredientName, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>
+          {displayName}
+        </Text>
+        {(quantity || unitLabel) && (
+          <View style={[styles.ingredientBadge, { borderColor: colors.gray[200], backgroundColor: colors.white }]}>
+            {!!quantity && <Text style={[styles.ingredientBadgeText, { color: textColors.primary, fontFamily: fonts.bold }]}>{quantity}</Text>}
+            {!!unitLabel && <Text style={[styles.ingredientUnitText, { color: colors.primary, fontFamily: fonts.medium }]}>{unitLabel}</Text>}
+          </View>
+        )}
+      </View>
+    );
+  };
 
   // Nutrition label translation helper
   const getNutritionLabel = (key: string): string => {
@@ -319,9 +370,7 @@ const RecipeDetail = () => {
       <View style={[styles.card, { backgroundColor: colors.white, borderColor: colors.gray[200] }]}>
         <Text style={[styles.sectionTitle, { color: textColors.primary, fontFamily: fonts.bold, lineHeight: lineHeights.lg }]}>{t('recipes.ingredients')}</Text>
         {(translated?.ingredients ?? recipe.ingredients)?.length ? (
-          (translated?.ingredients ?? recipe.ingredients)!.map((ing, i) => (
-            <Text key={`ing-${i}`} style={[styles.listItem, { color: textColors.primary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>• {displayIngredient(ing)}</Text>
-          ))
+          (translated?.ingredients ?? recipe.ingredients)!.map((ing, i) => renderIngredientRow(ing, i))
         ) : (
           <Text style={[styles.muted, { color: textColors.secondary, fontFamily: fonts.regular, lineHeight: lineHeights.base }]}>{t('recipes.noIngredients')}</Text>
         )}
@@ -471,6 +520,29 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 8 },
   bodyText: { color: '#1f2937' },
   kv: { color: '#1f2937' },
+  ingredientRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 8,
+  },
+  ingredientName: { fontSize: 14, fontWeight: '600', flex: 1, paddingRight: 12 },
+  ingredientBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minWidth: 90,
+  },
+  ingredientBadgeText: { fontSize: 16, fontWeight: '700', marginRight: 6 },
+  ingredientUnitText: { fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
   listItem: { color: '#1f2937', marginTop: 6 },
 
   // Nutrition rows

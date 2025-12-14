@@ -1,8 +1,17 @@
+type TranslatableIngredient =
+  | string
+  | {
+      name?: string;
+      amount?: string | number;
+      quantity?: number;
+      type?: string;
+    };
+
 type RecipeContent = {
   title?: string;
   tag?: string;
   type?: string;
-  ingredients?: Array<string | { name: string; amount?: string | number; quantity?: number }>;
+  ingredients?: TranslatableIngredient[];
   instructions?: string[];
   description?: string;
 };

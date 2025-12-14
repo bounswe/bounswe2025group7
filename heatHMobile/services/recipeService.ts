@@ -1,4 +1,5 @@
 import { apiClient } from './apiClient';
+import type { MeasurementType } from '../constants/measurements';
 
 export const recipeService = {
   list: () => apiClient.get<any[]>('/recipes').then((r: any) => r.data),
@@ -7,7 +8,7 @@ export const recipeService = {
   createRecipe: (recipeData: {
     title: string;
     instructions: string[];
-    ingredients: Array<{ name: string; quantity: number }>;
+    ingredients: Array<{ name: string; quantity: number; type: MeasurementType }>;
     tag: string;
     type: string;
     photo: string;

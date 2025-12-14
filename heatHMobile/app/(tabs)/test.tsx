@@ -5,6 +5,7 @@ import { interestFormService } from '@/services/interestFormService';
 import { recipeService } from '@/services/recipeService';
 import { calorieService } from '@/services/calorieService';
 import { useThemeColors } from '../../hooks/useThemeColors';
+import { MeasurementType } from '../../constants/measurements';
 
 export default function TestScreen() {
   const { colors, textColors, borderColors, fonts, fontSizes, lineHeights } = useThemeColors();
@@ -334,14 +335,16 @@ export default function TestScreen() {
       // Small base64 encoded 1x1 red pixel image for testing
       const testImageBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==';
 
+      const sampleIngredients: Array<{ name: string; quantity: number; type: MeasurementType }> = [
+        { name: 'Ingredient 1', quantity: 100, type: 'GRAM' },
+        { name: 'Ingredient 2', quantity: 2, type: 'TEASPOON' },
+        { name: 'Ingredient 3', quantity: 1, type: 'CUP' },
+      ];
+
       const payload = {
         title: 'Test Recipe from Mobile',
         instructions: ['Step 1: Prepare ingredients', 'Step 2: Cook', 'Step 3: Serve'],
-        ingredients: [
-          { name: 'Ingredient 1', quantity: 100 },
-          { name: 'Ingredient 2', quantity: 200 },
-          { name: 'Ingredient 3', quantity: 150 }
-        ],
+        ingredients: sampleIngredients,
         tag: 'test',
         type: 'dinner',
         photo: testImageBase64,
