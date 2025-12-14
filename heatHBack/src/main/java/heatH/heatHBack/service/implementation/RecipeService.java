@@ -147,4 +147,18 @@ public class RecipeService {
     public Double getAverageEasinessRate(Long recipeId) {
         return easinessRateRepository.findAverageEasinessRateByRecipeId(recipeId);
     }
+
+    public Integer getEasinessRateByUser(Long recipeId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        User user = userRepository.findByUsername(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new RuntimeException("Recipe not found"));
+
+        Optional<EasinessRate> easinessRate = easinessRateRepository.findByUserAndRecipe(user, recipe);
+        
+        return easinessRate.map(EasinessRate::getEasiness_rate).orElse(null);
+    }
 }
