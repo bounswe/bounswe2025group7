@@ -478,9 +478,9 @@ const RecipeDetail = () => {
           <View style={styles.scoreItem}>
             <Text style={[styles.scoreLabel, { color: textColors.secondary, fontFamily: fonts.regular }]}>{t('recipes.healthinessScore')}</Text>
             <View style={styles.ratingContainer}>
-              <StarRating rating={recipe.healthinessScore || 3.5} readOnly size={20} />
+              <StarRating rating={recipe.healthinessScore ?? 0} readOnly size={20} />
               <Text style={[styles.scoreValue, { color: textColors.primary, fontFamily: fonts.medium }]}>
-                ({recipe.healthinessScore || '3.5'})
+                ({recipe.healthinessScore ?? 0})
               </Text>
             </View>
           </View>
