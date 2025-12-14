@@ -14,6 +14,7 @@ import heatH.heatHBack.service.implementation.RecipeService;
 import heatH.heatHBack.model.request.EasinessRateRequest;
 import heatH.heatHBack.model.response.EasinessRateResponse;
 import heatH.heatHBack.model.request.GetEasinessRequest;
+import heatH.heatHBack.model.response.UserEasinessRateResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -88,6 +89,6 @@ public class RecipeController {
     public ResponseEntity<Double> getHealthinessScore(@RequestParam Long recipeId) {
     Double score = recipeService.getHealthinessScore(recipeId);
     return ResponseEntity.ok(score);
-}   
+    }   
     
 }
