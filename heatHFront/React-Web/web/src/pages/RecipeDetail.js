@@ -496,7 +496,7 @@ const RecipeDetail = () => {
               <Typography variant="body2" sx={{ mt: 0.5 }}>
                 {averageEasinessScore !== null 
                   ? `(${averageEasinessScore.toFixed(1)}/5)` 
-                  : t('recipes.noRatings') || '(No ratings yet)'}
+                  : '(0/5)'}
               </Typography>
             </Box>
           </Box>
