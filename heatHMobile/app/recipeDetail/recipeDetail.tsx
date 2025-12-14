@@ -212,7 +212,8 @@ const RecipeDetail = () => {
 
     setEasinessRatingLoading(true);
     try {
-      await recipeService.rateEasiness(Number(effectiveId), roundedValue);
+      // Use the new unified submitRating method
+      await recipeService.submitRating(Number(effectiveId), roundedValue, 'easiness');
 
       // Fetch updated average score
       const response = await recipeService.getAverageEasiness(Number(effectiveId));
