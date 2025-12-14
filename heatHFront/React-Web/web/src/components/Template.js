@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Container, Box, Divider, IconButton } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Container, Box, Divider, IconButton, useTheme } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 import PersonIcon from '@mui/icons-material/Person';
@@ -14,6 +14,8 @@ import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import LanguageSwitcher from './LanguageSwitcher';
 import SearchIcon from '@mui/icons-material/Search';
 import MonitorWeightIcon from '@mui/icons-material/MonitorWeight';
+import SearchBar from './SearchBar';
+import DarkModeToggle from './DarkModeToggle';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
@@ -52,6 +54,7 @@ const Template = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const theme = useTheme();
 
   const handleLogout = () => {
     authService.logout();
@@ -62,7 +65,9 @@ const Template = ({ children }) => {
     <Box sx={{
       display: 'flex',
       flexDirection: 'column',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      bgcolor: 'background.default',
+      color: 'text.primary',
     }}>
       <StyledAppBar position="fixed">
         <StyledToolbar>
@@ -86,27 +91,20 @@ const Template = ({ children }) => {
 
 
 
+          {/* Search bar in the center */}
+          <SearchBar />
+
           {/* Navigation buttons on the right */}
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <NavButton
-              component={Link}
-              to="/profile"
-              color={location.pathname === '/profile' ? 'secondary' : 'inherit'}
-              startIcon={<PersonIcon />}
-            >
-              {t('common.profile')}
-            </NavButton>
-
+            <DarkModeToggle />
             <LanguageSwitcher variant="text" />
 
-            <IconButton
-              color="inherit"
+            <NavButton
               onClick={handleLogout}
-              sx={{ ml: 2 }}
-              title={t('common.logout')}
+              startIcon={<LogoutIcon />}
             >
-              <LogoutIcon />
-            </IconButton>
+              {t('common.logout')}
+            </NavButton>
           </Box>
         </StyledToolbar>
       </StyledAppBar>
@@ -119,7 +117,7 @@ const Template = ({ children }) => {
             sx={{
               width: 240,
               flexShrink: 0,
-              border: '1px solid #e0e0e0',
+              border: `1px solid ${theme.palette.divider}`,
               borderRadius: 2,
               p: 2,
               display: 'flex',
@@ -128,7 +126,7 @@ const Template = ({ children }) => {
               position: 'sticky',
               top: 96,
               height: 'fit-content',
-              backgroundColor: '#fff',
+              backgroundColor: theme.palette.background.paper,
             }}
           >
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
@@ -154,19 +152,19 @@ const Template = ({ children }) => {
 
             <NavButton
               component={Link}
-              to="/search"
-              startIcon={<SearchIcon />}
+              to="/profile"
+              startIcon={<PersonIcon />}
               fullWidth
               sx={{
                 justifyContent: 'flex-start',
-                color: location.pathname.startsWith('/search') ? 'primary.main' : 'text.primary',
-                backgroundColor: location.pathname.startsWith('/search') ? 'rgba(0, 128, 0, 0.08)' : 'transparent',
+                color: location.pathname.startsWith('/profile') ? 'primary.main' : 'text.primary',
+                backgroundColor: location.pathname.startsWith('/profile') ? 'rgba(0, 128, 0, 0.08)' : 'transparent',
                 '&:hover': {
-                  backgroundColor: location.pathname.startsWith('/search') ? 'rgba(0, 128, 0, 0.12)' : 'action.hover',
+                  backgroundColor: location.pathname.startsWith('/profile') ? 'rgba(0, 128, 0, 0.12)' : 'action.hover',
                 },
               }}
             >
-              {t('common.search')}
+              {t('common.profile')}
             </NavButton>
 
             <NavButton

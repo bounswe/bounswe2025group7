@@ -1,8 +1,7 @@
 // src/App.js
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
-import theme from './theme/theme';
+import { ThemeModeProvider } from './contexts/ThemeContext';
 import './i18n'; // Import i18n configuration 
 import LandingPage from './pages/LandingPage';
 
@@ -32,7 +31,7 @@ import CalorieTracking from './pages/CalorieTracking';
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeModeProvider>
       <BrowserRouter>
         <Routes>
           {/* Public routes */}
@@ -61,7 +60,7 @@ function App() {
           </Route>  
         </Routes>
       </BrowserRouter>
-    </ThemeProvider>  
+    </ThemeModeProvider>  
   );
 }
 

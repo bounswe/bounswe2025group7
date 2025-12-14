@@ -30,7 +30,9 @@
     "language": "Language",
     "english": "English",
     "turkish": "Türkçe",
-    "japanese": "Japanese"
+    "japanese": "Japanese",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode"
   },
   "landing": {
     "title": "Eat Healthy, Save Money",
@@ -92,7 +94,9 @@
     "recipeDetail": "Recipe Detail",
     "createRecipe": "Create Recipe",
     "noRecipesYet": "No Recipes Yet",
+    "noRecipesYetMessage": "Your recipes will be visible here when created. Start by creating some recipes!",
     "noSavedRecipes": "No Saved Recipes",
+    "noSavedRecipesMessage": "It looks like you haven't saved any recipes yet. Explore the recipes shared by our users!",
     "browseRecipes": "Browse Recipes",
     "editRecipe": "Edit Recipe",
     "recipeName": "Recipe Name",
@@ -228,6 +232,7 @@
     "welcome": "Welcome back!",
     "todaysRecipes": "Today's Featured Recipes",
     "recentActivity": "Recent Activity",
+    "recentActivityEmpty": "Your recent activity is displayed here.",
     "quickActions": "Quick Actions",
     "createMealPlan": "Create Meal Plan",
     "browseRecipes": "Browse Recipes",

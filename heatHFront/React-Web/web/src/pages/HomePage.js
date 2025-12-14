@@ -548,7 +548,8 @@ const HomePage = () => {
       <Box>
         <Container maxWidth={false} disableGutters sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {/* Post composer box */}
-          <Card sx={{ mb: 4, p: 2, width: '100%', maxWidth: 720 }}>
+          <Box sx={{ width: '100%', maxWidth: 720, mx: 'auto', mb: 4 }}>
+            <Card sx={{ p: 2, width: '100%', transition: 'none' }}>
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
               <Avatar
                 sx={{ width: 48, height: 48 }}
@@ -642,7 +643,8 @@ const HomePage = () => {
                 {t('home.post')}
               </Button>
             </Box>
-          </Card>
+            </Card>
+          </Box>
 
           {/* Feed listing */}
           {loading && pageNumber === 0 ? (
@@ -660,10 +662,15 @@ const HomePage = () => {
                   sx={{
                     width: '100%',
                     p: 2,
-                    boxShadow: '0px 4px 12px rgba(0,0,0,0.08)',
+                    backgroundColor: theme.palette.mode === 'dark' ? '#353535' : '#f3f4f6',
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? '0 8px 20px rgba(0,0,0,0.3)'
+                      : '0 2px 8px rgba(0,0,0,0.08)',
                     transition: 'box-shadow 0.2s ease, transform 0.2s ease',
                     '&:hover': {
-                      boxShadow: '0px 8px 24px rgba(0,0,0,0.10)',
+                      boxShadow: theme.palette.mode === 'dark'
+                        ? '0 16px 30px rgba(0,0,0,0.4)'
+                        : '0 4px 16px rgba(0,0,0,0.12)',
                       transform: 'translateY(-2px)',
                     },
                   }}

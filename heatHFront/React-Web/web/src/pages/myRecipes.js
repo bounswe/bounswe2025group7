@@ -369,12 +369,6 @@ const MyRecipes = () => {
   return (
     <Template>
       <Box>
-        <div style={{ textAlign: 'center' }}>
-          <Typography variant="h3" sx={{ color: 'primary.main', backgroundColor: 'white' }}>
-            {t('recipes.myRecipes')}
-          </Typography>
-        </div>
-
         <Container maxWidth="md" sx={{ py: 4 }}>
           {/* Error message display */}
           {error && (
@@ -383,13 +377,19 @@ const MyRecipes = () => {
             </Alert>
           )}
 
-          {/* Button to open Add Recipe Dialog */}
-          <Box sx={{ mb: 4, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-              {t('recipes.createRecipe')}
-            </Typography>
-
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+          {/* Loading state */}
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : recipes.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 8 }}>
+              <Typography variant="h6" color="text.secondary" gutterBottom sx={{ mb: 2 }}>
+                {t('recipes.noRecipesYet')}
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
+                {t('recipes.noRecipesYetMessage')}
+              </Typography>
               <Button
                 variant="contained"
                 color="primary"
@@ -398,33 +398,10 @@ const MyRecipes = () => {
                   setOpenAddDialog(true);
                 }}
                 startIcon={<AddIcon />}
+                size="large"
               >
                 {t('recipes.createRecipe')}
               </Button>
-
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => navigate('/saved')}
-              >
-                {t('recipes.savedRecipes')}
-              </Button>
-            </Box>
-          </Box>
-
-          {/* Loading state */}
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : recipes.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 8 }}>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                {t('recipes.myRecipes')}
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                {t('recipes.createRecipe')}
-              </Typography>
             </Box>
           ) : (
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: theme.spacing(3) }}>
