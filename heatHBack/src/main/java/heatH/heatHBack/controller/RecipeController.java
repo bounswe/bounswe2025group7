@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import heatH.heatHBack.model.request.RecipeRequest;
 import heatH.heatHBack.model.response.RecipeResponse;
+import heatH.heatHBack.model.response.UserEasinessRateResponse;
 import heatH.heatHBack.service.implementation.RecipeService;
 
 import heatH.heatHBack.model.request.EasinessRateRequest;
@@ -72,6 +73,14 @@ public class RecipeController {
         Double averageRate = recipeService.getAverageEasinessRate(getEasinessRequest.getRecipeId());
         EasinessRateResponse response = new EasinessRateResponse();
         response.setAverageEasinessRate(averageRate);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/get-easiness-rate-by-user")
+    public ResponseEntity<UserEasinessRateResponse> getEasinessRateByUser(@RequestParam Long recipeId) {
+        Integer easinessRate = recipeService.getEasinessRateByUser(recipeId);
+        UserEasinessRateResponse response = new UserEasinessRateResponse();
+        response.setEasinessRate(easinessRate);
         return ResponseEntity.ok(response);
     }
 
