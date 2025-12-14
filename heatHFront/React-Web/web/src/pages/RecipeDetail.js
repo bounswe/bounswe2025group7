@@ -3,22 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Container, Typography, Grid, Box, IconButton, useTheme, Button, Rating,
-  Chip, Divider, List, ListItem, ListItemText, Paper, Avatar,
+  Chip, List, ListItem, Paper,
   Table, TableBody, TableRow, TableCell, Alert
 } from '@mui/material';
-import { alpha, styled } from '@mui/material/styles';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import FavoriteIcon from '@mui/icons-material/Favorite';
+import { alpha } from '@mui/material/styles';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
-import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import ShareIcon from '@mui/icons-material/Share';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import RestaurantIcon from '@mui/icons-material/Restaurant';
 import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import PersonIcon from '@mui/icons-material/Person';
 import PrintIcon from '@mui/icons-material/Print';
 import Template from '../components/Template';
 import apiClient, { checkIfRecipeSaved, saveRecipe, unsaveRecipe } from '../services/apiClient';
@@ -49,28 +43,6 @@ const UNIT_LABELS = {
   TABLESPOON: 'tbsp',
   CUP: 'cup',
 };
-
-// Recipe section styling
-const RecipeDetailSection = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(3),
-  margin: theme.spacing(0, 0, 3, 0),
-  borderRadius: theme.shape.borderRadius,
-  background: theme.palette.background.paper,
-  boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
-}));
-
-// Recipe info box styling
-const RecipeInfoBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexDirection: 'column',
-  padding: theme.spacing(2),
-  borderRadius: theme.shape.borderRadius,
-  textAlign: 'center',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-  background: alpha(theme.palette.primary.light, 0.05)
-}));
 
 // Simple table row component for nutrition
 const NutrientRow = ({ label, value, unit = '', indent = 0, isSub = false, IconComponent = null }) => (
@@ -124,7 +96,6 @@ const RecipeDetail = () => {
 
   // States
   const [recipe, setRecipe] = useState(null);
-  const [userRating, setUserRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('details');
 
