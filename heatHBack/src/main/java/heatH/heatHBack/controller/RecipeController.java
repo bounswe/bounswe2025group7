@@ -13,11 +13,11 @@ import heatH.heatHBack.service.implementation.RecipeService;
 import heatH.heatHBack.model.request.EasinessRateRequest;
 import heatH.heatHBack.model.response.EasinessRateResponse;
 import heatH.heatHBack.model.request.GetEasinessRequest;
-import heatH.heatHBack.model.response.UserEasinessRateResponse;
 
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+
 
 @Controller
 @RestController
@@ -75,11 +75,10 @@ public class RecipeController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/get-easiness-rate-by-user")
-    public ResponseEntity<UserEasinessRateResponse> getEasinessRateByUser(@RequestParam Long recipeId) {
-        Integer easinessRate = recipeService.getEasinessRateByUser(recipeId);
-        UserEasinessRateResponse response = new UserEasinessRateResponse();
-        response.setEasinessRate(easinessRate);
-        return ResponseEntity.ok(response);
-    }
+    @GetMapping("/healthiness-score")
+    public ResponseEntity<Double> getHealthinessScore(@RequestParam Long recipeId) {
+    Double score = recipeService.getHealthinessScore(recipeId);
+    return ResponseEntity.ok(score);
+}   
+    
 }

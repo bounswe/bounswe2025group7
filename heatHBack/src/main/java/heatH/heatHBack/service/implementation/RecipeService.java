@@ -64,6 +64,11 @@ public class RecipeService {
         // --- YENİ BÖLÜMÜN SONU ---
 
         recipe.setNutritionData(nutritionData);
+
+        double healthinessScore = openAIService.calculateHealthinessScore(nutritionData, recipe.getTotalCalorie());
+        recipe.setHealthinessScore(healthinessScore);
+        recipe.setPrice(request.getPrice());
+
         recipe.setPrice(request.getPrice());
 
         if (request.getPhoto() != null) {
@@ -160,5 +165,11 @@ public class RecipeService {
         Optional<EasinessRate> easinessRate = easinessRateRepository.findByUserAndRecipe(user, recipe);
         
         return easinessRate.map(EasinessRate::getEasiness_rate).orElse(null);
+    }
+
+    public Double getHealthinessScore(Long recipeId) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new RuntimeException("Recipe not found"));
+        return recipe.getHealthinessScore();
     }
 }
