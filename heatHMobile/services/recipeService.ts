@@ -54,22 +54,15 @@ export const recipeService = {
   },
 
   submitRating: (recipeId: number, rating: number, type: 'easiness' | 'healthiness' = 'easiness') => {
-    // Mobile specific endpoint mapping based on the provided web code structure request
-    // Since the web code provided uses /api/recipe/rate for both, but the existing mobile code used /recipe/rate-easiness
-    // We will follow the user's request to implement 'submitRating' which likely implies a unified endpoint or specific logic.
-    // However, looking at the web code provided: 
-    // fetch(`${RECIPE_API}/rate`, ... body: { recipeId, rating, type })
-    // We should replicate this structure using apiClient.
-    
-    // Note: The previous implementation used /recipe/rate-easiness. 
-    // If the backend has changed to support a unified /rate endpoint as per the web code provided, we use that.
-    // If not, we might need to stick to the old endpoint for easiness or check if a new one exists.
-    // Assuming the user wants us to match the web implementation structure:
-    return apiClient.post<string>('/recipe/rate', { 
-      recipeId, 
-      rating, 
-      type 
-    }).then((r: any) => r.data);
+    // Currently only easiness is supported by backend
+    if (type === 'easiness') {
+      return apiClient.post<string>('/recipe/rate-easiness', { 
+        recipeId, 
+        easinessRate: rating // Backend expects 'easinessRate' not 'rating'
+      }).then((r: any) => r.data);
+    }
+    // Fallback or future implementation for healthiness if needed
+    return Promise.resolve("Rating type not supported yet");
   },
 
   // Keeping these for backward compatibility if needed, but submitRating is the new requested way
@@ -78,4 +71,7 @@ export const recipeService = {
 
   getAverageEasiness: (recipeId: number) =>
     apiClient.post<{ averageEasinessRate: number }>('/recipe/average-easiness-rate', { recipeId }).then((r: any) => r.data),
+
+  getUserEasinessRate: (recipeId: number) =>
+    apiClient.get<{ easinessRate: number | null }>(`/recipe/get-easiness-rate-by-user?recipeId=${recipeId}`).then((r: any) => r.data),
 };

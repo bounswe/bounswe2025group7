@@ -67,6 +67,7 @@ const RecipeDetail = () => {
   const [translating, setTranslating] = useState(false);
   const [translated, setTranslated] = useState<Recipe | null>(null);
   const [averageEasinessScore, setAverageEasinessScore] = useState<number | null>(null);
+  const [userEasinessRate, setUserEasinessRate] = useState<number | null>(null);
   const [easinessRatingLoading, setEasinessRatingLoading] = useState(false);
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
 
@@ -206,6 +207,26 @@ const RecipeDetail = () => {
     if (effectiveId) fetchAverageEasinessScore();
   }, [effectiveId]);
 
+  // Fetch user's own easiness rate
+  useEffect(() => {
+    const fetchUserEasinessRate = async () => {
+      if (!effectiveId) return;
+      try {
+        const response = await recipeService.getUserEasinessRate(Number(effectiveId));
+        const userRate = response?.easinessRate;
+        if (userRate !== null && userRate !== undefined) {
+          setUserEasinessRate(Number(userRate));
+        } else {
+          setUserEasinessRate(null);
+        }
+      } catch (error) {
+        console.error('Error fetching user easiness rate:', error);
+        setUserEasinessRate(null);
+      }
+    };
+    if (effectiveId) fetchUserEasinessRate();
+  }, [effectiveId]);
+
   const handleRateEasiness = async (newValue: number) => {
     if (!effectiveId || !newValue) return;
     const roundedValue = Math.round(newValue);
@@ -221,6 +242,16 @@ const RecipeDetail = () => {
       if (averageScore !== null && averageScore !== undefined) {
         setAverageEasinessScore(Number(averageScore));
       }
+
+      // Fetch updated user's own rating
+      const userRateResponse = await recipeService.getUserEasinessRate(Number(effectiveId));
+      const userRate = userRateResponse?.easinessRate;
+      if (userRate !== null && userRate !== undefined) {
+        setUserEasinessRate(Number(userRate));
+      } else {
+        setUserEasinessRate(null);
+      }
+      
       Alert.alert(t('common.success'), t('recipes.easinessRated'));
     } catch (error) {
       console.error('Error submitting easiness rating:', error);
@@ -456,21 +487,36 @@ const RecipeDetail = () => {
 
           <View style={styles.scoreItem}>
             <Text style={[styles.scoreLabel, { color: textColors.secondary, fontFamily: fonts.regular }]}>{t('recipes.easinessScore')}</Text>
-            <TouchableOpacity 
-              style={styles.ratingContainer}
-              onPress={openRatingModal}
-              activeOpacity={0.7}
-            >
+            <View style={styles.ratingContainer}>
               <StarRating 
                 rating={averageEasinessScore !== null ? averageEasinessScore : 0} 
-                onRatingChange={openRatingModal}
-                readOnly={true} // Read only here, rating happens in modal
+                onRatingChange={() => {}} // Disabled here
+                readOnly={true}
                 size={20}
               />
               <Text style={[styles.scoreValue, { color: textColors.primary, fontFamily: fonts.medium }]}>
                 {averageEasinessScore !== null ? `(${averageEasinessScore.toFixed(1)}/5)` : '(0/5)'}
               </Text>
-            </TouchableOpacity>
+            </View>
+
+            <View style={{ marginTop: 12, alignItems: 'center' }}>
+              <Text style={[styles.scoreLabel, { color: textColors.secondary, fontFamily: fonts.regular }]}>{t('recipes.yourEasinessRating')}</Text>
+              <TouchableOpacity 
+                style={styles.ratingContainer}
+                onPress={openRatingModal}
+                activeOpacity={0.7}
+              >
+                <StarRating 
+                  rating={userEasinessRate !== null ? userEasinessRate : 0} 
+                  onRatingChange={openRatingModal}
+                  readOnly={true} // Read only here, rating happens in modal
+                  size={20}
+                />
+                <Text style={[styles.scoreValue, { color: textColors.primary, fontFamily: fonts.medium }]}>
+                  {userEasinessRate !== null ? `(${userEasinessRate}/5)` : t('recipes.tapToRate')}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
