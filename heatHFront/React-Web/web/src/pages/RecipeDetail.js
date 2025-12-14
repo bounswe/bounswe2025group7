@@ -595,10 +595,18 @@ const RecipeDetail = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
               {t('recipes.healthinessScore')}
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Rating value={recipe.healthinessScore || 3.5} readOnly precision={0.5} />
-              <Typography variant="body2" sx={{ ml: 1 }}>
-                (3.5)
+            <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
+              <Rating 
+                value={recipe.healthinessScore !== null && recipe.healthinessScore !== undefined ? recipe.healthinessScore : 0} 
+                readOnly 
+                precision={0.1}
+                max={5}
+                sx={{ mb: 0.5 }}
+              />
+              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                {recipe.healthinessScore !== null && recipe.healthinessScore !== undefined
+                  ? `(${recipe.healthinessScore.toFixed(1)}/5)`
+                  : '(0/5)'}
               </Typography>
             </Box>
           </Box>
