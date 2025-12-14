@@ -45,7 +45,6 @@ const LANGUAGE_LABEL_KEYS = {
 const UNIT_LABELS = {
   GRAM: 'g',
   ML: 'ml',
-  PIECE: 'piece',
   TEASPOON: 'tsp',
   TABLESPOON: 'tbsp',
   CUP: 'cup',

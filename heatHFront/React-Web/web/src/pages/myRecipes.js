@@ -37,7 +37,6 @@ const initialRecipes = [
 const MEASUREMENT_OPTIONS = [
   { value: 'GRAM', label: 'g' },
   { value: 'ML', label: 'ml' },
-  { value: 'PIECE', label: 'piece' },
   { value: 'TEASPOON', label: 'tsp' },
   { value: 'TABLESPOON', label: 'tbsp' },
   { value: 'CUP', label: 'cup' },

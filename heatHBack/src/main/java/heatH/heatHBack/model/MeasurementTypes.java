@@ -3,7 +3,6 @@ package heatH.heatHBack.model;
 public enum MeasurementTypes {
     GRAM(1.0),
     ML(1.0),
-    PIECE(1.0),
     TEASPOON(5.0),
     TABLESPOON(10.0),
     CUP(200.0);
