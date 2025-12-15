@@ -370,12 +370,30 @@ const MyRecipes = () => {
     <Template>
       <Box>
         <Container maxWidth="md" sx={{ py: 4 }}>
-          {/* Error message display */}
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+        {/* Error message display */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Banner and create button (fixed) */}
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Typography variant="h4" sx={{ mb: 2, color: 'primary.main' }}>
+            {t('recipes.myRecipes')}
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              resetForm();
+              setOpenAddDialog(true);
+            }}
+          >
+            {t('recipes.createRecipe')}
+          </Button>
+        </Box>
 
           {/* Loading state */}
           {loading ? (
@@ -390,18 +408,6 @@ const MyRecipes = () => {
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
                 {t('recipes.noRecipesYetMessage')}
               </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => {
-                  resetForm();
-                  setOpenAddDialog(true);
-                }}
-                startIcon={<AddIcon />}
-                size="large"
-              >
-                {t('recipes.createRecipe')}
-              </Button>
             </Box>
           ) : (
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: theme.spacing(3) }}>
