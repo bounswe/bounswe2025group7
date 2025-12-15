@@ -14,7 +14,6 @@ import {
 import { useRouter } from 'expo-router';
 import { authService } from '../../services/authService';
 import { useThemeColors } from '../../hooks/useThemeColors';
-import { interestFormService } from '../../services/interestFormService';
 import { colors } from '../../constants/theme';
 
 export default function SignInScreen() {
@@ -33,20 +32,7 @@ export default function SignInScreen() {
     setLoading(true);
     try {
       await authService.login({ username: email, password: password });
-      
-      // Check if this is the user's first login
-      try {
-        const isFirstLogged = await interestFormService.checkFirstLogin();
-        
-        if (isFirstLogged) {
-          router.replace('/(tabs)' as any);
-        } else {
-          router.replace('/first-login-profile' as any);
-
-        }
-      } catch (firstLoginError) {
-        router.replace('/(tabs)' as any);
-      }
+      router.replace('/(tabs)' as any);
     } catch (error: any) {
       let errorMessage = 'An unexpected error occurred. Please try again.';
       

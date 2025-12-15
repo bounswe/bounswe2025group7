@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { authService } from '../services/authService';
-import { interestFormService } from '../services/interestFormService';
 
 export default function Index() {
   const router = useRouter();
@@ -18,17 +17,7 @@ export default function Index() {
       console.log('Token:', token ? 'Found' : 'Not found');
       
       if (token) {
-        // Check if this is the user's first login
-        try {
-          const isFirstLogged = await interestFormService.checkFirstLogin();
-          if (isFirstLogged) {
-            router.replace('/(tabs)' as any);
-          } else {
-            router.replace('/first-login-profile' as any);
-          }
-        } catch (firstLoginError) {
-          router.replace('/(tabs)' as any);
-        }
+        router.replace('/(tabs)' as any);
       } else {
         router.replace('/auth/sign-in' as any);
       }
