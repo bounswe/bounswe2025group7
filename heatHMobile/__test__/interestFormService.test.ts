@@ -13,9 +13,14 @@ jest.mock('@/services/apiClient', () => ({
 describe('interestFormService', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('checkFirstLogin returns backend value on success', async () => {
-    (apiClient.get as jest.Mock).mockResolvedValueOnce({ data: true });
+  it('checkFirstLogin returns true if form is missing (backend returns false)', async () => {
+    (apiClient.get as jest.Mock).mockResolvedValueOnce({ data: false });
     await expect(interestFormService.checkFirstLogin()).resolves.toBe(true);
+  });
+
+  it('checkFirstLogin returns false if form exists (backend returns true)', async () => {
+    (apiClient.get as jest.Mock).mockResolvedValueOnce({ data: true });
+    await expect(interestFormService.checkFirstLogin()).resolves.toBe(false);
   });
 
   it('checkFirstLogin returns false on 404/403', async () => {

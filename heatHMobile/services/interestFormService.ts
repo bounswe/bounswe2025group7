@@ -17,7 +17,9 @@ export const interestFormService = {
     try {
       const response = await apiClient.get('/interest-form/check-first-login');
       console.log('Check first login response:', response.data);
-      return response.data;
+      // Backend returns true if form EXISTS.
+      // We want true if form is MISSING (is first login).
+      return !response.data;
     } catch (err) {
       // If endpoint not found or form doesn't exist/forbidden, treat as not first login
       if (axios.isAxiosError(err) && (err.response?.status === 404 || err.response?.status === 403)) {
