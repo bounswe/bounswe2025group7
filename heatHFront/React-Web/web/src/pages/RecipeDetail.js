@@ -6,7 +6,7 @@ import {
   Chip, List, ListItem, Paper,
   Table, TableBody, TableRow, TableCell, Alert
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
+import { alpha, styled } from '@mui/material/styles';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import ShareIcon from '@mui/icons-material/Share';
