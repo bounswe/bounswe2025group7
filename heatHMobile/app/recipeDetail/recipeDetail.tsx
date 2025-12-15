@@ -12,7 +12,15 @@ import RatingModal from '../../components/RatingModal';
 import { useFocusEffect } from '@react-navigation/native';
 import { translateRecipeContent, mapLanguageToRecipeTarget } from '../../services/translationService';
 import { formatPrice } from '../../services/currencyService';
-import { measurementOptionMap, MeasurementType, isMeasurementType } from '../../constants/measurements';
+import { useMeasurement } from '../../context/MeasurementContext';
+import {
+  measurementOptionMap,
+  MeasurementType,
+  isMeasurementType,
+  convertQuantityForSystem,
+  formatQuantityText,
+  normalizeMeasurementType,
+} from '../../constants/measurements';
 
 type Ingredient =
   | string
@@ -56,6 +64,7 @@ const RecipeDetail = () => {
   const insets = useSafeAreaInsets();
   const { colors, textColors, fonts, lineHeights } = useThemeColors();
   const { t, i18n } = useTranslation();
+  const { system: measurementSystem } = useMeasurement();
   const { recipeId, id } = useLocalSearchParams<{ recipeId?: string; id?: string }>();
   const effectiveId = (recipeId ?? id) as string;
 
@@ -95,9 +104,26 @@ const RecipeDetail = () => {
     }
 
     const qtyValue = ing.amount ?? ing.quantity;
-    const quantity = qtyValue != null && qtyValue !== '' ? String(qtyValue) : '';
-    const unitLabel = ing.type ? getMeasurementLabel(ing.type, quantity.length > 3 ? 'long' : 'short') : '';
+    const numericQuantity =
+      typeof qtyValue === 'number'
+        ? qtyValue
+        : typeof qtyValue === 'string'
+        ? Number(qtyValue.replace(/,/g, '.'))
+        : null;
+
+    const measurementType = normalizeMeasurementType(ing.type);
     const displayName = ing.name?.trim() || t('recipes.ingredient');
+
+    let quantityText = '';
+    let unitLabel = '';
+
+    if (numericQuantity != null && !Number.isNaN(numericQuantity)) {
+      const converted = convertQuantityForSystem(numericQuantity, measurementType, measurementSystem);
+      quantityText = formatQuantityText(converted.value);
+      unitLabel = converted.unit || getMeasurementLabel(measurementType, quantityText.length > 3 ? 'long' : 'short');
+    } else if (ing.type) {
+      unitLabel = getMeasurementLabel(ing.type);
+    }
 
     return (
       <View
@@ -113,9 +139,9 @@ const RecipeDetail = () => {
         <Text style={[styles.ingredientName, { color: textColors.primary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>
           {displayName}
         </Text>
-        {(quantity || unitLabel) && (
+        {(quantityText || unitLabel) && (
           <View style={[styles.ingredientBadge, { borderColor: colors.gray[200], backgroundColor: colors.white }]}>
-            {!!quantity && <Text style={[styles.ingredientBadgeText, { color: textColors.primary, fontFamily: fonts.bold }]}>{quantity}</Text>}
+            {!!quantityText && <Text style={[styles.ingredientBadgeText, { color: textColors.primary, fontFamily: fonts.bold }]}>{quantityText}</Text>}
             {!!unitLabel && <Text style={[styles.ingredientUnitText, { color: colors.primary, fontFamily: fonts.medium }]}>{unitLabel}</Text>}
           </View>
         )}

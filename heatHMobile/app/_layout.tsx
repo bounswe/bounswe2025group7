@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import React from 'react';
 import { ThemeProvider } from '../context/ThemeContext';
+import { MeasurementProvider } from '../context/MeasurementContext';
 import { useFonts } from '../hooks/useFonts';
 import { View, Text, ActivityIndicator } from 'react-native';
 import '../i18n'; // Initialize i18n
@@ -18,6 +19,7 @@ export default function RootLayout() {
   }
 
   return (
+    <MeasurementProvider>
     <ThemeProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -25,6 +27,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
+    </MeasurementProvider>
   );
 }
 

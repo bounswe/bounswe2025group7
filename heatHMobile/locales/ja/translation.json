@@ -62,7 +62,11 @@
     "colorSuccess": "成功",
     "colorError": "エラー",
     "colorWarning": "警告",
-    "colorPrimary": "プライマリ"
+    "colorPrimary": "プライマリ",
+    "measurementSystem": "計量システム",
+    "measurementDescription": "材料の表示単位を選択します。レシピは常にメートル法で保存され、必要に応じて変換されます。",
+    "metricSystem": "メートル法 (g, ml)",
+    "imperialSystem": "ヤード・ポンド法 (oz, fl oz)"
   },
   "recipes": {
     "description": "説明",

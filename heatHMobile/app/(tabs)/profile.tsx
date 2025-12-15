@@ -8,6 +8,8 @@ import { interestFormService } from '../../services/interestFormService';
 import { feedService } from '../../services/feedService';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { useTheme } from '../../context/ThemeContext';
+import { useMeasurement } from '../../context/MeasurementContext';
+import { measurementSystemOptions } from '../../constants/measurements';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import { translateTextContent, mapLanguageToRecipeTarget } from '../../services/translationService';
@@ -42,6 +44,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { colors, textColors, borderColors, fonts, lineHeights } = useThemeColors();
   const { isDark, toggleTheme, isDyslexic, toggleFont, isColorBlind, toggleColorBlind } = useTheme();
+  const { system: measurementSystem, setSystem: setMeasurementSystem } = useMeasurement();
   const { t } = useTranslation();
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'tr' | 'ja'>(() => {
     const lang = i18n.language || 'en';
@@ -682,6 +685,41 @@ const convertImageToBase64 = async (uri: string): Promise<string> => {
           </View>
         </View>
 
+        <View style={[styles.card, { backgroundColor: colors.backgroundPaper, borderColor: borderColors.light }]}>
+          <Text style={[styles.label, { color: textColors.secondary, fontFamily: fonts.medium, lineHeight: lineHeights.base }]}>{t('profile.measurementSystem')}</Text>
+          <View style={styles.measurementSelector}>
+            {measurementSystemOptions.map((option) => {
+              const isActive = measurementSystem === option;
+              return (
+                <TouchableOpacity
+                  key={option}
+                  onPress={() => setMeasurementSystem(option)}
+                  style={[
+                    styles.measurementOption,
+                    {
+                      backgroundColor: isActive ? colors.primary : colors.white,
+                      borderColor: isActive ? colors.primary : borderColors.medium,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.measurementOptionText,
+                      {
+                        color: isActive ? colors.primaryContrast : textColors.primary,
+                        fontFamily: fonts.regular,
+                        lineHeight: lineHeights.base,
+                      },
+                    ]}
+                  >
+                    {option === 'metric' ? t('profile.metricSystem') : t('profile.imperialSystem')}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
         {isEditing && (
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary }]} onPress={handleSave}>
@@ -1172,6 +1210,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   languageOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  measurementSelector: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  measurementOption: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  measurementOptionText: {
     fontSize: 14,
     fontWeight: '500',
   },
