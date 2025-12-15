@@ -18,15 +18,18 @@ export default function Index() {
       console.log('Token:', token ? 'Found' : 'Not found');
       
       if (token) {
-        // Check if this is the user's first login
+        // Check if this is the user's first login (needs to fill profile)
         try {
-          const isFirstLogged = await interestFormService.checkFirstLogin();
-          if (isFirstLogged) {
-            router.replace('/(tabs)' as any);
-          } else {
+          // returns true if form NOT submitted (first login)
+          const isFirstLogin = await interestFormService.checkFirstLogin();
+          
+          if (isFirstLogin) {
             router.replace('/first-login-profile' as any);
+          } else {
+            router.replace('/(tabs)' as any);
           }
         } catch (firstLoginError) {
+          // If check fails, default to tabs
           router.replace('/(tabs)' as any);
         }
       } else {
