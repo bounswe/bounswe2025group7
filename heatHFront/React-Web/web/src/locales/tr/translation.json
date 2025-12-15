@@ -18,6 +18,7 @@
     "error": "Hata",
     "success": "Başarılı",
     "retry": "Tekrar Dene",
+    "navigation": "Keşfet",
     "like": "beğeni",
     "likes": "beğeni",
     "view": "Görüntüle",
@@ -29,7 +30,9 @@
     "language": "Dil",
     "english": "English",
     "turkish": "Türkçe",
-    "japanese": "Japonca"
+    "japanese": "Japonca",
+    "darkMode": "Karanlık Mod",
+    "lightMode": "Aydınlık Mod"
   },
   "landing": {
     "title": "Sağlıklı Beslen, Para Biriktir",
@@ -91,7 +94,9 @@
     "recipeDetail": "Tarif Detayı",
     "createRecipe": "Tarif Oluştur",
     "noRecipesYet": "Henüz Tarif Yok",
+    "noRecipesYetMessage": "Oluşturduğunuz tarifler burada görünür. Hemen tarif oluşturmaya başlayın!",
     "noSavedRecipes": "Kayıtlı Tarif Yok",
+    "noSavedRecipesMessage": "Henüz hiç tarif kaydetmediniz. Kullanıcılarımızın paylaştığı tarifleri keşfedin!",
     "browseRecipes": "Tarifleri Keşfet",
     "editRecipe": "Tarifi Düzenle",
     "recipeName": "Tarif Adı",
@@ -264,9 +269,13 @@
     "welcome": "Tekrar hoş geldiniz!",
     "todaysRecipes": "Bugünün Öne Çıkan Tarifleri",
     "recentActivity": "Son Aktiviteler",
+    "recentActivityEmpty": "Son aktiviteleriniz burada görüntülenir.",
     "quickActions": "Hızlı İşlemler",
     "createMealPlan": "Yemek Planı Oluştur",
     "browseRecipes": "Tarifleri Gözden Geçir",
+    "attachRecipe": "Tarif Ekle",
+    "uploadPhoto": "Fotoğraf Yükle",
+    "post": "Paylaş",
     "viewProfile": "Profili Görüntüle"
   },
   "errors": {

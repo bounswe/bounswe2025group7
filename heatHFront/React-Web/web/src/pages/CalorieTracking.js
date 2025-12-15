@@ -213,7 +213,7 @@ const CalorieTracking = () => {
     <Template>
       <Box>
         <div style={{ textAlign: 'center' }}> 
-          <Typography variant="h3" sx={{ color: 'primary.main', backgroundColor: 'white', mb: 3 }}>
+          <Typography variant="h3" sx={{ color: 'primary.main', mb: 3 }}>
             {t('calorieTracking.title')}
           </Typography>
         </div>
@@ -399,7 +399,7 @@ const CalorieTracking = () => {
                       <Box
                         sx={{
                           height: 160,
-                          bgcolor: 'grey.100',
+                          bgcolor: 'background.paper',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center'

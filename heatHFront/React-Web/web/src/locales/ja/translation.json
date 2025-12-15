@@ -18,6 +18,7 @@
     "error": "エラー",
     "success": "成功",
     "retry": "再試行",
+    "navigation": "探索",
     "like": "いいね",
     "likes": "いいね",
     "view": "表示",
@@ -29,7 +30,9 @@
     "language": "言語",
     "english": "英語",
     "turkish": "トルコ語",
-    "japanese": "日本語"
+    "japanese": "日本語",
+    "darkMode": "ダークモード",
+    "lightMode": "ライトモード"
   },
   "landing": {
     "title": "健康的に食べて節約しよう",
@@ -91,7 +94,9 @@
     "recipeDetail": "レシピ詳細",
     "createRecipe": "レシピを作成",
     "noRecipesYet": "レシピがまだありません",
+    "noRecipesYetMessage": "作成したレシピはここに表示されます。レシピを作成してみましょう！",
     "noSavedRecipes": "保存されたレシピはありません",
+    "noSavedRecipesMessage": "まだレシピを保存していないようです。ユーザーが共有したレシピを探索してみましょう！",
     "browseRecipes": "レシピを探す",
     "editRecipe": "レシピを編集",
     "recipeName": "レシピ名",
@@ -264,9 +269,13 @@
     "welcome": "お帰りなさい!",
     "todaysRecipes": "今日のおすすめレシピ",
     "recentActivity": "最近のアクティビティ",
+    "recentActivityEmpty": "最近のアクティビティはここに表示されます。",
     "quickActions": "クイックアクション",
     "createMealPlan": "食事プランを作成",
     "browseRecipes": "レシピを閲覧",
+    "attachRecipe": "レシピを添付",
+    "uploadPhoto": "写真をアップロード",
+    "post": "投稿",
     "viewProfile": "プロフィールを見る"
   },
   "errors": {

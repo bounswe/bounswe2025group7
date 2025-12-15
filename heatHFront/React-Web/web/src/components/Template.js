@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Container, Box, Divider, IconButton } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Container, Box, Divider, IconButton, useTheme } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 import PersonIcon from '@mui/icons-material/Person';
@@ -14,6 +14,8 @@ import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import LanguageSwitcher from './LanguageSwitcher';
 import SearchIcon from '@mui/icons-material/Search';
 import MonitorWeightIcon from '@mui/icons-material/MonitorWeight';
+import SearchBar from './SearchBar';
+import DarkModeToggle from './DarkModeToggle';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
@@ -52,6 +54,7 @@ const Template = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const theme = useTheme();
 
   const handleLogout = () => {
     authService.logout();
@@ -62,9 +65,11 @@ const Template = ({ children }) => {
     <Box sx={{
       display: 'flex',
       flexDirection: 'column',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      bgcolor: 'background.default',
+      color: 'text.primary',
     }}>
-      <StyledAppBar position="static">
+      <StyledAppBar position="fixed">
         <StyledToolbar>
           {/* Logo at the far left */}
           <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 48, gap: 2 }}>
@@ -86,31 +91,78 @@ const Template = ({ children }) => {
 
 
 
+          {/* Search bar in the center */}
+          <SearchBar />
+
           {/* Navigation buttons on the right */}
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <DarkModeToggle />
+            <LanguageSwitcher variant="text" />
+
+            <NavButton
+              onClick={handleLogout}
+              startIcon={<LogoutIcon />}
+            >
+              {t('common.logout')}
+            </NavButton>
+          </Box>
+        </StyledToolbar>
+      </StyledAppBar>
+      {/* Spacer to offset fixed AppBar */}
+      <Toolbar />
+      <Container sx={{ mt: 4, mb: 4, flex: 1 }}>
+        <Box sx={{ display: 'flex', gap: 3 }}>
+          {/* Left-side navigation box (Explore) */}
+          <Box
+            sx={{
+              width: 240,
+              flexShrink: 0,
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: 2,
+              p: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+              position: 'sticky',
+              top: 96,
+              height: 'fit-content',
+              backgroundColor: theme.palette.background.paper,
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+              {t('common.navigation')}
+            </Typography>
+
             <NavButton
               component={Link}
               to="/home"
-              color={location.pathname === '/home' ? 'secondary' : 'inherit'}
               startIcon={<HomeIcon />}
+              fullWidth
+              sx={{
+                justifyContent: 'flex-start',
+                color: location.pathname.startsWith('/home') ? 'primary.main' : 'text.primary',
+                backgroundColor: location.pathname.startsWith('/home') ? 'rgba(0, 128, 0, 0.08)' : 'transparent',
+                '&:hover': {
+                  backgroundColor: location.pathname.startsWith('/home') ? 'rgba(0, 128, 0, 0.12)' : 'action.hover',
+                },
+              }}
             >
               {t('common.home')}
             </NavButton>
 
             <NavButton
               component={Link}
-              to="/search"
-              color={location.pathname === '/search' ? 'secondary' : 'inherit'}
-              startIcon={<SearchIcon />}
-            >
-              {t('common.search')}
-            </NavButton>
-
-            <NavButton
-              component={Link}
               to="/profile"
-              color={location.pathname === '/profile' ? 'secondary' : 'inherit'}
               startIcon={<PersonIcon />}
+              fullWidth
+              sx={{
+                justifyContent: 'flex-start',
+                color: location.pathname.startsWith('/profile') ? 'primary.main' : 'text.primary',
+                backgroundColor: location.pathname.startsWith('/profile') ? 'rgba(0, 128, 0, 0.08)' : 'transparent',
+                '&:hover': {
+                  backgroundColor: location.pathname.startsWith('/profile') ? 'rgba(0, 128, 0, 0.12)' : 'action.hover',
+                },
+              }}
             >
               {t('common.profile')}
             </NavButton>
@@ -118,8 +170,16 @@ const Template = ({ children }) => {
             <NavButton
               component={Link}
               to="/myrecipes"
-              color={location.pathname === '/myrecipes' ? 'secondary' : 'inherit'}
               startIcon={<RestaurantMenuIcon />}
+              fullWidth
+              sx={{
+                justifyContent: 'flex-start',
+                color: location.pathname.startsWith('/myrecipes') ? 'primary.main' : 'text.primary',
+                backgroundColor: location.pathname.startsWith('/myrecipes') ? 'rgba(0, 128, 0, 0.08)' : 'transparent',
+                '&:hover': {
+                  backgroundColor: location.pathname.startsWith('/myrecipes') ? 'rgba(0, 128, 0, 0.12)' : 'action.hover',
+                },
+              }}
             >
               {t('recipes.myRecipes')}
             </NavButton>
@@ -127,8 +187,16 @@ const Template = ({ children }) => {
             <NavButton
               component={Link}
               to="/saved"
-              color={location.pathname === '/saved' ? 'secondary' : 'inherit'}
               startIcon={<BookmarkIcon />}
+              fullWidth
+              sx={{
+                justifyContent: 'flex-start',
+                color: location.pathname.startsWith('/saved') ? 'primary.main' : 'text.primary',
+                backgroundColor: location.pathname.startsWith('/saved') ? 'rgba(0, 128, 0, 0.08)' : 'transparent',
+                '&:hover': {
+                  backgroundColor: location.pathname.startsWith('/saved') ? 'rgba(0, 128, 0, 0.12)' : 'action.hover',
+                },
+              }}
             >
               {t('recipes.savedRecipes')}
             </NavButton>
@@ -136,27 +204,26 @@ const Template = ({ children }) => {
             <NavButton
               component={Link}
               to="/calorie-tracking"
-              color={location.pathname === '/calorie-tracking' ? 'secondary' : 'inherit'}
               startIcon={<MonitorWeightIcon />}
+              fullWidth
+              sx={{
+                justifyContent: 'flex-start',
+                color: location.pathname.startsWith('/calorie-tracking') ? 'primary.main' : 'text.primary',
+                backgroundColor: location.pathname.startsWith('/calorie-tracking') ? 'rgba(0, 128, 0, 0.08)' : 'transparent',
+                '&:hover': {
+                  backgroundColor: location.pathname.startsWith('/calorie-tracking') ? 'rgba(0, 128, 0, 0.12)' : 'action.hover',
+                },
+              }}
             >
               {t('calorieTracking.title')}
             </NavButton>
-
-            <LanguageSwitcher variant="icon" />
-
-            <IconButton
-              color="inherit"
-              onClick={handleLogout}
-              sx={{ ml: 2 }}
-              title={t('common.logout')}
-            >
-              <LogoutIcon />
-            </IconButton>
           </Box>
-        </StyledToolbar>
-      </StyledAppBar>
-      <Container sx={{ mt: 4, mb: 4, flex: 1 }}>
-        {children}
+
+          {/* Main content centered */}
+          <Box sx={{ flex: 1 }}>
+            {children}
+          </Box>
+        </Box>
       </Container>
       <Footer>
         <Container>

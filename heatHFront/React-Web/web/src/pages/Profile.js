@@ -162,7 +162,7 @@ const Profile = () => {
           </Typography>
 
           {userFeed.length === 0 ? (
-            <Typography color="textSecondary">{t('home.recentActivity')}</Typography>
+            <Typography color="textSecondary">{t('home.recentActivityEmpty')}</Typography>
           ) : (
             userFeed.map((feed) => (
               <Box

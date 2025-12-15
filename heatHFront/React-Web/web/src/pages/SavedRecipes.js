@@ -160,12 +160,6 @@ const SavedRecipes = () => {
   return (
     <Template>
       <Box>
-        <div style={{ textAlign: 'center' }}> 
-          <Typography variant="h3" sx={{ color: 'primary.main', backgroundColor: 'white' }}>
-            {t('recipes.savedRecipes')}
-          </Typography>
-        </div>
-
         <Container maxWidth="md" sx={{ py: 4 }}>
           {/* Error message display */}
           {error && (
@@ -173,20 +167,6 @@ const SavedRecipes = () => {
               {error}
             </Alert>
           )}
-          
-          {/* Navigation to My Recipes */}
-          <Box sx={{ mb: 4, textAlign: 'center' }}>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-            {t('recipes.savedRecipes')}
-          </Typography>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              onClick={() => navigate('/myrecipes')}
-            >
-              {t('recipes.myRecipes')}
-            </Button>
-          </Box>
 
           {/* Loading state */}
           {loading ? (
@@ -195,14 +175,14 @@ const SavedRecipes = () => {
             </Box>
           ) : recipes.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
+              <Typography variant="h6" color="text.secondary" gutterBottom sx={{ mb: 2 }}>
                 {t('recipes.noSavedRecipes')}
               </Typography>
-              <Typography variant="body1" color="text.secondary">
-                {t('home.browseRecipes')}
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
+                {t('recipes.noSavedRecipesMessage')}
               </Typography>
               <Button 
-                variant="outlined" 
+                variant="contained" 
                 color="primary" 
                 sx={{ mt: 2 }}
                 onClick={() => navigate('/home')}
